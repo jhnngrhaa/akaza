@@ -824,9 +824,11 @@ async function loadAdminWithdrawals() {
 function openRejectWithdrawalModal(id) {
   const modal = document.getElementById('reject-wd-modal');
   if (!modal) return;
-  const wd = currentWithdrawalsList.find(w => w.id === id);
+  const wd = currentWithdrawalsList.find(w => String(w.id) === String(id));
 
-  document.getElementById('reject-wd-id').value = id;
+  const idEl = document.getElementById('reject-wd-id');
+  if (idEl) idEl.value = id;
+
   const userEl = document.getElementById('reject-wd-user');
   const destEl = document.getElementById('reject-wd-destination');
   const amtEl = document.getElementById('reject-wd-amount');
@@ -838,12 +840,16 @@ function openRejectWithdrawalModal(id) {
   if (reasonInput) reasonInput.value = 'Nomor rekening/e-wallet tidak valid';
 
   modal.style.display = 'flex';
+  modal.classList.add('active');
   if (reasonInput) setTimeout(() => { reasonInput.focus(); reasonInput.select(); }, 120);
 }
 
 function closeRejectWithdrawalModal() {
   const modal = document.getElementById('reject-wd-modal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
 }
 
 function setRejectReason(reason) {
@@ -899,9 +905,11 @@ async function submitRejectWithdrawal() {
 function openApproveWithdrawalModal(id) {
   const modal = document.getElementById('approve-wd-modal');
   if (!modal) return;
-  const wd = currentWithdrawalsList.find(w => w.id === id);
+  const wd = currentWithdrawalsList.find(w => String(w.id) === String(id));
 
-  document.getElementById('approve-wd-id').value = id;
+  const idEl = document.getElementById('approve-wd-id');
+  if (idEl) idEl.value = id;
+
   const userEl = document.getElementById('approve-wd-user');
   const destEl = document.getElementById('approve-wd-destination');
   const amtEl = document.getElementById('approve-wd-amount');
@@ -911,11 +919,15 @@ function openApproveWithdrawalModal(id) {
   if (amtEl) amtEl.textContent = wd ? `Rp ${(wd.amount || 0).toLocaleString('id-ID')}` : '-';
 
   modal.style.display = 'flex';
+  modal.classList.add('active');
 }
 
 function closeApproveWithdrawalModal() {
   const modal = document.getElementById('approve-wd-modal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
 }
 
 async function submitApproveWithdrawal() {
