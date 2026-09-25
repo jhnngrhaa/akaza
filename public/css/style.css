@@ -2,7 +2,7 @@
    AKAZA BLAST - CLEAN & MINIMALIST LIGHT UI
    ======================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+/* Font: Helvetica (system) */
 
 :root {
   --bg-app: #f8fafc;
@@ -54,7 +54,7 @@ button, input, textarea, select {
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--bg-app);
   color: var(--text-main);
   line-height: 1.5;
