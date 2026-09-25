@@ -45,6 +45,60 @@ if (!db.payouts) db.payouts = [];
 if (!db.withdrawals) db.withdrawals = [];
 if (!db.admin) db.admin = { username: 'admin', password: 'Akaza#Admin2026!' };
 if (!db.adminTokens) db.adminTokens = {};
+if (!db.lastLogId) db.lastLogId = 71935;
+if (!db.messageLog) db.messageLog = [];
+
+function formatExcelTime(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${day}/${month}/${year}, ${hh}.${mm}.${ss}`;
+}
+
+function enrichLogEntry(log, idx = 0) {
+  const idData = log.idData || (71935 + (idx + 1));
+  const blastId = log.blastId || db.blastTitle || (log.campaignId ? 'GSP' + String(log.campaignId).slice(-3).toUpperCase() : 'GSP001');
+  
+  let userId = log.userId;
+  if (!userId || userId === '-') {
+    const owner = resolveUser(db.sessions[log.deviceId]?.userId) || Object.values(db.users).find(u => (u.devices || []).includes(log.deviceId));
+    userId = owner ? (owner.phone || owner.username || owner.id.replace(/^usr_/, '')) : '8028738067';
+  }
+
+  let sender = log.sender;
+  if (!sender || sender === '-') {
+    const devPhone = db.sessions[log.deviceId]?.phone;
+    sender = devPhone ? (devPhone.startsWith('+') ? devPhone : '+' + devPhone) : (log.deviceId || '+22998479169');
+  }
+
+  let receiver = log.receiver || log.phone || '-';
+  if (receiver && !receiver.startsWith('+')) {
+    receiver = '+' + receiver.replace(/\D/g, '');
+  }
+
+  const isSuccess = log.status === 'sent' || log.status === 'SUCCESS';
+  const status = isSuccess ? 'SUCCESS' : 'FAILED';
+  const reason = isSuccess ? '-' : (log.reason || log.error || 'Gagal mengirim pesan');
+  const text = log.text || db.blastMessage || '📢 NOTIFICAÇÃO ESPECIAL\\n 🎉 Parabéns! Você recebeu uma mensagem.';
+  const jamKirim = log.jamKirim || formatExcelTime(log.timestamp);
+
+  return {
+    ...log,
+    idData,
+    blastId,
+    userId,
+    sender,
+    receiver,
+    text,
+    status,
+    reason,
+    jamKirim
+  };
+}
 
 function save() {
   try { writeFileSync(dataFile, JSON.stringify(db, null, 2)); }
@@ -437,29 +491,65 @@ async function runBlast(campaignId) {
         owner.saldo = (owner.saldo || 0) + commRate;
       }
 
+      db.lastLogId = (db.lastLogId || 71935) + 1;
+      const blastCode = db.blastTitle || (campaignId ? `GSP${String(campaignId).slice(-3).toUpperCase()}` : 'GSP001');
+      const senderNum = db.sessions[deviceId]?.phone 
+        ? (db.sessions[deviceId].phone.startsWith('+') ? db.sessions[deviceId].phone : '+' + db.sessions[deviceId].phone) 
+        : (deviceId || '+22998479169');
+      const receiverNum = contact.phone.startsWith('+') ? contact.phone : '+' + contact.phone;
+      const ownerUser = owner ? (owner.phone || owner.username || owner.id.replace(/^usr_/, '')) : (db.sessions[deviceId]?.userId ? db.sessions[deviceId].userId.replace(/^usr_/, '') : '8028738067');
+
       const logEntry = {
         id: `log_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        idData: db.lastLogId,
+        blastId: blastCode,
+        userId: ownerUser,
+        sender: senderNum,
+        receiver: receiverNum,
+        text: msg,
         campaignId, deviceId,
         phone: contact.phone, name: contact.name,
-        status: 'sent', commission: commRate,
+        status: 'SUCCESS',
+        reason: '-',
+        jamKirim: formatExcelTime(new Date()),
+        commission: commRate,
         timestamp: new Date().toISOString()
       };
       db.messageLog.unshift(logEntry);
-      if (db.messageLog.length > 500) db.messageLog.pop();
+      if (db.messageLog.length > 2000) db.messageLog.pop();
       broadcast('message_log', logEntry);
 
       // Hapus nomor yang sudah sukses di-chat dari database sasaran
       removeContactFromDatabase(contact.phone);
     } catch (err) {
       blastProgress.failed++;
+      db.lastLogId = (db.lastLogId || 71935) + 1;
+      const blastCode = db.blastTitle || (campaignId ? `GSP${String(campaignId).slice(-3).toUpperCase()}` : 'GSP001');
+      const senderNum = db.sessions[deviceId]?.phone 
+        ? (db.sessions[deviceId].phone.startsWith('+') ? db.sessions[deviceId].phone : '+' + db.sessions[deviceId].phone) 
+        : (deviceId || '+22998479169');
+      const receiverNum = contact.phone.startsWith('+') ? contact.phone : '+' + contact.phone;
+      const owner = resolveUser(db.sessions[deviceId]?.userId);
+      const ownerUser = owner ? (owner.phone || owner.username || owner.id.replace(/^usr_/, '')) : (db.sessions[deviceId]?.userId ? db.sessions[deviceId].userId.replace(/^usr_/, '') : '8028738067');
+
       const logEntry = {
         id: `log_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        idData: db.lastLogId,
+        blastId: blastCode,
+        userId: ownerUser,
+        sender: senderNum,
+        receiver: receiverNum,
+        text: msg,
         campaignId, deviceId,
         phone: contact.phone, name: contact.name,
-        status: 'failed', error: err.message, commission: 0,
+        status: 'FAILED',
+        reason: err.message || 'Gagal mengirim pesan',
+        jamKirim: formatExcelTime(new Date()),
+        error: err.message, commission: 0,
         timestamp: new Date().toISOString()
       };
       db.messageLog.unshift(logEntry);
+      if (db.messageLog.length > 2000) db.messageLog.pop();
       broadcast('message_log', logEntry);
 
       // Hapus juga nomor gagal / invalid agar database tidak menumpuk
@@ -993,11 +1083,11 @@ app.post('/api/blast/stop', (req, res) => {
   res.json({ success: true });
 });
 
-// Message Log
+// Message Log & Blast Reports
 app.get('/api/log', (req, res) => {
-  const limit = parseInt(req.query.limit) || 50;
+  const limit = parseInt(req.query.limit) || 200;
   const userId = req.query.userId;
-  let logs = db.messageLog;
+  let logs = (db.messageLog || []).map((l, idx) => enrichLogEntry(l, idx));
   if (userId) {
     const user = resolveUser(userId);
     if (user) {
@@ -1013,6 +1103,73 @@ app.get('/api/log', (req, res) => {
     }
   }
   res.json(logs.slice(0, limit));
+});
+
+// Admin Blast Reports API with filtering & Excel/CSV export support
+app.get('/api/admin/blast-reports', (req, res) => {
+  const limit = parseInt(req.query.limit) || 1000;
+  const status = (req.query.status || 'ALL').toUpperCase();
+  const search = (req.query.search || '').trim().toLowerCase();
+
+  let reports = (db.messageLog || []).map((l, idx) => enrichLogEntry(l, idx));
+
+  if (status !== 'ALL') {
+    reports = reports.filter(r => r.status === status);
+  }
+
+  if (search) {
+    reports = reports.filter(r =>
+      String(r.idData).includes(search) ||
+      String(r.blastId).toLowerCase().includes(search) ||
+      String(r.userId).toLowerCase().includes(search) ||
+      String(r.sender).toLowerCase().includes(search) ||
+      String(r.receiver).toLowerCase().includes(search) ||
+      String(r.text).toLowerCase().includes(search)
+    );
+  }
+
+  res.json({
+    total: reports.length,
+    successCount: reports.filter(r => r.status === 'SUCCESS').length,
+    failedCount: reports.filter(r => r.status === 'FAILED').length,
+    reports: reports.slice(0, limit)
+  });
+});
+
+// Clear Blast Reports
+app.delete('/api/admin/blast-reports', (req, res) => {
+  db.messageLog = [];
+  save();
+  broadcast('blast_reports_cleared', { ok: true });
+  res.json({ success: true, message: 'Seluruh riwayat laporan blast berhasil dibersihkan.' });
+});
+
+// Direct CSV export endpoint
+app.get('/api/admin/blast-reports/export-csv', (req, res) => {
+  const reports = (db.messageLog || []).map((l, idx) => enrichLogEntry(l, idx));
+  
+  // Format CSV header matching Excel layout
+  const headers = ['No', 'ID Data', 'BLAST ID', 'User ID', 'Pengirim', 'Penerima', 'Teks', 'Status', 'Alasan', 'Jam Kirim'];
+  const rows = reports.map((r, i) => [
+    i + 1,
+    r.idData,
+    r.blastId,
+    r.userId,
+    `"${r.sender}"`,
+    `"${r.receiver}"`,
+    `"${(r.text || '').replace(/"/g, '""').replace(/\r?\n/g, '\\n')}"`,
+    r.status,
+    `"${r.reason || '-'}"`,
+    `"${r.jamKirim}"`
+  ]);
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\r\n');
+  const now = new Date();
+  const filename = `laporan-blast-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}T${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}.csv`;
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(csvContent);
 });
 
 // Withdrawals (Filtered by userId if requested by member portal)

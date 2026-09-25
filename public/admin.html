@@ -583,6 +583,27 @@
         overflow-y: visible;
         padding: 16px 14px 40px;
       }
+      .admin-blast-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .clean-table {
+        min-width: 640px;
+      }
+    }
+    @media (max-width: 640px) {
+      .admin-main-container {
+        padding: 12px 10px 40px;
+      }
+      .admin-metric-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .admin-metric-card {
+        padding: 12px 14px;
+      }
+      .admin-metric-card .val {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
@@ -631,9 +652,10 @@
           <span class="nav-badge" id="tab-withdraw-badge">0</span>
         </button>
 
-        <button class="admin-nav-item" id="tab-btn-logs" onclick="switchAdminTab('logs')" title="Live Delivery Log">
-          <i class="fa-solid fa-list-check"></i>
-          <span class="nav-text">Live Delivery Log</span>
+        <button class="admin-nav-item" id="tab-btn-logs" onclick="switchAdminTab('logs')" title="Laporan Blast (Excel &amp; Logs)">
+          <i class="fa-solid fa-file-excel" style="color:#107c41;"></i>
+          <span class="nav-text">Laporan Blast</span>
+          <span class="nav-badge" id="tab-logs-badge" style="background:#107c41;color:#ffffff;">0</span>
         </button>
       </div>
 
@@ -694,7 +716,7 @@
          ============================================================== -->
     <section id="admin-view-blast">
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="admin-blast-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         
         <!-- Target Database Panel -->
         <div class="clean-panel" style="display:flex;flex-direction:column;">
@@ -780,7 +802,7 @@
          ============================================================== -->
     <section id="admin-view-withdrawals" style="display:none;">
 
-      <div class="clean-panel" style="padding:0;overflow:hidden;">
+      <div class="clean-panel clean-table-box" style="padding:0;overflow-x:auto;">
         <table class="clean-table" style="width:100%;">
           <thead>
             <tr>
@@ -805,25 +827,86 @@
     </section>
 
     <!-- ==============================================================
-         TAB 4: LIVE DELIVERY LOGS
+         TAB 4: LAPORAN BLAST (EXCEL & LOGS)
          ============================================================== -->
     <section id="admin-view-logs" style="display:none;">
 
-      <div class="clean-panel" style="padding:0;overflow:hidden;">
-        <table class="clean-table">
+      <!-- Header Card with Excel Export & Action Buttons -->
+      <div class="clean-panel" style="margin-bottom:14px;">
+        <div class="panel-header-flex" style="margin-bottom:0;">
+          <div class="panel-title-area">
+            <div style="font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;">
+              <i class="fa-solid fa-file-excel" style="color:#107c41;font-size:20px;"></i>
+              Laporan Blast Real-time
+            </div>
+            <div style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">
+              Rekap pengiriman pesan WhatsApp seluruh device, status terkirim/gagal, dan unduh laporan ke file Excel (.xlsx).
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary" style="background:#107c41;border-color:#107c41;padding:8px 16px;font-size:12.5px;box-shadow:0 3px 10px rgba(16,124,65,0.25);" onclick="exportBlastReportExcel()" title="Download file Excel (.xlsx)">
+              <i class="fa-solid fa-file-excel"></i> Export Excel (.xlsx)
+            </button>
+            <a href="/api/admin/blast-reports/export-csv" class="btn-secondary" style="padding:8px 12px;font-size:12px;text-decoration:none;" title="Download file CSV" download>
+              <i class="fa-solid fa-file-csv"></i> Unduh CSV
+            </a>
+            <button class="btn-secondary" style="padding:8px 12px;font-size:12px;" onclick="loadAdminLogs()" title="Muat ulang data">
+              <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+            <button class="btn-secondary" style="color:#ef4444;border-color:#fee2e2;padding:8px 12px;font-size:12px;" onclick="clearAdminLogs()" title="Bersihkan seluruh riwayat log">
+              <i class="fa-solid fa-trash-can"></i> Hapus Log
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div style="display:flex;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;align-items:center;flex-wrap:wrap;">
+          <!-- Filter Status -->
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label style="font-size:11.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Status:</label>
+            <select id="log-filter-status" onchange="filterAdminLogs()" class="form-select" style="padding:6px 12px;font-size:12px;width:auto;height:34px;background:#f8fafc;border:1px solid #e2e8f0 !important;">
+              <option value="ALL">Semua Status</option>
+              <option value="SUCCESS">SUCCESS (Terkirim)</option>
+              <option value="FAILED">FAILED (Gagal)</option>
+            </select>
+          </div>
+
+          <!-- Search Input -->
+          <div style="flex:1;min-width:200px;position:relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:#94a3b8;"></i>
+            <input type="text" id="log-search-input" oninput="filterAdminLogs()" placeholder="Cari nomor pengirim, penerima, BLAST ID, user..." 
+              style="width:100%;height:34px;padding:6px 12px 6px 30px;font-size:12px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;outline:none;">
+          </div>
+
+          <!-- Counter info badge -->
+          <div id="log-count-indicator" style="font-size:12px;font-weight:700;color:var(--text-secondary);background:#f1f5f9;padding:6px 12px;border-radius:8px;white-space:nowrap;">
+            0 Laporan
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabel Laporan Blast (10 Kolom Persis Excel Screenshot) -->
+      <div class="clean-panel clean-table-box" style="padding:0;overflow-x:auto;">
+        <table class="clean-table" style="min-width:980px;border-collapse:collapse;">
           <thead>
-            <tr>
-              <th>Waktu</th>
-              <th>Device Pengirim</th>
-              <th>Nomor Tujuan</th>
-              <th>Status</th>
-              <th>Komisi Diberikan</th>
+            <tr style="background:#1F4E79;color:#ffffff;">
+              <th style="background:#1F4E79;color:#ffffff;text-align:center;width:48px;padding:12px 8px;">No</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;">ID Data</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;">BLAST ID</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;">User ID</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;">Pengirim</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;">Penerima</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;min-width:260px;">Teks</th>
+              <th style="background:#1F4E79;color:#ffffff;text-align:center;padding:12px 10px;">Status</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;">Alasan</th>
+              <th style="background:#1F4E79;color:#ffffff;padding:12px 10px;white-space:nowrap;">Jam Kirim</th>
             </tr>
           </thead>
           <tbody id="admin-logs-tbody">
             <tr>
-              <td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">
-                Memuat riwayat pengiriman...
+              <td colspan="10" style="text-align:center;padding:28px;color:var(--text-muted);">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;display:block;margin-bottom:8px;color:#107c41;"></i>
+                Memuat riwayat laporan blast...
               </td>
             </tr>
           </tbody>
@@ -841,7 +924,7 @@
         </button>
       </div>
 
-      <div class="clean-panel" style="padding:0;overflow:hidden;">
+      <div class="clean-panel clean-table-box" style="padding:0;overflow-x:auto;">
         <table class="clean-table">
           <thead>
             <tr>
@@ -1062,6 +1145,8 @@
     </div>
   </div>
 
-  <script src="js/admin.js?v=3.4"></script>
+  <!-- SheetJS Library for Excel (.xlsx) Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="js/admin.js?v=3.5"></script>
 </body>
 </html>

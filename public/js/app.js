@@ -435,19 +435,22 @@ function renderLogTable(logs) {
     return;
   }
 
-  tbody.innerHTML = logs.map(log => `
+  tbody.innerHTML = logs.map(log => {
+    const isSuccess = log.status === 'sent' || log.status === 'SUCCESS';
+    return `
     <tr>
       <td>${formatTime(log.timestamp)}</td>
-      <td>${escHtml(maskPhone(log.phone))}</td>
+      <td>${escHtml(maskPhone(log.phone || log.receiver))}</td>
       <td>
-        <span class="${log.status === 'sent' ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">
-          ${log.status === 'sent' ? 'Terkirim' : 'Gagal'}
+        <span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">
+          ${isSuccess ? 'Terkirim' : 'Gagal'}
         </span>
       </td>
-      <td style="color:${log.status === 'sent' ? '#16a34a' : '#dc2626'};font-weight:600;">
-        ${log.status === 'sent' ? '+' + formatRp(log.commission && log.commission >= 1500 ? log.commission : 1500) : 'Rp 0'}
+      <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">
+        ${isSuccess ? '+' + formatRp(log.commission && log.commission >= 1500 ? log.commission : 1500) : 'Rp 0'}
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function prependLogRow(entry) {
@@ -458,12 +461,13 @@ function prependLogRow(entry) {
   const emptyRow = tbody.querySelector('td[colspan="4"]');
   if (emptyRow) tbody.innerHTML = '';
 
+  const isSuccess = entry.status === 'sent' || entry.status === 'SUCCESS';
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td>${formatTime(entry.timestamp)}</td>
-    <td>${escHtml(maskPhone(entry.phone))}</td>
-    <td><span class="${entry.status === 'sent' ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">${entry.status === 'sent' ? 'Terkirim' : 'Gagal'}</span></td>
-    <td style="color:${entry.status === 'sent' ? '#16a34a' : '#dc2626'};font-weight:600;">${entry.status === 'sent' ? '+' + formatRp(entry.commission && entry.commission >= 1500 ? entry.commission : 1500) : 'Rp 0'}</td>`;
+    <td>${escHtml(maskPhone(entry.phone || entry.receiver))}</td>
+    <td><span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">${isSuccess ? 'Terkirim' : 'Gagal'}</span></td>
+    <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">${isSuccess ? '+' + formatRp(entry.commission && entry.commission >= 1500 ? entry.commission : 1500) : 'Rp 0'}</td>`;
   tr.style.animation = 'fadeInRow 0.4s ease';
   tbody.insertBefore(tr, tbody.firstChild);
 

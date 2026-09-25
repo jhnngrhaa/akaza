@@ -1104,17 +1104,29 @@ async function deleteAdminUser(uid, name) {
   }
 }
 
-// ─── Tab 4: Logs ───────────────────────────────────────────────────
+// ─── Tab 4: Laporan Blast (Excel & Logs) ───────────────────────────
+let allBlastReports = [];
+let filteredBlastReports = [];
+
 async function loadAdminLogs() {
   const tbody = document.getElementById('admin-logs-tbody');
   if (!tbody) return;
 
   try {
-    const res = await fetch(`${API}/api/log?limit=50`);
-    if (!res.ok) return;
-    const logs = await res.json();
+    const res = await fetch(`${API}/api/admin/blast-reports?limit=1000`);
+    if (!res.ok) {
+      // Fallback ke /api/log jika endpoint baru belum tersedia
+      const fallbackRes = await fetch(`${API}/api/log?limit=200`);
+      if (fallbackRes.ok) {
+        allBlastReports = await fallbackRes.json();
+      }
+    } else {
+      const data = await res.json();
+      allBlastReports = data.reports || [];
+    }
 
-    const todayCount = logs.filter(l => {
+    // Update Counter Metric Pesan Hari Ini
+    const todayCount = allBlastReports.filter(l => {
       const d = new Date(l.timestamp);
       const now = new Date();
       return d.toDateString() === now.toDateString();
@@ -1122,57 +1134,240 @@ async function loadAdminLogs() {
     const sentTodayEl = document.getElementById('metric-sent-today');
     if (sentTodayEl) sentTodayEl.textContent = todayCount;
 
-    if (!logs.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">
-            Belum ada log pengiriman pesan hari ini.
-          </td>
-        </tr>`;
-      return;
+    // Update Badge Laporan di sidebar
+    const badgeEl = document.getElementById('tab-logs-badge');
+    if (badgeEl) badgeEl.textContent = allBlastReports.length;
+
+    filterAdminLogs();
+  } catch (err) {
+    console.error('Error loading blast reports:', err);
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#ef4444;padding:24px;">Gagal memuat laporan blast</td></tr>';
+  }
+}
+
+function filterAdminLogs() {
+  const statusSelect = document.getElementById('log-filter-status');
+  const searchInput = document.getElementById('log-search-input');
+  const selectedStatus = statusSelect ? statusSelect.value : 'ALL';
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+  filteredBlastReports = allBlastReports.filter((r, idx) => {
+    // Enrich default field jika belum ada
+    const idData = String(r.idData || (71936 + idx));
+    const blastId = String(r.blastId || 'GSP001').toLowerCase();
+    const userId = String(r.userId || '-').toLowerCase();
+    const sender = String(r.sender || r.deviceId || '-').toLowerCase();
+    const receiver = String(r.receiver || r.phone || '-').toLowerCase();
+    const text = String(r.text || '').toLowerCase();
+    const isSuccess = r.status === 'SUCCESS' || r.status === 'sent';
+    const statusStr = isSuccess ? 'SUCCESS' : 'FAILED';
+
+    if (selectedStatus !== 'ALL' && statusStr !== selectedStatus) {
+      return false;
     }
 
-    tbody.innerHTML = logs.map(l => `
+    if (query) {
+      const match = idData.includes(query) ||
+        blastId.includes(query) ||
+        userId.includes(query) ||
+        sender.includes(query) ||
+        receiver.includes(query) ||
+        text.includes(query);
+      if (!match) return false;
+    }
+
+    return true;
+  });
+
+  renderAdminLogsTable(filteredBlastReports);
+}
+
+function renderAdminLogsTable(reports) {
+  const tbody = document.getElementById('admin-logs-tbody');
+  const countIndicator = document.getElementById('log-count-indicator');
+  if (!tbody) return;
+
+  const totalSuccess = reports.filter(r => r.status === 'SUCCESS' || r.status === 'sent').length;
+  const totalFailed = reports.filter(r => r.status === 'FAILED' || r.status === 'failed').length;
+
+  if (countIndicator) {
+    countIndicator.textContent = `${reports.length} Laporan (${totalSuccess} Sukses, ${totalFailed} Gagal)`;
+  }
+
+  if (!reports.length) {
+    tbody.innerHTML = `
       <tr>
-        <td style="font-size:11.5px;color:var(--text-muted);">${formatDateTime(l.timestamp)}</td>
-        <td style="font-family:monospace;font-size:12px;">${escHtml(l.deviceId || '-')}</td>
-        <td style="font-weight:700;">${escHtml(l.phone || '-')}</td>
-        <td>
-          <span class="${l.status === 'sent' ? 'device-status-pill connected' : 'device-status-pill disconnected'}" style="font-size:10px;">
-            ${l.status === 'sent' ? 'Terkirim' : 'Gagal'}
+        <td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted);">
+          <i class="fa-solid fa-file-excel" style="font-size:32px;opacity:0.3;display:block;margin-bottom:8px;"></i>
+          Belum ada riwayat pengiriman pesan blast.
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = reports.map((r, i) => {
+    const isSuccess = r.status === 'SUCCESS' || r.status === 'sent';
+    const statusLabel = isSuccess ? 'SUCCESS' : 'FAILED';
+    const statusClass = isSuccess ? 'device-status-pill connected' : 'device-status-pill disconnected';
+    const idData = r.idData || (71936 + i);
+    const blastId = r.blastId || (r.campaignId ? 'GSP' + String(r.campaignId).slice(-3).toUpperCase() : 'GSP001');
+    const userId = r.userId || '-';
+    const sender = r.sender || r.deviceId || '-';
+    const receiver = r.receiver || (r.phone ? (r.phone.startsWith('+') ? r.phone : '+' + r.phone) : '-');
+    const textPreview = r.text || '-';
+    const reason = isSuccess ? '-' : (r.reason || r.error || 'Gagal terkirim');
+    const jamKirim = r.jamKirim || formatExcelTime(r.timestamp);
+
+    // Styling baris selang-seling lembut (mirip spreadsheet Excel di gambar pengguna)
+    const rowBg = i % 2 === 0 ? '#ffffff' : '#f0fdf4';
+
+    return `
+      <tr style="background:${rowBg};transition:background 0.15s ease;" onmouseover="this.style.background='#e6f4ea'" onmouseout="this.style.background='${rowBg}'">
+        <td style="text-align:center;font-weight:700;color:#64748b;font-size:11.5px;padding:10px 8px;">${i + 1}</td>
+        <td style="font-family:monospace;font-weight:700;color:#1e3a8a;font-size:12px;padding:10px 8px;">${idData}</td>
+        <td style="font-family:monospace;font-weight:700;color:#059669;font-size:12px;padding:10px 8px;">${escHtml(blastId)}</td>
+        <td style="font-weight:600;color:#334155;font-size:12px;padding:10px 8px;white-space:nowrap;">${escHtml(userId)}</td>
+        <td style="font-family:monospace;font-weight:600;color:#0f172a;font-size:12px;padding:10px 8px;white-space:nowrap;">${escHtml(sender)}</td>
+        <td style="font-family:monospace;font-weight:700;color:#1e40af;font-size:12px;padding:10px 8px;white-space:nowrap;">${escHtml(receiver)}</td>
+        <td style="font-size:12px;color:#1f2937;padding:10px 8px;line-height:1.4;max-width:320px;word-break:break-word;">
+          <div style="max-height:48px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;" title="${escHtml(textPreview)}">
+            ${escHtml(textPreview)}
+          </div>
+        </td>
+        <td style="text-align:center;padding:10px 8px;white-space:nowrap;">
+          <span class="${statusClass}" style="font-size:10px;font-weight:800;letter-spacing:0.5px;">
+            ${statusLabel}
           </span>
         </td>
-        <td style="font-weight:700;color:${l.status === 'sent' ? '#10b981' : '#dc2626'};">
-          ${l.status === 'sent' ? '+Rp ' + (l.commission && l.commission >= 1500 ? l.commission : 1500).toLocaleString('id-ID') : 'Rp 0'}
+        <td style="font-size:11.5px;color:${isSuccess ? '#64748b' : '#dc2626'};padding:10px 8px;white-space:nowrap;">
+          ${escHtml(reason)}
         </td>
-      </tr>
-    `).join('');
-  } catch (_) {}
+        <td style="font-size:11.5px;font-family:monospace;color:#475569;padding:10px 8px;white-space:nowrap;">
+          ${escHtml(jamKirim)}
+        </td>
+      </tr>`;
+  }).join('');
 }
 
 function prependAdminLogRow(l) {
-  const tbody = document.getElementById('admin-logs-tbody');
-  if (!tbody) return;
+  // Tambahkan log real-time ke memori dan perbarui tampilan
+  const enriched = {
+    ...l,
+    idData: l.idData || (71936 + allBlastReports.length),
+    blastId: l.blastId || 'GSP001',
+    userId: l.userId || '-',
+    sender: l.sender || l.deviceId || '-',
+    receiver: l.receiver || l.phone || '-',
+    text: l.text || '-',
+    status: (l.status === 'sent' || l.status === 'SUCCESS') ? 'SUCCESS' : 'FAILED',
+    reason: (l.status === 'sent' || l.status === 'SUCCESS') ? '-' : (l.reason || l.error || 'Gagal terkirim'),
+    jamKirim: l.jamKirim || formatExcelTime(l.timestamp)
+  };
 
-  const emptyRow = tbody.querySelector('td[colspan="5"]');
-  if (emptyRow) tbody.innerHTML = '';
+  allBlastReports.unshift(enriched);
+  filterAdminLogs();
 
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td style="font-size:11.5px;color:var(--text-muted);">${formatDateTime(l.timestamp)}</td>
-    <td style="font-family:monospace;font-size:12px;">${escHtml(l.deviceId || '-')}</td>
-    <td style="font-weight:700;">${escHtml(l.phone || '-')}</td>
-    <td>
-      <span class="${l.status === 'sent' ? 'device-status-pill connected' : 'device-status-pill disconnected'}" style="font-size:10px;">
-        ${l.status === 'sent' ? 'Terkirim' : 'Gagal'}
-      </span>
-    </td>
-    <td style="font-weight:700;color:${l.status === 'sent' ? '#10b981' : '#dc2626'};">
-      ${l.status === 'sent' ? '+Rp ' + (l.commission && l.commission >= 1500 ? l.commission : 1500).toLocaleString('id-ID') : 'Rp 0'}
-    </td>
-  `;
-  tbody.insertBefore(tr, tbody.firstChild);
-  while (tbody.rows.length > 50) tbody.removeChild(tbody.lastChild);
+  const sentTodayEl = document.getElementById('metric-sent-today');
+  if (sentTodayEl) sentTodayEl.textContent = parseInt(sentTodayEl.textContent || '0') + 1;
+
+  const badgeEl = document.getElementById('tab-logs-badge');
+  if (badgeEl) badgeEl.textContent = allBlastReports.length;
+}
+
+// ─── Export Excel (.xlsx) dengan SheetJS ────────────────────────────
+function exportBlastReportExcel() {
+  if (!allBlastReports || !allBlastReports.length) {
+    showAdminToast('⚠️ Tidak ada data laporan blast untuk diexport');
+    return;
+  }
+
+  if (typeof XLSX === 'undefined') {
+    showAdminToast('⏳ Memuat library Excel, silakan coba sesaat lagi...');
+    return;
+  }
+
+  // Gunakan data hasil filter saat ini, atau seluruh data jika tidak ada filter
+  const dataToExport = filteredBlastReports.length ? filteredBlastReports : allBlastReports;
+
+  // Format array of object dengan header persis sesuai screenshot Excel user
+  const excelData = dataToExport.map((r, i) => {
+    const isSuccess = r.status === 'SUCCESS' || r.status === 'sent';
+    return {
+      'No': i + 1,
+      'ID Data': r.idData || (71936 + i),
+      'BLAST ID': r.blastId || 'GSP001',
+      'User ID': r.userId || '-',
+      'Pengirim': r.sender || r.deviceId || '-',
+      'Penerima': r.receiver || (r.phone ? (r.phone.startsWith('+') ? r.phone : '+' + r.phone) : '-'),
+      'Teks': r.text || '-',
+      'Status': isSuccess ? 'SUCCESS' : 'FAILED',
+      'Alasan': isSuccess ? '-' : (r.reason || r.error || 'Gagal'),
+      'Jam Kirim': r.jamKirim || formatExcelTime(r.timestamp)
+    };
+  });
+
+  // Buat Worksheet & Workbook
+  const ws = XLSX.utils.json_to_sheet(excelData);
+
+  // Atur lebar kolom yang pas agar rapi di Microsoft Excel
+  ws['!cols'] = [
+    { wch: 6 },   // No
+    { wch: 10 },  // ID Data
+    { wch: 12 },  // BLAST ID
+    { wch: 14 },  // User ID
+    { wch: 18 },  // Pengirim
+    { wch: 18 },  // Penerima
+    { wch: 45 },  // Teks
+    { wch: 12 },  // Status
+    { wch: 16 },  // Alasan
+    { wch: 22 }   // Jam Kirim
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Laporan Blast');
+
+  // Format nama file: laporan-blast-YYYY-MM-DDTHH-mm-ss.xlsx
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const timestampStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  const filename = `laporan-blast-${timestampStr}.xlsx`;
+
+  XLSX.writeFile(wb, filename);
+  showAdminToast(`✅ Laporan blast berhasil didownload: ${filename}`);
+}
+
+async function clearAdminLogs() {
+  if (!confirm('Apakah Anda yakin ingin menghapus seluruh riwayat laporan blast? Data yang terhapus tidak dapat dikembalikan.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/api/admin/blast-reports`, { method: 'DELETE' });
+    if (res.ok) {
+      allBlastReports = [];
+      filteredBlastReports = [];
+      renderAdminLogsTable([]);
+      const badgeEl = document.getElementById('tab-logs-badge');
+      if (badgeEl) badgeEl.textContent = '0';
+      showAdminToast('🗑️ Seluruh riwayat laporan blast berhasil dibersihkan');
+    } else {
+      showAdminToast('❌ Gagal membersihkan riwayat laporan');
+    }
+  } catch (err) {
+    showAdminToast('❌ Terjadi kesalahan saat menghapus laporan');
+  }
+}
+
+function formatExcelTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${day}/${month}/${year}, ${hh}.${mm}.${ss}`;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -1232,3 +1427,6 @@ window.closeEditSaldoModal = closeEditSaldoModal;
 window.submitEditSaldo = submitEditSaldo;
 window.deleteAdminUser = deleteAdminUser;
 window.handleAdminLogout = handleAdminLogout;
+window.exportBlastReportExcel = exportBlastReportExcel;
+window.filterAdminLogs = filterAdminLogs;
+window.clearAdminLogs = clearAdminLogs;

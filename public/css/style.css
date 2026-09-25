@@ -503,7 +503,51 @@ body {
 .clean-table-box {
   border: none;
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  position: relative;
+}
+
+.clean-table-box::-webkit-scrollbar {
+  height: 4px;
+}
+.clean-table-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+.clean-table-box::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+.clean-table-box::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive Header & Layout Helpers */
+.panel-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-header-flex .panel-title-area {
+  min-width: 0;
+  flex: 1;
+}
+
+.panel-header-flex .btn-action-top {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+.grid-responsive-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .clean-table {
@@ -978,4 +1022,252 @@ body {
 .wallet-subtab-btn:hover {
   opacity: 0.9;
 }
+
+/* ========================================================
+   RESPONSIVE DESIGN (MOBILE & ANDROID OPTIMIZATIONS)
+   ======================================================== */
+
+@media (max-width: 600px) {
+  /* Layout & Container */
+  .app-container {
+    padding: 14px 12px 95px 12px;
+  }
+
+  .clean-panel {
+    padding: 14px 12px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+
+  .section-header {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .section-icon-box {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .section-title-group h2 {
+    font-size: 18px;
+  }
+
+  .section-title-group p {
+    font-size: 12px;
+  }
+
+  /* Topbar */
+  .topbar {
+    padding: 0 12px;
+    height: 54px;
+  }
+
+  .brand-subtext {
+    display: none;
+  }
+
+  .brand-text {
+    font-size: 15.5px;
+  }
+
+  .topbar-actions {
+    gap: 8px;
+  }
+
+  #sse-label {
+    display: none;
+  }
+
+  #topbar-user-badge {
+    padding: 3px 8px;
+    font-size: 11px;
+    max-width: 95px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .logout-btn {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  #topbar-auth-text {
+    display: none;
+  }
+
+  /* Clean Tables: Ensure no content is ever clipped */
+  .clean-table {
+    min-width: 360px;
+  }
+
+  .clean-table th {
+    padding: 9px 8px;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  .clean-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  /* Status Grid (Online / Offline) */
+  .status-grid {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .status-stat-card {
+    padding: 14px 12px;
+  }
+
+  .status-stat-card .number {
+    font-size: 26px;
+  }
+
+  .status-stat-card .icon-box {
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+  }
+
+  /* Responsive 2-column Grid collapses to 1-column on mobile */
+  .grid-responsive-2col {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Device Cards */
+  .device-card-item {
+    padding: 14px 12px;
+    border-radius: 16px;
+  }
+
+  .device-stats-row {
+    gap: 6px;
+  }
+
+  .stat-pill {
+    padding: 6px 4px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .device-mode-select {
+    font-size: 11.5px;
+    padding: 0 8px;
+    height: 36px;
+  }
+
+  .device-btn-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Floating Support Telegram Button */
+  .fab-telegram {
+    bottom: 78px;
+    right: 14px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .fab-telegram svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Wallet & Referrals */
+  .wallet-subtabs {
+    padding: 3px;
+    gap: 4px;
+  }
+
+  .wallet-subtab-btn {
+    padding: 8px 6px !important;
+    font-size: 11.5px !important;
+  }
+
+  #wallet-saldo-amount,
+  #wallet-points-amount {
+    font-size: 20px !important;
+  }
+
+  /* Bottom Nav Safe Area */
+  .bottom-nav {
+    height: 64px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .nav-tab-item {
+    font-size: 10px;
+    gap: 2px;
+  }
+
+  .nav-tab-item i {
+    font-size: 17px;
+  }
+
+  .nav-tab-wallet-center {
+    width: 48px;
+    height: 48px;
+    font-size: 19px;
+    top: -10px;
+    border-radius: 14px;
+  }
+
+  /* Modal Dialogs */
+  .modal-content {
+    max-width: 94vw !important;
+    border-radius: 18px;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar {
+    padding: 0 8px;
+  }
+
+  .brand-text {
+    font-size: 14px;
+  }
+
+  .app-container {
+    padding: 10px 8px 90px 8px;
+  }
+
+  .clean-panel {
+    padding: 12px 10px;
+  }
+
+  .clean-table th,
+  .clean-table td {
+    padding: 8px 5px;
+    font-size: 11px;
+  }
+
+  .panel-header-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .panel-header-flex .btn-action-top {
+    width: 100%;
+  }
+}
+
 

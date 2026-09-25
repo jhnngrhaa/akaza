@@ -83,12 +83,12 @@
 
       <!-- Log Pengiriman Real-time -->
       <div class="clean-panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <div>
+        <div class="panel-header-flex">
+          <div class="panel-title-area">
             <div style="font-size:14px;font-weight:700;">Log Pengiriman Real-time</div>
             <div style="font-size:12px;color:var(--text-muted);">Pesan terkirim otomatis dari Admin lewat WhatsApp kamu</div>
           </div>
-          <button class="btn-primary" style="padding:7px 14px;font-size:12px;" onclick="openDeviceModal()">
+          <button class="btn-primary btn-action-top" onclick="openDeviceModal()">
             <i class="fa-solid fa-plus"></i> Tambah Device
           </button>
         </div>
@@ -130,12 +130,12 @@
       </div>
 
       <div class="clean-panel" style="margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
+        <div class="panel-header-flex" style="margin-bottom:0;">
+          <div class="panel-title-area">
             <div style="font-size:14px;font-weight:700;">Tautkan WhatsApp Baru</div>
             <div style="font-size:12.5px;color:var(--text-muted);">Scan QR Code atau gunakan 8 digit kode pairing</div>
           </div>
-          <button class="btn-primary" onclick="openDeviceModal()">
+          <button class="btn-primary btn-action-top" onclick="openDeviceModal()">
             <i class="fa-solid fa-plus"></i> Tambah Device
           </button>
         </div>
@@ -294,15 +294,15 @@
         <div class="form-group" style="margin-bottom:10px;">
           <label class="form-label" style="font-size:11px;">Kode Referral Unik</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" class="form-input" id="ref-code-input" value="Loading..." readonly style="font-weight:800;letter-spacing:1px;font-family:monospace;font-size:14px;color:var(--primary);">
-            <button class="btn-primary" onclick="copyReferralCode()"><i class="fa-solid fa-copy"></i> Salin Kode</button>
+            <input type="text" class="form-input" id="ref-code-input" value="Loading..." readonly style="font-weight:800;letter-spacing:1px;font-family:monospace;font-size:14px;color:var(--primary);flex:1;min-width:0;">
+            <button class="btn-primary" style="flex-shrink:0;white-space:nowrap;padding:10px 14px;font-size:12px;" onclick="copyReferralCode()"><i class="fa-solid fa-copy"></i> Salin Kode</button>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label" style="font-size:11px;">Tautan Pendaftaran Langsung</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" class="form-input" id="ref-link-input" value="Loading..." readonly style="font-size:12px;color:var(--text-secondary);">
-            <button class="btn-secondary" onclick="copyReferralLink()"><i class="fa-solid fa-link"></i> Salin Link</button>
+            <input type="text" class="form-input" id="ref-link-input" value="Loading..." readonly style="font-size:12px;color:var(--text-secondary);flex:1;min-width:0;">
+            <button class="btn-secondary" style="flex-shrink:0;white-space:nowrap;padding:10px 14px;font-size:12px;" onclick="copyReferralLink()"><i class="fa-solid fa-link"></i> Salin Link</button>
           </div>
         </div>
         <button class="btn-primary" style="width:100%;background:#25d366;border-color:#25d366;" onclick="shareReferralWhatsApp()">
@@ -390,7 +390,7 @@
         <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Perbarui Profil &amp; Akun E-Wallet</div>
         <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Pastikan data profil dan akun E-Wallet Anda aktif dan sesuai.</p>
         <form id="profile-ewallet-form" onsubmit="handleUpdateProfile(event)">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div class="grid-responsive-2col" style="margin-bottom:10px;">
             <div class="form-group">
               <label class="form-label">Nama Lengkap</label>
               <input type="text" class="form-input" id="prof-user-name" placeholder="Nama Lengkap" required>
@@ -400,7 +400,7 @@
               <input type="text" class="form-input" id="prof-user-phone" placeholder="081234567890" required>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div class="grid-responsive-2col" style="margin-bottom:10px;">
             <div class="form-group">
               <label class="form-label">Akun Penarikan</label>
               <select class="form-select" id="prof-ewallet-select" style="height:42px;">
