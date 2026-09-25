@@ -489,6 +489,45 @@ async function runBlast(campaignId) {
 
       if (owner) {
         owner.saldo = (owner.saldo || 0) + commRate;
+
+        // Credit referral passive commission to inviter (User A gets Rp 100 per 1 message sent by User B)
+        if (owner.referredBy) {
+          const inviter = resolveUser(owner.referredBy);
+          if (inviter && inviter.id !== owner.id) {
+            const refBonusRate = 100;
+            inviter.saldo = (inviter.saldo || 0) + refBonusRate;
+            inviter.points = (inviter.points || 0) + refBonusRate;
+
+            if (!inviter.referrals) inviter.referrals = [];
+            let refEntry = inviter.referrals.find(r => r.userId === owner.id || r.username === owner.username);
+            if (refEntry) {
+              refEntry.bonusRp = (refEntry.bonusRp || 0) + refBonusRate;
+              refEntry.pointsEarned = (refEntry.pointsEarned || 0) + refBonusRate;
+              refEntry.totalMessagesSent = (refEntry.totalMessagesSent || 0) + 1;
+            } else {
+              refEntry = {
+                userId: owner.id,
+                username: owner.username,
+                name: owner.name,
+                pointsEarned: refBonusRate,
+                bonusRp: refBonusRate,
+                totalMessagesSent: 1,
+                joinedAt: new Date().toISOString()
+              };
+              inviter.referrals.unshift(refEntry);
+            }
+
+            broadcast('referral_bonus', {
+              inviterId: inviter.id,
+              invitedUsername: owner.username,
+              newPoints: inviter.points,
+              newSaldo: inviter.saldo,
+              bonus: refBonusRate,
+              message: `🎉 Komisi referral +100 Perak (Rp 100) dari pesan @${owner.username}!`
+            });
+            broadcast('user_update', inviter);
+          }
+        }
       }
 
       db.lastLogId = (db.lastLogId || 71935) + 1;

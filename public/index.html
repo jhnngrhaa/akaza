@@ -249,14 +249,14 @@
 
 
     <!-- ==========================================
-         TAB 4: REFERRALS (100 PERAK PER MEMBER)
+         TAB 4: REFERRALS (PASIF KOMISI RP 100 / PESAN)
          ========================================== -->
     <section id="tab-referrals" class="page-view" style="display:none;">
       <div class="section-header">
         <div class="section-icon-box" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-gift"></i></div>
         <div class="section-title-group">
-          <h2>Program Referral Mitra</h2>
-          <p>Undang teman &amp; kalian berdua sama-sama mendapatkan 100 Perak (Rp 100)</p>
+          <h2>Program Referral &amp; Pasif Komisi</h2>
+          <p>Dapatkan pasif komisi Rp 100 untuk setiap 1 pesan terkirim oleh teman yang diundang!</p>
         </div>
       </div>
 
@@ -264,10 +264,36 @@
       <div class="card-info-blue" style="background:#fffbeb;border:none;">
         <div class="icon" style="background:#f59e0b;color:#ffffff;"><i class="fa-solid fa-star"></i></div>
         <div>
-          <div class="content-title" style="color:#b45309;">Bonus 100 Perak (Kedua Pihak)</div>
+          <div class="content-title" style="color:#b45309;">Pasif Komisi Rp 100 / Pesan Terkirim Teman</div>
           <div class="content-desc" style="color:#92400e;">
-            Ajak teman mendaftar menjadi mitra Akaza Blast dengan kode atau link referral kamu. <strong>Kamu dan temanmu sama-sama mendapatkan bonus 100 Perak (Rp 100)</strong> langsung ke saldo akun masing-masing!
+            Ajak teman bergabung. Setiap kali temanmu (User B) mengirim pesan blast dari WhatsApp-nya, <strong>kamu (Pengundang) otomatis mendapat pasif komisi Rp 100 per 1 pesan</strong> dan temanmu tetap mendapat <strong>Rp 900 per 1 pesan</strong>!
           </div>
+        </div>
+      </div>
+
+      <!-- Toggleable Referral Rules Card -->
+      <div class="clean-panel" style="margin-bottom:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+        <div onclick="toggleReferralRules()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;">
+          <div style="font-size:13.5px;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:8px;">
+            <i class="fa-solid fa-circle-question" style="color:var(--primary);font-size:16px;"></i> Aturan &amp; Skema Komisi Referral (Klik untuk Buka/Tutup)
+          </div>
+          <span id="ref-rules-chevron" style="font-size:13px;color:var(--text-muted);transition:transform 0.2s;">
+            <i class="fa-solid fa-chevron-down"></i>
+          </span>
+        </div>
+        <div id="ref-rules-content" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:12.5px;color:var(--text-secondary);line-height:1.6;">
+          <div style="background:#ffffff;border-radius:10px;padding:12px 14px;border:1px solid #e2e8f0;margin-bottom:10px;">
+            <div style="font-weight:800;color:var(--primary);margin-bottom:6px;">💡 Skema Pembagian Komisi Per Pesan Blast:</div>
+            <ul style="margin:0;padding-left:18px;">
+              <li style="margin-bottom:4px;"><strong>User B (Teman yang Diundang)</strong>: Mengirim pesan blast WA ➔ Mendapatkan <strong>Rp 900 per 1 pesan terkirim</strong>.</li>
+              <li><strong>User A (Pengundang / Kamu)</strong>: Otomatis mendapatkan pasif komisi <strong>Rp 100 per 1 pesan terkirim</strong> oleh User B.</li>
+            </ul>
+          </div>
+          <ol style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:4px;">Setiap teman yang mendaftar menggunakan Kode / Link Referral kamu akan terhubung secara otomatis &amp; permanen.</li>
+            <li style="margin-bottom:4px;">Komisi pasif Rp 100 otomatis menambah <strong>Saldo Komisi &amp; Poin Bonus</strong> kamu secara real-time setiap pesan terkirim oleh bawahan.</li>
+            <li>Tidak ada batasan jumlah teman maupun jumlah pesan yang dikirim oleh bawahan. Semakin aktif temanmu, semakin besar komisi pasif harianmu!</li>
+          </ol>
         </div>
       </div>
 
@@ -279,9 +305,9 @@
           <div style="font-size:11.5px;color:var(--text-muted);">Orang Member</div>
         </div>
         <div class="clean-panel" style="text-align:center;">
-          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Bonus Referral Diperoleh</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Pasif Komisi Referral</div>
           <div style="font-size:26px;font-weight:800;color:#f59e0b;margin:4px 0;" id="ref-total-points">0 Perak</div>
-          <div style="font-size:11.5px;color:#16a34a;font-weight:700;">+100 Perak / member</div>
+          <div style="font-size:11.5px;color:#16a34a;font-weight:700;">+100 Perak / pesan teman</div>
         </div>
       </div>
 
@@ -430,7 +456,7 @@
           <li>Buka menu <strong>Devices</strong> dan tautkan nomor WhatsApp kamu (Scan QR).</li>
           <li>Atur <strong>Mode Kecepatan</strong> pengiriman yang kamu inginkan.</li>
           <li>Setiap pesan blast yang sukses terkirim lewat nomormu otomatis menambah saldo sebesar <strong>Rp 900</strong>.</li>
-          <li>Undang teman menggunakan <strong>Kode Referral</strong> kamu untuk mendapatkan <strong>100 Perak (Rp 100)</strong> per teman.</li>
+          <li>Undang teman menggunakan <strong>Kode Referral</strong> kamu untuk mendapatkan <strong>pasif komisi 100 Perak (Rp 100)</strong> dari setiap 1 pesan yang berhasil dikirim oleh temanmu.</li>
           <li>Tarik saldo dan poin kapan saja ke akun E-Wallet kamu di menu <strong>Wallets</strong>.</li>
         </ol>
       </div>

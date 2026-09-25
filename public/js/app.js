@@ -981,7 +981,7 @@ async function renderReferrals() {
     if (!list.length) {
       tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px;">
         <i class="fa-solid fa-gift" style="opacity:0.3;font-size:24px;display:block;margin-bottom:8px;"></i>
-        Belum ada member yang mendaftar via referral Anda.<br>Ajak teman sekarang untuk dapat <strong>+100 Perak</strong> per orang!
+        Belum ada member yang mendaftar via referral Anda.<br>Ajak teman sekarang untuk dapat pasif komisi <strong>+100 Perak / pesan</strong>!
       </td></tr>`;
       return;
     }
@@ -991,11 +991,12 @@ async function renderReferrals() {
         <td>
           <div style="font-weight:700;color:var(--text-main);">${escHtml(m.name || 'Member')}</div>
           <div style="font-size:11.5px;color:var(--primary);font-family:monospace;">@${escHtml(m.username || '-')}</div>
+          ${m.totalMessagesSent ? `<div style="font-size:10.5px;color:var(--text-muted);">${m.totalMessagesSent} pesan terkirim</div>` : ''}
         </td>
         <td style="font-size:12px;color:var(--text-muted);">${formatDate(m.joinedAt)}</td>
         <td>
           <span style="background:#fef3c7;color:#b45309;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:4px;">
-            <i class="fa-solid fa-gift"></i> +${m.bonusRp || m.pointsEarned || 100} Perak
+            <i class="fa-solid fa-coins"></i> +${(m.bonusRp || m.pointsEarned || 0).toLocaleString('id-ID')} Perak
           </span>
         </td>
       </tr>
@@ -1004,6 +1005,16 @@ async function renderReferrals() {
     tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#ef4444;padding:16px;">Gagal memuat data referral</td></tr>`;
   }
 }
+
+function toggleReferralRules() {
+  const content = document.getElementById('ref-rules-content');
+  const chevron = document.getElementById('ref-rules-chevron');
+  if (!content) return;
+  const isHidden = content.style.display === 'none' || !content.style.display;
+  content.style.display = isHidden ? 'block' : 'none';
+  if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+window.toggleReferralRules = toggleReferralRules;
 
 function copyReferralCode() {
   const code = document.getElementById('ref-code-input').value;
