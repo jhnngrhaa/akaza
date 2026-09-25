@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Console — Akaza Blast Platform</title>
+  <meta name="description" content="Dashboard Pengelola Akaza Blast: Manajemen Database Nomor Sasaran, Template Pesan, Blast Engine, dan Persetujuan Penarikan Member.">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    html, body {
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #f8fafc;
+    }
+
+    body {
+      padding-bottom: 0 !important;
+      display: flex;
+    }
+
+    .admin-wrapper {
+      display: flex;
+      height: 100vh;
+      max-height: 100vh;
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ─── SIDEBAR NAVBAR KIRI (TELEGRAM DESKTOP STYLE) ─── */
+    body.is-resizing {
+      cursor: col-resize !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+    body.is-resizing * {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+
+    .admin-sidebar {
+      width: 260px;
+      min-width: 250px;
+      max-width: 480px;
+      background: #ffffff;
+      border-right: 1px solid rgba(226, 232, 240, 0.85);
+      box-shadow: 1px 0 10px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-height: 100vh;
+      z-index: 100;
+      flex-shrink: 0;
+      transition: width 0.2s cubic-bezier(0.2, 0, 0, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    body.is-resizing .admin-sidebar {
+      transition: none !important;
+    }
+
+    /* Resizer Splitter (Telegram Drag Handle) */
+    .sidebar-resizer {
+      position: absolute;
+      top: 0;
+      right: -3px;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 120;
+      transition: background 0.15s ease;
+      touch-action: none;
+    }
+    .sidebar-resizer:hover,
+    body.is-resizing .sidebar-resizer {
+      background: rgba(99, 102, 241, 0.5);
+    }
+    .sidebar-resizer::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 2px;
+      transform: translateY(-50%);
+      width: 2px;
+      height: 26px;
+      border-radius: 2px;
+      background: #94a3b8;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .sidebar-resizer:hover::after,
+    body.is-resizing .sidebar-resizer::after {
+      opacity: 1;
+      background: #ffffff;
+    }
+
+    .admin-sidebar-header {
+      padding: 16px 14px;
+      border-bottom: 1px solid rgba(241, 245, 249, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      overflow: hidden;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .admin-brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-toggle-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+    .sidebar-toggle-btn:hover {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
+
+    .admin-brand-logo {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      object-fit: contain;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+      flex-shrink: 0;
+    }
+
+    .admin-brand-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      white-space: nowrap;
+      min-width: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .admin-brand-title {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-badge-pill {
+      background: #fee2e2;
+      color: #dc2626;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      margin-top: 3px;
+      align-self: flex-start;
+      white-space: nowrap;
+    }
+
+    .admin-sidebar-menu {
+      padding: 14px 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .admin-menu-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 4px 10px 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s ease-in-out;
+      text-decoration: none;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .admin-nav-item:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .admin-nav-item.active {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      border-color: var(--primary);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
+    }
+
+    .admin-nav-item i {
+      font-size: 15px;
+      width: 20px;
+      text-align: center;
+      color: #64748b;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .admin-nav-item.active i {
+      color: #ffffff;
+    }
+
+    .admin-nav-item .nav-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-nav-item .nav-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+      background: #f1f5f9;
+      color: #475569;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .admin-nav-item.active .nav-badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+
+    .admin-sidebar-footer {
+      padding: 14px 12px;
+      border-top: 1px solid rgba(241, 245, 249, 0.9);
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .admin-sidebar-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border: none;
+      border-radius: 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      overflow: hidden;
+    }
+
+    /* ─── TELEGRAM COLLAPSED MODE (COMPACT ICONS) ─── */
+    .admin-sidebar.collapsed {
+      width: 70px !important;
+      min-width: 70px !important;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-header {
+      padding: 14px 8px;
+      justify-content: center;
+      gap: 0;
+    }
+
+    .admin-sidebar.collapsed .admin-brand-group,
+    .admin-sidebar.collapsed .admin-brand-info,
+    .admin-sidebar.collapsed .admin-brand-logo,
+    .admin-sidebar.collapsed .admin-menu-label,
+    .admin-sidebar.collapsed .nav-text,
+    .admin-sidebar.collapsed .sse-pill-tag,
+    .admin-sidebar.collapsed #sse-label,
+    .admin-sidebar.collapsed #admin-user-display,
+    .admin-sidebar.collapsed .logout-btn-text {
+      display: none !important;
+    }
+
+    .admin-sidebar.collapsed .sidebar-toggle-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 17px;
+      color: var(--primary);
+      background: #f5f3ff;
+      border-radius: 10px;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-menu {
+      padding: 12px 6px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-sidebar.collapsed .admin-nav-item {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 12px;
+      position: relative;
+    }
+
+    .admin-sidebar.collapsed .admin-nav-item i {
+      font-size: 17px;
+      width: auto;
+    }
+
+    /* Telegram Style Overlaid Unread Badge */
+    .admin-sidebar.collapsed .admin-nav-item .nav-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      padding: 1px 5px;
+      min-width: 17px;
+      height: 17px;
+      font-size: 9.5px;
+      font-weight: 800;
+      border-radius: 99px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      z-index: 2;
+    }
+    .admin-sidebar.collapsed .admin-nav-item.active .nav-badge {
+      background: #ffffff !important;
+      color: var(--primary) !important;
+      border-color: var(--primary);
+    }
+    .admin-sidebar.collapsed .admin-nav-item .nav-badge:empty,
+    .admin-sidebar.collapsed .admin-nav-item .nav-badge[data-empty="true"] {
+      display: none !important;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-footer {
+      padding: 12px 6px;
+      align-items: center;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-status {
+      padding: 6px;
+      width: 38px;
+      height: 38px;
+      justify-content: center;
+      border-radius: 10px;
+    }
+
+    .admin-sidebar.collapsed .admin-footer-user-row {
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 0 !important;
+    }
+
+    .admin-sidebar.collapsed .admin-logout-btn {
+      width: 38px;
+      height: 38px;
+      padding: 0 !important;
+      justify-content: center;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    /* ─── MAIN CONTENT AREA KANAN ─── */
+    .admin-main-container {
+      flex: 1;
+      height: 100vh;
+      max-height: 100vh;
+      min-width: 0;
+      padding: 24px 32px 50px;
+      overflow-y: auto;
+      max-width: 1400px;
+    }
+
+    .admin-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 640px) {
+      .admin-metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .admin-metric-card {
+      background: #ffffff;
+      border: none;
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+    .clean-panel {
+      border: none !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+    }
+    .section-icon-box {
+      border: none !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    }
+    .clean-table-box {
+      border: none !important;
+    }
+    .admin-metric-card .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .admin-metric-card .val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .admin-metric-card .sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    *, *::before, *::after {
+      outline: none !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+    *:focus, *:focus-visible, *:active {
+      outline: none !important;
+    }
+    button, input, textarea, select {
+      outline: none !important;
+    }
+
+    .preview-chat-bubble {
+      background: #e7fedb;
+      border-radius: 10px 10px 0 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #111b21;
+      line-height: 1.45;
+      border: none;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      position: relative;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .preview-chat-time {
+      font-size: 10px;
+      color: #667781;
+      text-align: right;
+      margin-top: 6px;
+    }
+    .progress-bar-bg {
+      background: #e2e8f0;
+      border-radius: 99px;
+      height: 10px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #4f46e5, #10b981);
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    .btn-preset-reason {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-preset-reason:hover {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+
+    @media (max-width: 900px) {
+      html, body {
+        height: auto;
+        overflow: auto;
+      }
+      .admin-wrapper {
+        flex-direction: column;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+      .admin-sidebar,
+      .admin-sidebar.collapsed {
+        width: 100% !important;
+        min-width: 100% !important;
+        height: auto;
+        max-height: none;
+        position: relative;
+        border-right: none;
+        border-bottom: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .sidebar-resizer {
+        display: none !important;
+      }
+      .sidebar-toggle-btn {
+        display: none !important;
+      }
+      .admin-sidebar.collapsed .admin-brand-group,
+      .admin-sidebar.collapsed .admin-brand-info,
+      .admin-sidebar.collapsed .admin-brand-logo,
+      .admin-sidebar.collapsed .nav-text,
+      .admin-sidebar.collapsed .sse-pill-tag,
+      .admin-sidebar.collapsed #sse-label,
+      .admin-sidebar.collapsed #admin-user-display,
+      .admin-sidebar.collapsed .logout-btn-text {
+        display: inline-block !important;
+      }
+      .admin-sidebar-menu {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 8px 12px;
+      }
+      .admin-menu-label {
+        display: none;
+      }
+      .admin-main-container {
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+        padding: 16px 14px 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-wrapper">
+
+    <!-- ─── SIDEBAR NAVBAR KIRI (TELEGRAM DESKTOP STYLE) ─── -->
+    <aside class="admin-sidebar" id="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-brand-group">
+          <img src="logo.svg" alt="Akaza Blast" class="admin-brand-logo">
+          <div class="admin-brand-info">
+            <div class="admin-brand-title">Akaza Blast</div>
+            <span class="admin-badge-pill">ADMIN CONSOLE</span>
+          </div>
+        </div>
+        <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Ciutkan / Lebarkan Menu (Telegram Style)" onclick="toggleSidebarCollapse()">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+
+      <div class="admin-sidebar-menu">
+        <div class="admin-menu-label">Menu Navigasi</div>
+
+        <button class="admin-nav-item active" id="tab-btn-blast" onclick="switchAdminTab('blast')" title="Kontrol Blast & Target">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span class="nav-text">Kontrol Blast &amp; Target</span>
+        </button>
+
+        <button class="admin-nav-item" id="tab-btn-users" onclick="switchAdminTab('users')" title="Database User">
+          <i class="fa-solid fa-users"></i>
+          <span class="nav-text">Database User</span>
+          <span class="nav-badge" id="tab-users-badge">0</span>
+        </button>
+
+        <button class="admin-nav-item" id="tab-btn-devices" onclick="switchAdminTab('devices')" title="Device Mitra">
+          <i class="fa-solid fa-mobile-screen"></i>
+          <span class="nav-text">Device Mitra</span>
+          <span class="nav-badge" id="tab-devices-badge">0</span>
+        </button>
+
+        <button class="admin-nav-item" id="tab-btn-withdrawals" onclick="switchAdminTab('withdrawals')" title="Penarikan Mitra">
+          <i class="fa-solid fa-wallet"></i>
+          <span class="nav-text">Penarikan Mitra</span>
+          <span class="nav-badge" id="tab-withdraw-badge">0</span>
+        </button>
+
+        <button class="admin-nav-item" id="tab-btn-logs" onclick="switchAdminTab('logs')" title="Live Delivery Log">
+          <i class="fa-solid fa-list-check"></i>
+          <span class="nav-text">Live Delivery Log</span>
+        </button>
+      </div>
+
+      <div class="admin-sidebar-footer">
+        <div class="admin-sidebar-status" title="Status Live SSE Stream">
+          <span style="display:flex;align-items:center;gap:6px;" id="sse-indicator">
+            <span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;flex-shrink:0;" id="sse-dot"></span>
+            <span id="sse-label" style="font-weight:700;color:var(--text-main);white-space:nowrap;">Live</span>
+          </span>
+          <span class="sse-pill-tag" style="font-size:10px;background:#f1f5f9;padding:2px 6px;border-radius:4px;font-weight:700;white-space:nowrap;">SSE STREAM</span>
+        </div>
+        <div class="admin-footer-user-row" style="display:flex;align-items:center;justify-content:space-between;padding:4px 2px 2px;">
+          <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
+            <i class="fa-solid fa-user-shield" style="color:var(--primary);font-size:13px;flex-shrink:0;"></i>
+            <span style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="admin-user-display">@admin</span>
+          </div>
+          <button type="button" class="admin-logout-btn" onclick="handleAdminLogout()" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:4px 6px;border-radius:6px;transition:background 0.15s;flex-shrink:0;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'" title="Keluar dari Admin Console">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span class="logout-btn-text">Keluar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Resizer Splitter Bar (Telegram Style) -->
+      <div class="sidebar-resizer" id="sidebar-resizer" title="Geser untuk ubah lebar sidebar / Klik 2x untuk ciutkan"></div>
+    </aside>
+
+    <!-- ─── MAIN CONTENT AREA KANAN ─── -->
+    <main class="admin-main-container">
+
+
+      <!-- METRICS OVERVIEW -->
+      <div class="admin-metric-grid">
+        <div class="admin-metric-card">
+          <span class="label">Device Online</span>
+          <span class="val" id="metric-devices-online" style="color:#10b981;">0</span>
+          <span class="sub"><span id="metric-devices-total">0</span> total terhubung</span>
+        </div>
+        <div class="admin-metric-card">
+          <span class="label">Target Database</span>
+          <span class="val" id="metric-target-count" style="color:var(--primary);">0</span>
+          <span class="sub">Nomor siap blast</span>
+        </div>
+        <div class="admin-metric-card">
+          <span class="label">Pesan Hari Ini</span>
+          <span class="val" id="metric-sent-today">0</span>
+          <span class="sub">Terkirim otomatis</span>
+        </div>
+        <div class="admin-metric-card">
+          <span class="label">Status Engine</span>
+          <span class="val" id="metric-blast-status" style="font-size:16px;text-transform:uppercase;color:#64748b;">IDLE</span>
+          <span class="sub" id="metric-blast-sub">Siap meluncurkan</span>
+        </div>
+      </div>
+
+    <!-- ==============================================================
+         TAB 1: BLAST CONTROL & TARGET DATABASE
+         ============================================================== -->
+    <section id="admin-view-blast">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        
+        <!-- Target Database Panel -->
+        <div class="clean-panel" style="display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:14px;font-weight:800;">
+              <i class="fa-solid fa-address-book" style="color:var(--primary);margin-right:4px;"></i> Database Nomor Sasaran
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+            Cukup masukkan nomor saja (1 nomor per baris). Contoh: <code>081234567890</code>
+          </p>
+
+          <textarea class="form-textarea" id="admin-contacts-input" style="flex:1;min-height:380px;height:420px;font-family:monospace;font-size:12.5px;resize:vertical;"
+            placeholder="081234567890&#10;085788990011&#10;089612345678&#10;082155443322"></textarea>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:12px;">
+            <span style="font-size:12px;color:var(--text-muted);">
+              Total Target: <strong id="target-count-indicator">0</strong> nomor
+            </span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="saveDraftSetup()">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Database
+              </button>
+              <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="clearContactsInput()">
+                <i class="fa-solid fa-trash-can"></i> Bersihkan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Message & Spintax Panel -->
+        <div class="clean-panel" style="display:flex;flex-direction:column;">
+          <div style="font-size:14px;font-weight:800;margin-bottom:8px;">
+            <i class="fa-solid fa-message" style="color:var(--primary);margin-right:4px;"></i> Custom Pesan Promosi
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+            Gunakan Spintax <code>{Halo|Hai|Pagi}</code> untuk variasi pesan otomatis anti-banned.
+          </p>
+
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label" style="font-size:11px;">Template Pesan WhatsApp</label>
+            <textarea class="form-textarea" id="admin-message-input" style="height:190px;font-size:12.5px;"
+              placeholder="{Halo|Hai|Selamat Siang} kak {nama}! Kami ada penawaran promo spesial diskon hingga 50% untuk kamu hari ini. Jangan lewatkan ya!"></textarea>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="saveDraftSetup()">
+              <i class="fa-solid fa-floppy-disk"></i> Simpan Template Pesan
+            </button>
+          </div>
+
+          <!-- Live Preview Box -->
+          <div style="margin-top:12px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;">
+              Preview Pesan di WhatsApp Pelanggan:
+            </div>
+            <div class="preview-chat-bubble" id="preview-bubble">
+              Halo kak Pelanggan! Kami ada penawaran promo spesial...
+              <div class="preview-chat-time"><span id="preview-clock">12:00</span> <i class="fa-solid fa-check-double" style="color:#53bdeb;"></i></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==============================================================
+         TAB 2: MEMBER DEVICES MONITOR
+         ============================================================== -->
+    <section id="admin-view-devices" style="display:none;">
+
+      <div id="admin-devices-container">
+        <div class="clean-panel" style="text-align:center;padding:30px;color:var(--text-muted);">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;margin-bottom:8px;display:block;"></i>
+          Memuat data perangkat...
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         TAB 3: WITHDRAWAL APPROVALS
+         ============================================================== -->
+    <section id="admin-view-withdrawals" style="display:none;">
+
+      <div class="clean-panel" style="padding:0;overflow:hidden;">
+        <table class="clean-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Mitra / User</th>
+              <th>Bank / E-Wallet</th>
+              <th>No. Rekening</th>
+              <th>Atas Nama</th>
+              <th>Jumlah</th>
+              <th style="text-align:center;">Status &amp; Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="admin-withdrawals-tbody">
+            <tr>
+              <td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">
+                Memuat data penarikan...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         TAB 4: LIVE DELIVERY LOGS
+         ============================================================== -->
+    <section id="admin-view-logs" style="display:none;">
+
+      <div class="clean-panel" style="padding:0;overflow:hidden;">
+        <table class="clean-table">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Device Pengirim</th>
+              <th>Nomor Tujuan</th>
+              <th>Status</th>
+              <th>Komisi Diberikan</th>
+            </tr>
+          </thead>
+          <tbody id="admin-logs-tbody">
+            <tr>
+              <td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">
+                Memuat riwayat pengiriman...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         TAB 5: DATABASE USER (MITRA)
+         ============================================================== -->
+    <section id="admin-view-users" style="display:none;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+        <button class="btn-primary" onclick="openCreateUserModal()" style="font-size:12px;padding:7px 14px;">
+          <i class="fa-solid fa-user-plus"></i> Tambah User Baru
+        </button>
+      </div>
+
+      <div class="clean-panel" style="padding:0;overflow:hidden;">
+        <table class="clean-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Nama Mitra</th>
+              <th>Nomor WhatsApp</th>
+              <th>Saldo Komisi</th>
+              <th>Device Aktif</th>
+              <th>Kode Referral</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-tbody">
+            <tr>
+              <td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">
+                Memuat database user...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+  <!-- MODAL: CREATE USER -->
+  <div class="modal-overlay" id="create-user-modal" style="display:none;">
+    <div class="modal-content" style="max-width:440px;">
+      <div class="modal-header">
+        <h3>Tambah User / Mitra Baru</h3>
+        <button class="modal-close" onclick="closeCreateUserModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="new-user-username" placeholder="Contoh: ahmad_fauzi">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Nama Lengkap</label>
+          <input type="text" class="form-input" id="new-user-name" placeholder="Contoh: Ahmad Fauzi">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Nomor WhatsApp</label>
+          <input type="text" class="form-input" id="new-user-phone" placeholder="081234567890">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">Akun Penarikan</label>
+            <select class="form-select" id="new-user-ewallet" style="height:42px;width:100%;border:none;background:#f1f5f9;outline:none;border-radius:8px;padding:0 10px;font-weight:600;font-size:13px;">
+              <option value="DANA">DANA</option>
+              <option value="SEABANK">SeaBank</option>
+              <option value="GOPAY">GoPay</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nama di Akun E-Wallet</label>
+            <input type="text" class="form-input" id="new-user-ewallet-name" placeholder="Atas nama rekening">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Password (Default: 123456)</label>
+          <input type="password" class="form-input" id="new-user-password" placeholder="123456">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Saldo Awal (Opsional)</label>
+          <input type="number" class="form-input" id="new-user-saldo" placeholder="0">
+        </div>
+        <button class="btn-primary" style="width:100%;padding:10px;" onclick="submitCreateUser()">
+          <i class="fa-solid fa-check"></i> Simpan User Baru
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT USER SALDO -->
+  <div class="modal-overlay" id="edit-saldo-modal" style="display:none;">
+    <div class="modal-content" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>Edit Saldo Komisi User</h3>
+        <button class="modal-close" onclick="closeEditSaldoModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-saldo-uid">
+        <div style="font-size:13px;margin-bottom:12px;">
+          User: <strong id="edit-saldo-user-display">-</strong>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Jumlah Saldo Baru (Rp)</label>
+          <input type="number" class="form-input" id="edit-saldo-input" placeholder="Contoh: 50000">
+        </div>
+        <button class="btn-primary" style="width:100%;padding:10px;" onclick="submitEditSaldo()">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Saldo
+        </button>
+      </div>
+    </div>
+  <!-- MODAL: TOLAK PENARIKAN -->
+  <div class="modal-overlay" id="reject-wd-modal" style="display:none;">
+    <div class="modal-content" style="max-width:440px;border-radius:16px;overflow:hidden;box-shadow:0 20px 45px rgba(0,0,0,0.18);">
+      <div class="modal-header" style="border-bottom:1px solid #f1f5f9;padding:16px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:10px;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:16px;">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </div>
+          <div>
+            <h3 style="font-size:15px;font-weight:800;color:#0f172a;margin:0;">Tolak Permintaan Penarikan</h3>
+            <span style="font-size:11.5px;color:var(--text-muted);">Saldo akan otomatis dikembalikan ke akun mitra</span>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeRejectWithdrawalModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding:18px 20px;">
+        <input type="hidden" id="reject-wd-id">
+
+        <!-- Detail Box -->
+        <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Mitra Penerima</div>
+            <div style="font-weight:700;font-size:13px;color:var(--text-main);" id="reject-wd-user">-</div>
+            <div style="font-size:11.5px;color:#64748b;" id="reject-wd-destination">-</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Nominal</div>
+            <div style="font-weight:800;font-size:15px;color:#dc2626;" id="reject-wd-amount">-</div>
+          </div>
+        </div>
+
+        <!-- Alasan Penolakan Input -->
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label" style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;display:block;">
+            Alasan Penolakan <span style="color:#ef4444;">*</span>
+          </label>
+          <input type="text" class="form-input" id="reject-wd-reason" 
+            placeholder="Ketik alasan penolakan..." 
+            value="Nomor rekening/e-wallet tidak valid"
+            style="width:100%;font-size:13px;padding:10px 12px;border-radius:8px;border:1px solid #cbd5e1;">
+        </div>
+
+        <!-- Preset Chips -->
+        <div style="margin-bottom:18px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">Pilih Alasan Cepat:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button type="button" class="btn-preset-reason" onclick="setRejectReason('Nomor rekening/e-wallet tidak valid')">
+              Nomor tidak valid
+            </button>
+            <button type="button" class="btn-preset-reason" onclick="setRejectReason('Nama pemilik akun tidak sesuai')">
+              Nama tidak sesuai
+            </button>
+            <button type="button" class="btn-preset-reason" onclick="setRejectReason('Akun e-wallet belum di-upgrade / melebihi limit')">
+              Akun belum upgrade
+            </button>
+            <button type="button" class="btn-preset-reason" onclick="setRejectReason('Permintaan ganda / duplikat')">
+              Permintaan ganda
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" onclick="closeRejectWithdrawalModal()" style="padding:9px 16px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#475569;font-weight:700;font-size:12.5px;cursor:pointer;">
+            Batal
+          </button>
+          <button type="button" id="btn-confirm-reject-wd" onclick="submitRejectWithdrawal()" style="padding:9px 18px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(239,68,68,0.3);">
+            <i class="fa-solid fa-xmark"></i> Tolak &amp; Kembalikan Saldo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETUJUI PENARIKAN -->
+  <div class="modal-overlay" id="approve-wd-modal" style="display:none;">
+    <div class="modal-content" style="max-width:440px;border-radius:16px;overflow:hidden;box-shadow:0 20px 45px rgba(0,0,0,0.18);">
+      <div class="modal-header" style="border-bottom:1px solid #f1f5f9;padding:16px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:10px;background:#ecfdf5;color:#10b981;display:flex;align-items:center;justify-content:center;font-size:16px;">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <div>
+            <h3 style="font-size:15px;font-weight:800;color:#0f172a;margin:0;">Konfirmasi Penarikan Mitra</h3>
+            <span style="font-size:11.5px;color:var(--text-muted);">Setujui jika dana sudah ditransfer manual</span>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeApproveWithdrawalModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding:18px 20px;">
+        <input type="hidden" id="approve-wd-id">
+
+        <div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:12px;color:var(--text-muted);">Penerima:</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--text-main);" id="approve-wd-user">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:12px;color:var(--text-muted);">Tujuan Transfer:</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--primary);" id="approve-wd-destination">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-top:1px dashed #cbd5e1;padding-top:8px;">
+            <span style="font-size:12px;color:var(--text-muted);">Nominal:</span>
+            <span style="font-size:15px;font-weight:800;color:#059669;" id="approve-wd-amount">-</span>
+          </div>
+        </div>
+
+        <p style="font-size:12px;color:#64748b;line-height:1.45;margin-bottom:18px;">
+          Pastikan Anda sudah mentransfer dana ini via m-banking atau e-wallet ke rekening mitra. Status penarikan akan langsung berubah menjadi <strong>Selesai</strong>.
+        </p>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" onclick="closeApproveWithdrawalModal()" style="padding:9px 16px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#475569;font-weight:700;font-size:12.5px;cursor:pointer;">
+            Batal
+          </button>
+          <button type="button" id="btn-confirm-approve-wd" onclick="submitApproveWithdrawal()" style="padding:9px 18px;border-radius:8px;border:none;background:#10b981;color:#fff;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+            <i class="fa-solid fa-check"></i> Ya, Sudah Ditransfer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js?v=3.4"></script>
+</body>
+</html>

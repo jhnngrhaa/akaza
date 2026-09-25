@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akaza Blast — WhatsApp Blast Platform</title>
+  <meta name="description" content="Platform blast WhatsApp otomatis. Hubungkan WA kamu dan dapatkan komisi setiap pesan terkirim.">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand-area">
+      <img src="logo.svg" alt="Akaza Blast" class="brand-logo-img">
+      <span class="brand-text">Akaza Blast</span>
+      <span class="brand-subtext">v3.0</span>
+    </div>
+    <div class="topbar-actions">
+      <div id="sse-indicator" title="Status koneksi real-time" style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);">
+        <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;" id="sse-dot"></span>
+        <span id="sse-label">Connecting...</span>
+      </div>
+      <div id="topbar-user-badge" style="display:none;align-items:center;background:#f1f5f9;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;color:var(--text-main);">
+        <span id="topbar-username">User</span>
+      </div>
+      <button class="logout-btn" id="topbar-auth-btn" onclick="handleAuthClick()">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> <span id="topbar-auth-text">Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="app-container">
+
+    <!-- ==========================================
+         TAB 1: DASHBOARD (USER)
+         ========================================== -->
+    <section id="tab-dashboard" class="page-view">
+      <div class="section-header">
+        <div class="section-icon-box"><i class="fa-solid fa-table-cells-large"></i></div>
+        <div class="section-title-group">
+          <h2>Dashboard</h2>
+          <p>Ringkasan akun kamu hari ini</p>
+        </div>
+      </div>
+
+      <!-- Info Komisi (Bisa dihapus / dismissible & muncul di awal login) -->
+      <div class="card-info-blue" id="commission-banner" style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;">
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div class="icon">i</div>
+          <div>
+            <div class="content-title">Komisi Per Pesan</div>
+            <div class="content-desc">
+              Kamu mendapatkan <strong style="color: var(--blue-text);">Rp 1.500</strong> untuk setiap pesan yang berhasil terkirim melalui WhatsApp kamu.
+            </div>
+          </div>
+        </div>
+        <button type="button" onclick="dismissCommissionBanner()" style="background:none;border:none;cursor:pointer;color:var(--blue-text);padding:2px 8px;font-size:16px;line-height:1;opacity:0.6;transition:opacity 0.2s;border-radius:6px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Hapus / Tutup pemberitahuan">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Device Status Grid -->
+      <div class="status-grid">
+        <div class="status-stat-card">
+          <div>
+            <div class="label online">ONLINE</div>
+            <div class="number" id="dash-online-count">—</div>
+          </div>
+          <div class="icon-box online"><i class="fa-solid fa-wifi"></i></div>
+        </div>
+        <div class="status-stat-card">
+          <div>
+            <div class="label offline">OFFLINE</div>
+            <div class="number" id="dash-offline-count">—</div>
+          </div>
+          <div class="icon-box offline"><i class="fa-solid fa-wifi" style="opacity:0.5;"></i></div>
+        </div>
+      </div>
+
+      <!-- Log Pengiriman Real-time -->
+      <div class="clean-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">Log Pengiriman Real-time</div>
+            <div style="font-size:12px;color:var(--text-muted);">Pesan terkirim otomatis dari Admin lewat WhatsApp kamu</div>
+          </div>
+          <button class="btn-primary" style="padding:7px 14px;font-size:12px;" onclick="openDeviceModal()">
+            <i class="fa-solid fa-plus"></i> Tambah Device
+          </button>
+        </div>
+
+        <div class="clean-table-box">
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Nomor Tujuan</th>
+                <th>Status</th>
+                <th>Komisi</th>
+              </tr>
+            </thead>
+            <tbody id="user-dash-history-tbody">
+              <tr>
+                <td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">
+                  <i class="fa-solid fa-clock" style="opacity:0.3;font-size:24px;display:block;margin-bottom:8px;"></i>
+                  Menunggu aktivitas pengiriman...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==========================================
+         TAB 2: DEVICES
+         ========================================== -->
+    <section id="tab-devices" class="page-view" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon-box"><i class="fa-solid fa-mobile-screen"></i></div>
+        <div class="section-title-group">
+          <h2>Devices</h2>
+          <p>Kelola nomor WhatsApp yang terhubung</p>
+        </div>
+      </div>
+
+      <div class="clean-panel" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">Tautkan WhatsApp Baru</div>
+            <div style="font-size:12.5px;color:var(--text-muted);">Scan QR Code atau gunakan 8 digit kode pairing</div>
+          </div>
+          <button class="btn-primary" onclick="openDeviceModal()">
+            <i class="fa-solid fa-plus"></i> Tambah Device
+          </button>
+        </div>
+      </div>
+
+      <div id="devices-list-cards">
+        <div class="clean-panel" style="text-align:center;color:var(--text-muted);padding:32px 16px;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;display:block;margin-bottom:10px;"></i>
+          Memuat device...
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==========================================
+         TAB 3: WALLETS & WITHDRAW
+         ========================================== -->
+    <section id="tab-wallets" class="page-view" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon-box"><i class="fa-solid fa-wallet"></i></div>
+        <div class="section-title-group">
+          <h2>Wallets &amp; Komisi</h2>
+          <p>Saldo pendapatan blast &amp; poin referral mitra</p>
+        </div>
+      </div>
+
+      <!-- Saldo & Poin Grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div class="clean-panel" style="background:#ffffff;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Saldo Komisi Blast</div>
+          <div style="font-size:24px;font-weight:800;color:var(--text-main);margin:4px 0;" id="wallet-saldo-amount">Rp 0</div>
+          <div style="font-size:11.5px;color:#16a34a;font-weight:600;">
+            <i class="fa-solid fa-circle-check"></i> Rp 1.500 / pesan blast
+          </div>
+        </div>
+        <div class="clean-panel" style="background:#ffffff;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Bonus Referral Teman</div>
+          <div style="font-size:24px;font-weight:800;color:#f59e0b;margin:4px 0;" id="wallet-points-amount">0 Perak</div>
+          <div style="font-size:11.5px;color:var(--text-muted);font-weight:600;">
+            <i class="fa-solid fa-gift" style="color:#f59e0b;"></i> +200 Perak per teman
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-Tabs: Tarik Dana vs Riwayat Penarikan -->
+      <div class="wallet-subtabs" style="display:flex;gap:8px;margin-bottom:14px;background:#f1f5f9;padding:4px;border-radius:12px;">
+        <button type="button" class="wallet-subtab-btn" id="btn-wallet-form" onclick="switchWalletSubTab('form')" style="flex:1;padding:9px 12px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;background:#ffffff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+          <i class="fa-solid fa-money-bill-transfer"></i> Ajukan Penarikan
+        </button>
+        <button type="button" class="wallet-subtab-btn" id="btn-wallet-history" onclick="switchWalletSubTab('history')" style="flex:1;padding:9px 12px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;background:transparent;color:var(--text-secondary);">
+          <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Penarikan
+          <span id="wallet-history-badge" style="font-size:10px;padding:2px 7px;border-radius:10px;background:#e2e8f0;color:#475569;margin-left:3px;font-weight:800;">0</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Form Tarik Dana -->
+      <div id="wallet-view-form" class="clean-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:700;">Form Penarikan Dana (Withdrawal)</div>
+          <span style="font-size:11px;background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:99px;font-weight:700;">
+            <i class="fa-solid fa-bolt"></i> Auto Payout API
+          </span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+          Pencairan dana langsung otomatis dikirim ke akun E-Wallet / Bank Anda oleh sistem.
+        </div>
+        <form id="withdraw-form" onsubmit="handleWithdrawSubmit(event)">
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Tujuan Akun Penarikan</label>
+            <select class="form-select" id="wd-bank" required>
+              <option value="DANA">DANA</option>
+              <option value="SEABANK">SeaBank</option>
+              <option value="GOPAY">GoPay</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Nomor Akun / HP E-Wallet</label>
+            <input type="text" class="form-input" id="wd-acc-number" placeholder="Contoh: 081234567890" required>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Nama Pemilik Akun (Sesuai E-Wallet)</label>
+            <input type="text" class="form-input" id="wd-acc-name" placeholder="Nama lengkap sesuai akun" required>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Jumlah Penarikan (Rp)</label>
+            <input type="number" class="form-input" id="wd-amount" min="30000" placeholder="Minimal Rp 30.000" required>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;padding:11px;font-size:13.5px;">
+            <i class="fa-solid fa-paper-plane"></i> Ajukan Penarikan Sekarang
+          </button>
+        </form>
+      </div>
+
+      <!-- Tab 2: Riwayat Penarikan -->
+      <div id="wallet-view-history" class="clean-panel" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:700;">Riwayat Penarikan &amp; Pembayaran</div>
+          <button type="button" class="btn-secondary" style="font-size:11.5px;padding:4px 10px;" onclick="refreshWithdrawals()">
+            <i class="fa-solid fa-rotate"></i> Muat Ulang
+          </button>
+        </div>
+        <div class="clean-table-box">
+          <table class="clean-table">
+            <thead>
+              <tr><th>Tanggal</th><th>Tujuan</th><th>Nominal</th><th>Status</th></tr>
+            </thead>
+            <tbody id="wd-history-tbody">
+              <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px;">Belum ada riwayat penarikan.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==========================================
+         TAB 4: REFERRALS (200 PERAK PER MEMBER)
+         ========================================== -->
+    <section id="tab-referrals" class="page-view" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon-box" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-gift"></i></div>
+        <div class="section-title-group">
+          <h2>Program Referral Mitra</h2>
+          <p>Undang teman &amp; kalian berdua sama-sama mendapatkan 200 Perak (Rp 200)</p>
+        </div>
+      </div>
+
+      <!-- Referral Banner Info -->
+      <div class="card-info-blue" style="background:#fffbeb;border:none;">
+        <div class="icon" style="background:#f59e0b;color:#ffffff;"><i class="fa-solid fa-star"></i></div>
+        <div>
+          <div class="content-title" style="color:#b45309;">Bonus 200 Perak (Kedua Pihak)</div>
+          <div class="content-desc" style="color:#92400e;">
+            Ajak teman mendaftar menjadi mitra Akaza Blast dengan kode atau link referral kamu. <strong>Kamu dan temanmu sama-sama mendapatkan bonus 200 Perak (Rp 200)</strong> langsung ke saldo akun masing-masing!
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div class="clean-panel" style="text-align:center;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Total Teman Bergabung</div>
+          <div style="font-size:26px;font-weight:800;color:var(--primary);margin:4px 0;" id="ref-total-invited">0</div>
+          <div style="font-size:11.5px;color:var(--text-muted);">Orang Member</div>
+        </div>
+        <div class="clean-panel" style="text-align:center;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Bonus Referral Diperoleh</div>
+          <div style="font-size:26px;font-weight:800;color:#f59e0b;margin:4px 0;" id="ref-total-points">0 Perak</div>
+          <div style="font-size:11.5px;color:#16a34a;font-weight:700;">+200 Perak / member</div>
+        </div>
+      </div>
+
+      <!-- Share Box -->
+      <div class="clean-panel" style="margin-bottom:14px;">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:8px;">Kode &amp; Tautan Undangan Kamu</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label" style="font-size:11px;">Kode Referral Unik</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" class="form-input" id="ref-code-input" value="Loading..." readonly style="font-weight:800;letter-spacing:1px;font-family:monospace;font-size:14px;color:var(--primary);">
+            <button class="btn-primary" onclick="copyReferralCode()"><i class="fa-solid fa-copy"></i> Salin Kode</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label" style="font-size:11px;">Tautan Pendaftaran Langsung</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" class="form-input" id="ref-link-input" value="Loading..." readonly style="font-size:12px;color:var(--text-secondary);">
+            <button class="btn-secondary" onclick="copyReferralLink()"><i class="fa-solid fa-link"></i> Salin Link</button>
+          </div>
+        </div>
+        <button class="btn-primary" style="width:100%;background:#25d366;border-color:#25d366;" onclick="shareReferralWhatsApp()">
+          <i class="fa-brands fa-whatsapp"></i> Bagikan Langsung ke Teman WhatsApp
+        </button>
+      </div>
+
+      <!-- Daftar Teman Referral -->
+      <div class="clean-panel">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Daftar Teman yang Diundang</div>
+        <div class="clean-table-box">
+          <table class="clean-table">
+            <thead>
+              <tr><th>Teman / Mitra</th><th>Tanggal Bergabung</th><th>Bonus Poin</th></tr>
+            </thead>
+            <tbody id="ref-members-tbody">
+              <tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:16px;">Belum ada member yang mendaftar via referral kamu. Bagikan sekarang!</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==========================================
+         TAB 5: PROFILE (MEMBER)
+         ========================================== -->
+    <section id="tab-profile" class="page-view" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon-box"><i class="fa-solid fa-user"></i></div>
+        <div class="section-title-group">
+          <h2>Profil Akun Mitra</h2>
+          <p>Informasi akun, nomor WhatsApp, dan akun E-Wallet kamu</p>
+        </div>
+      </div>
+
+      <!-- Account Info Card -->
+      <div class="clean-panel" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:800;color:var(--text-main);">
+            <i class="fa-solid fa-id-badge" style="color:var(--primary);margin-right:6px;"></i> Detail Keanggotaan
+          </div>
+          <span class="device-status-pill connected">
+            <span class="dot"></span> Mitra Aktif
+          </span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--text-secondary);">
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:8px;">
+            <span style="color:var(--text-muted);">Username</span>
+            <span style="font-weight:700;color:var(--primary);font-family:monospace;" id="profile-username">@loading</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:8px;">
+            <span style="color:var(--text-muted);">Nama Lengkap</span>
+            <span style="font-weight:700;color:var(--text-main);" id="profile-name">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:8px;">
+            <span style="color:var(--text-muted);">No. WhatsApp</span>
+            <span style="font-weight:700;color:var(--text-main);" id="profile-phone">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:8px;">
+            <span style="color:var(--text-muted);">E-Wallet Terdaftar</span>
+            <span style="font-weight:700;color:#059669;" id="profile-ewallet">DANA</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:8px;">
+            <span style="color:var(--text-muted);">Nomor &amp; Atas Nama E-Wallet</span>
+            <span style="font-weight:700;color:var(--text-main);" id="profile-ewallet-details">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:8px;">
+            <span style="color:var(--text-muted);">Kode Referral</span>
+            <span style="font-weight:800;color:var(--primary);font-family:monospace;" id="profile-refcode">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:8px;">
+            <span style="color:var(--text-muted);">Saldo Komisi</span>
+            <span style="font-weight:800;color:#10b981;font-size:15px;" id="profile-saldo">Rp 0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:var(--text-muted);">Poin Referral (Bonus)</span>
+            <span style="font-weight:800;color:#f59e0b;font-size:15px;" id="profile-points">0 Poin</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Update Profile & E-Wallet Panel -->
+      <div class="clean-panel" style="margin-bottom:14px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Perbarui Profil &amp; Akun E-Wallet</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Pastikan data profil dan akun E-Wallet Anda aktif dan sesuai.</p>
+        <form id="profile-ewallet-form" onsubmit="handleUpdateProfile(event)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap</label>
+              <input type="text" class="form-input" id="prof-user-name" placeholder="Nama Lengkap" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor WhatsApp</label>
+              <input type="text" class="form-input" id="prof-user-phone" placeholder="081234567890" required>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div class="form-group">
+              <label class="form-label">Akun Penarikan</label>
+              <select class="form-select" id="prof-ewallet-select" style="height:42px;">
+                <option value="DANA">DANA</option>
+                <option value="SEABANK">SeaBank</option>
+                <option value="GOPAY">GoPay</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor E-Wallet / Rekening</label>
+              <input type="text" class="form-input" id="prof-ewallet-number" placeholder="081234567890" required>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Nama Pemilik Akun E-Wallet</label>
+            <input type="text" class="form-input" id="prof-ewallet-name" placeholder="Nama sesuai di aplikasi E-Wallet" required>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;padding:9px;" id="btn-save-profile">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Profil
+          </button>
+        </form>
+      </div>
+
+      <!-- Cara Kerja Mitra -->
+      <div class="clean-panel" style="margin-bottom:14px;background:#f8fafc;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text-main);">
+          <i class="fa-solid fa-circle-info" style="color:var(--primary);margin-right:6px;"></i> Cara Kerja Mitra Akaza Blast
+        </div>
+        <ol style="font-size:12.5px;color:var(--text-secondary);line-height:1.7;padding-left:18px;">
+          <li>Buka menu <strong>Devices</strong> dan tautkan nomor WhatsApp kamu (Scan QR).</li>
+          <li>Atur <strong>Mode Kecepatan</strong> pengiriman yang kamu inginkan.</li>
+          <li>Setiap pesan blast yang sukses terkirim lewat nomormu otomatis menambah saldo sebesar <strong>Rp 1.500</strong>.</li>
+          <li>Undang teman menggunakan <strong>Kode Referral</strong> kamu untuk mendapatkan <strong>200 Perak (Rp 200)</strong> per teman.</li>
+          <li>Tarik saldo dan poin kapan saja ke akun E-Wallet kamu di menu <strong>Wallets</strong>.</li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ==========================================
+       BOTTOM NAVIGATION BAR
+       ========================================== -->
+  <nav class="bottom-nav">
+    <div class="nav-tab-item active" id="nav-btn-dashboard" onclick="switchTab('dashboard')">
+      <i class="fa-solid fa-house"></i>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-tab-item" id="nav-btn-devices" onclick="switchTab('devices')">
+      <i class="fa-solid fa-mobile-screen"></i>
+      <span>Devices</span>
+    </div>
+    <div class="nav-tab-wallet-center" onclick="switchTab('wallets')" title="Wallets & Saldo">
+      <i class="fa-solid fa-wallet"></i>
+    </div>
+    <div class="nav-tab-item" id="nav-btn-referrals" onclick="switchTab('referrals')">
+      <i class="fa-solid fa-user-group"></i>
+      <span>Referrals</span>
+    </div>
+    <div class="nav-tab-item" id="nav-btn-profile" onclick="switchTab('profile')">
+      <i class="fa-solid fa-user"></i>
+      <span>Profile</span>
+    </div>
+  </nav>
+
+  <!-- FLOATING SUPPORT BUTTON (OFFICIAL TELEGRAM) -->
+  <a href="https://t.me/Gaarzzz" target="_blank" rel="noopener noreferrer" class="fab-telegram" title="Hubungi CS Telegram @Gaarzzz">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="#ffffff" style="margin-left: -2px;">
+      <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/>
+    </svg>
+  </a>
+
+
+  <!-- ==========================================
+       MODAL: ADD DEVICE
+       ========================================== -->
+  <div class="modal-overlay" id="device-modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tautkan WhatsApp</h3>
+        <button class="modal-close" onclick="closeDeviceModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Device Name -->
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Nama Device</label>
+          <input type="text" class="form-input" id="device-name-input" placeholder="Contoh: WA Bisnis Utama">
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn-primary" id="modal-tab-qr" style="flex:1;padding:8px;" onclick="switchDeviceModalTab('qr')">
+            Scan QR
+          </button>
+          <button class="btn-secondary" id="modal-tab-pair" style="flex:1;padding:8px;" onclick="switchDeviceModalTab('pair')">
+            Kode Pairing
+          </button>
+        </div>
+
+        <!-- QR Tab -->
+        <div id="modal-content-qr" style="text-align:center;">
+          <div id="qr-loading-msg" style="color:var(--text-muted);font-size:13px;padding:30px 0 10px;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:28px;display:block;margin-bottom:10px;color:var(--primary);"></i>
+            <div style="font-weight:600;">Membuat QR Code...</div>
+            <div style="font-size:11px;margin-top:4px;">Harap tunggu beberapa detik</div>
+          </div>
+          <img id="qr-image" src="" alt="QR Code WhatsApp"
+            style="display:none;width:220px;height:220px;margin:0 auto 12px;border:none;border-radius:10px;padding:8px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+            Buka WhatsApp → Perangkat Tertaut → Tautkan Perangkat → Scan QR
+          </div>
+          <button class="btn-secondary" id="qr-refresh-btn" style="display:none;width:100%;margin-bottom:8px;" onclick="refreshQRImage()">
+            <i class="fa-solid fa-rotate"></i> QR Expired? Refresh
+          </button>
+        </div>
+
+        <!-- Pairing Tab -->
+        <div id="modal-content-pair" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Nomor WhatsApp Kamu</label>
+            <input type="text" class="form-input" id="pair-phone-input" placeholder="081234567890">
+          </div>
+          <button class="btn-primary" id="pair-code-btn" style="width:100%;" onclick="generatePairingCode()">
+            Dapatkan Kode 8 Digit
+          </button>
+          <div id="pair-result-box" style="display:none;margin-top:14px;text-align:center;">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Masukkan kode ini di WhatsApp kamu:</div>
+            <div style="font-size:28px;font-weight:800;color:var(--primary);letter-spacing:5px;font-family:monospace;" id="display-pairing-code">
+              --------
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+              WhatsApp → Perangkat Tertaut → Tautkan dgn nomor telepon
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // SSE Indicator Update
+    document.addEventListener('DOMContentLoaded', () => {
+      const dot = document.getElementById('sse-dot');
+      const label = document.getElementById('sse-label');
+
+      // Monitor SSE state via app.js eventSource
+      const check = setInterval(() => {
+        if (typeof eventSource !== 'undefined' && eventSource) {
+          if (eventSource.readyState === EventSource.OPEN) {
+            dot.style.background = '#10B981';
+            label.textContent = 'Live';
+          } else if (eventSource.readyState === EventSource.CONNECTING) {
+            dot.style.background = '#f59e0b';
+            label.textContent = 'Connecting...';
+          } else {
+            dot.style.background = '#ef4444';
+            label.textContent = 'Offline';
+          }
+        }
+      }, 1000);
+
+      // Profile info
+      setTimeout(() => {
+        const uid = document.getElementById('profile-uid');
+        const name = document.getElementById('profile-name');
+        const saldo = document.getElementById('profile-saldo');
+        if (uid && typeof USER_ID !== 'undefined') uid.textContent = USER_ID;
+        if (currentUser) {
+          if (name) name.textContent = currentUser.name || '-';
+          if (saldo) saldo.textContent = 'Rp ' + (currentUser.saldo || 0).toLocaleString('id-ID');
+        }
+      }, 2000);
+    });
+  </script>
+
+  <style>
+    @keyframes fadeInRow {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUpToast {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .badge-connecting {
+      background: #fef3c7; color: #92400e;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 20px;
+      text-transform: uppercase;
+    }
+  </style>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masuk ke Akaza Blast — Platform WhatsApp Blast</title>
+  <meta name="description" content="Halaman login dan pendaftaran mitra Akaza Blast. Hubungkan WhatsApp kamu dan dapatkan komisi setiap pesan blast terkirim.">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      min-height: 100vh;
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    *, *::before, *::after {
+      outline: none !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+    *:focus, *:focus-visible, *:active {
+      outline: none !important;
+    }
+    button, input, textarea, select {
+      outline: none !important;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border: none;
+      border-radius: 18px;
+      padding: 32px 28px;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .auth-brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .auth-logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      object-fit: contain;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+      margin-bottom: 10px;
+    }
+
+    .auth-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.4px;
+    }
+
+    .auth-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .auth-tab-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      height: 44px;
+      background: #f1f5f9;
+      border: none !important;
+      outline: none !important;
+      border-radius: 10px;
+      padding: 0 14px;
+      font-family: inherit;
+      font-size: 13.5px;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      background: #ffffff;
+      outline: none !important;
+      border: none !important;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2) !important;
+    }
+
+    .form-input::placeholder {
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .auth-submit-btn {
+      width: 100%;
+      height: 44px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-top: 6px;
+    }
+
+    .auth-submit-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .auth-submit-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .auth-footer-link {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .auth-footer-link a {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .auth-footer-link a:hover {
+      text-decoration: underline;
+    }
+
+    .info-banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #1e40af;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-card">
+    <!-- Brand -->
+    <div class="auth-brand">
+      <img src="logo.svg" alt="Akaza Blast" class="auth-logo">
+      <div class="auth-title">Akaza Blast</div>
+      <div class="auth-subtitle">Platform WhatsApp Blast &amp; Kemitraan</div>
+    </div>
+
+    <!-- Mode Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" id="tab-login" onclick="setAuthTab('login')">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk
+      </button>
+      <button class="auth-tab-btn" id="tab-register" onclick="setAuthTab('register')">
+        <i class="fa-solid fa-user-plus"></i> Daftar Baru
+      </button>
+    </div>
+
+    <!-- ─── 1. FORM LOGIN ─── -->
+    <form id="login-form" onsubmit="submitLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Username atau No. WhatsApp</label>
+        <input type="text" class="form-input" id="login-ident" placeholder="Username atau no. WhatsApp" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="login-pass" placeholder="Masukkan password" required>
+      </div>
+
+      <button type="submit" class="auth-submit-btn" id="login-btn">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk Sekarang
+      </button>
+
+      <div class="auth-footer-link">
+        Belum memiliki akun? <a onclick="setAuthTab('register')">Daftar Akun Mitra</a>
+      </div>
+    </form>
+
+    <!-- ─── 2. FORM REGISTER ─── -->
+    <form id="register-form" style="display:none;" onsubmit="submitRegister(event)">
+      <div class="info-banner">
+        <i class="fa-solid fa-gift"></i> Pendaftaran Mitra Gratis! Dapatkan komisi <strong>Rp 1.500/pesan</strong> &amp; bonus <strong>200 Perak</strong> setiap mengundang 1 teman.
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="reg-username" placeholder="Username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="reg-password" placeholder="Min. 4 karakter" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input type="text" class="form-input" id="reg-name" placeholder="Nama lengkap Anda" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nomor WhatsApp Aktif</label>
+        <input type="text" class="form-input" id="reg-phone" placeholder="08xxxxxxxxxx" required>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Akun Penarikan</label>
+          <select class="form-select" id="reg-ewallet">
+            <option value="DANA">DANA</option>
+            <option value="SEABANK">SeaBank</option>
+            <option value="GOPAY">GoPay</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nomor Akun / Rekening</label>
+          <input type="text" class="form-input" id="reg-ewallet-number" placeholder="Nomor akun / No. Rekening" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nama Pemilik Akun / Rekening</label>
+        <input type="text" class="form-input" id="reg-ewallet-name" placeholder="Nama pemilik akun sesuai DANA/SeaBank/GoPay" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Kode Referral Teman (Opsional)</label>
+        <input type="text" class="form-input" id="reg-refcode" placeholder="Kode referral (opsional)" style="text-transform:uppercase;font-family:monospace;letter-spacing:0.5px;">
+        <span style="font-size:11px;color:#16a34a;font-weight:600;margin-top:3px;display:block;">
+          <i class="fa-solid fa-gift"></i> Dapatkan bonus sambutan 200 Perak (Rp 200) untuk Anda &amp; teman yang mengundang!
+        </span>
+      </div>
+
+      <button type="submit" class="auth-submit-btn" id="reg-btn">
+        <i class="fa-solid fa-check"></i> Daftar &amp; Masuk Sekarang
+      </button>
+
+      <div class="auth-footer-link">
+        Sudah memiliki akun? <a onclick="setAuthTab('login')">Masuk di sini</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const API = '';
+
+    // Check if already logged in
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref');
+      if (ref) {
+        document.getElementById('reg-refcode').value = ref.trim().toUpperCase();
+        setAuthTab('register');
+      }
+
+      const uid = localStorage.getItem('akaza_auth_uid');
+      if (uid) {
+        try {
+          const res = await fetch(`${API}/api/user/${uid}`);
+          if (res.ok) {
+            window.location.href = '/';
+            return;
+          }
+        } catch (_) {}
+      }
+    });
+
+    function setAuthTab(tab) {
+      const loginForm = document.getElementById('login-form');
+      const regForm = document.getElementById('register-form');
+      const tabLogin = document.getElementById('tab-login');
+      const tabReg = document.getElementById('tab-register');
+
+      if (tab === 'login') {
+        loginForm.style.display = 'block';
+        regForm.style.display = 'none';
+        tabLogin.classList.add('active');
+        tabReg.classList.remove('active');
+        document.getElementById('login-ident').focus();
+      } else {
+        loginForm.style.display = 'none';
+        regForm.style.display = 'block';
+        tabLogin.classList.remove('active');
+        tabReg.classList.add('active');
+        document.getElementById('reg-username').focus();
+      }
+    }
+
+    async function submitLogin(e) {
+      e.preventDefault();
+      const identifier = document.getElementById('login-ident').value.trim();
+      const password = document.getElementById('login-pass').value;
+      const btn = document.getElementById('login-btn');
+
+      if (!identifier || !password) {
+        alert('Masukkan username/nomor WhatsApp dan password!');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Masuk...';
+
+      try {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password })
+        });
+        const d = await res.json();
+        if (d.success) {
+          localStorage.setItem('akaza_auth_uid', d.user.id);
+          localStorage.setItem('akaza_uid', d.user.id.replace('usr_', ''));
+          sessionStorage.setItem('just_logged_in', '1');
+          sessionStorage.removeItem('commission_banner_dismissed');
+          localStorage.removeItem('commission_banner_dismissed_' + d.user.id);
+          window.location.href = '/';
+        } else {
+          alert('❌ ' + (d.error || 'Login gagal'));
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk Sekarang';
+        }
+      } catch (err) {
+        alert('Gagal menghubungi server');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk Sekarang';
+      }
+    }
+
+    async function submitRegister(e) {
+      e.preventDefault();
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const name = document.getElementById('reg-name').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const ewallet = document.getElementById('reg-ewallet').value;
+      const ewalletNumber = document.getElementById('reg-ewallet-number').value.trim();
+      const ewalletName = document.getElementById('reg-ewallet-name').value.trim();
+      const referralCode = document.getElementById('reg-refcode').value.trim();
+      const btn = document.getElementById('reg-btn');
+
+      if (!username) { alert('Username harus diisi!'); return; }
+      if (password.length < 4) { alert('Password minimal 4 karakter!'); return; }
+      if (!name) { alert('Nama lengkap harus diisi!'); return; }
+      if (!phone) { alert('Nomor WhatsApp harus diisi!'); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mendaftar...';
+
+      try {
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username, password, name, phone, ewallet, ewalletNumber, ewalletName, referralCode
+          })
+        });
+        const d = await res.json();
+        if (d.success) {
+          localStorage.setItem('akaza_auth_uid', d.user.id);
+          localStorage.setItem('akaza_uid', d.user.id.replace('usr_', ''));
+          sessionStorage.setItem('just_logged_in', '1');
+          sessionStorage.removeItem('commission_banner_dismissed');
+          localStorage.removeItem('commission_banner_dismissed_' + d.user.id);
+          window.location.href = '/';
+        } else {
+          alert('❌ ' + (d.error || 'Pendaftaran gagal'));
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-check"></i> Daftar & Masuk Sekarang';
+        }
+      } catch (err) {
+        alert('Gagal menghubungi server');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Daftar & Masuk Sekarang';
+      }
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1162 @@
+{
+  "users": {
+    "usr_mufifmgf": {
+      "id": "usr_mufifmgf",
+      "username": "jhnngrhaa",
+      "name": "Jihan Nugraha",
+      "phone": "085123248618",
+      "password": "jihan230706",
+      "ewallet": "DANA",
+      "ewalletName": "Jihan Nugraha",
+      "ewalletNumber": "085123248618",
+      "saldo": 30200,
+      "points": 200,
+      "commissionPerMessage": 1500,
+      "devices": [
+        "dev_1790253862988"
+      ],
+      "referralCode": "AKZ-8K9M2P",
+      "referredBy": null,
+      "referrals": [
+        {
+          "userId": "usr_mugj52mg",
+          "username": "diktur",
+          "name": "diktur",
+          "pointsEarned": 200,
+          "bonusRp": 200,
+          "joinedAt": "2026-09-25T05:38:08.393Z"
+        }
+      ],
+      "createdAt": "2026-09-24T12:30:34.863Z"
+    },
+    "usr_mugj52mg": {
+      "id": "usr_mugj52mg",
+      "username": "diktur",
+      "name": "diktur",
+      "phone": "083195233027",
+      "password": "jihan230706",
+      "ewallet": "GOPAY",
+      "ewalletName": "DIktor",
+      "ewalletNumber": "083195233027",
+      "saldo": 57200,
+      "points": 200,
+      "commissionPerMessage": 1500,
+      "devices": [
+        "dev_1790314813701"
+      ],
+      "referralCode": "AKZ-ME8LSK",
+      "referredBy": "jhnngrhaa",
+      "referrals": [],
+      "createdAt": "2026-09-25T05:38:08.392Z"
+    }
+  },
+  "campaigns": [
+    {
+      "id": "camp_1790314844243",
+      "title": "Blast Campaign",
+      "totalRecipients": 94,
+      "sent": 0,
+      "failed": 0,
+      "status": "running",
+      "createdAt": "2026-09-25T05:40:44.243Z"
+    },
+    {
+      "id": "camp_1790256092866",
+      "title": "Blast Campaign",
+      "totalRecipients": 100,
+      "sent": 0,
+      "failed": 0,
+      "status": "running",
+      "createdAt": "2026-09-24T13:21:32.867Z"
+    },
+    {
+      "id": "camp_1790255731129",
+      "title": "Blast Campaign",
+      "totalRecipients": 1,
+      "sent": 1,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T13:15:31.129Z",
+      "completedAt": "2026-09-24T13:15:41.925Z"
+    },
+    {
+      "id": "camp_1790255300549",
+      "title": "Blast Campaign",
+      "totalRecipients": 1,
+      "sent": 1,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T13:08:20.549Z",
+      "completedAt": "2026-09-24T13:08:31.378Z"
+    },
+    {
+      "id": "camp_1790254926599",
+      "title": "Blast Campaign",
+      "totalRecipients": 1,
+      "sent": 1,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T13:02:06.599Z",
+      "completedAt": "2026-09-24T13:02:17.417Z"
+    },
+    {
+      "id": "camp_1790254523532",
+      "title": "Blast Campaign",
+      "totalRecipients": 1,
+      "sent": 1,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T12:55:23.532Z",
+      "completedAt": "2026-09-24T12:55:34.523Z"
+    },
+    {
+      "id": "camp_1790253902231",
+      "title": "Blast Campaign",
+      "totalRecipients": 1,
+      "sent": 1,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T12:45:02.231Z",
+      "completedAt": "2026-09-24T12:45:14.517Z"
+    },
+    {
+      "id": "camp_1790253657276",
+      "title": "Blast Campaign",
+      "totalRecipients": 1,
+      "sent": 1,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T12:40:57.276Z",
+      "completedAt": "2026-09-24T12:41:09.129Z"
+    },
+    {
+      "id": "camp_1790253579085",
+      "title": "Blast Campaign",
+      "totalRecipients": 3,
+      "sent": 0,
+      "failed": 0,
+      "status": "running",
+      "createdAt": "2026-09-24T12:39:39.085Z"
+    },
+    {
+      "id": "camp_1790235511883",
+      "title": "Blast Campaign",
+      "totalRecipients": 8,
+      "sent": 8,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T07:38:31.883Z",
+      "completedAt": "2026-09-24T07:39:58.095Z"
+    },
+    {
+      "id": "camp_1790228053395",
+      "title": "Blast Campaign",
+      "totalRecipients": 8,
+      "sent": 8,
+      "failed": 0,
+      "status": "completed",
+      "createdAt": "2026-09-24T05:34:13.395Z",
+      "completedAt": "2026-09-24T05:35:00.420Z"
+    }
+  ],
+  "blastContacts": [
+    {
+      "phone": "087948192039",
+      "name": ""
+    },
+    {
+      "phone": "089729104819",
+      "name": ""
+    },
+    {
+      "phone": "081438192048",
+      "name": ""
+    },
+    {
+      "phone": "083129104819",
+      "name": ""
+    },
+    {
+      "phone": "085629104819",
+      "name": ""
+    },
+    {
+      "phone": "088138192048",
+      "name": ""
+    },
+    {
+      "phone": "089839102948",
+      "name": ""
+    },
+    {
+      "phone": "081538192048",
+      "name": ""
+    },
+    {
+      "phone": "083291820394",
+      "name": ""
+    },
+    {
+      "phone": "085129104819",
+      "name": ""
+    },
+    {
+      "phone": "088238192048",
+      "name": ""
+    },
+    {
+      "phone": "089948192039",
+      "name": ""
+    },
+    {
+      "phone": "081638192048",
+      "name": ""
+    },
+    {
+      "phone": "083829104819",
+      "name": ""
+    },
+    {
+      "phone": "085329104819",
+      "name": ""
+    },
+    {
+      "phone": "088829104819",
+      "name": ""
+    },
+    {
+      "phone": "081748192039",
+      "name": ""
+    },
+    {
+      "phone": "081839102948",
+      "name": ""
+    },
+    {
+      "phone": "085929104819",
+      "name": ""
+    },
+    {
+      "phone": "081929104819",
+      "name": ""
+    },
+    {
+      "phone": "082148192039",
+      "name": ""
+    },
+    {
+      "phone": "085739102948",
+      "name": ""
+    },
+    {
+      "phone": "087849102938",
+      "name": ""
+    },
+    {
+      "phone": "089639102948",
+      "name": ""
+    },
+    {
+      "phone": "081249102938",
+      "name": ""
+    },
+    {
+      "phone": "082238192048",
+      "name": ""
+    },
+    {
+      "phone": "085249102938",
+      "name": ""
+    },
+    {
+      "phone": "087739102948",
+      "name": ""
+    },
+    {
+      "phone": "089559102938",
+      "name": ""
+    },
+    {
+      "phone": "081349102938",
+      "name": ""
+    },
+    {
+      "phone": "082349102938",
+      "name": ""
+    },
+    {
+      "phone": "085839102948",
+      "name": ""
+    },
+    {
+      "phone": "087959102938",
+      "name": ""
+    },
+    {
+      "phone": "089739102948",
+      "name": ""
+    },
+    {
+      "phone": "081449102938",
+      "name": ""
+    },
+    {
+      "phone": "083139102948",
+      "name": ""
+    },
+    {
+      "phone": "085639102948",
+      "name": ""
+    },
+    {
+      "phone": "088149102938",
+      "name": ""
+    },
+    {
+      "phone": "089849102938",
+      "name": ""
+    },
+    {
+      "phone": "081549102938",
+      "name": ""
+    },
+    {
+      "phone": "083319284019",
+      "name": ""
+    },
+    {
+      "phone": "085139102948",
+      "name": ""
+    },
+    {
+      "phone": "088249102938",
+      "name": ""
+    },
+    {
+      "phone": "089959102938",
+      "name": ""
+    },
+    {
+      "phone": "081649102938",
+      "name": ""
+    },
+    {
+      "phone": "083839102948",
+      "name": ""
+    },
+    {
+      "phone": "085339102948",
+      "name": ""
+    },
+    {
+      "phone": "088839102948",
+      "name": ""
+    },
+    {
+      "phone": "081759102938",
+      "name": ""
+    },
+    {
+      "phone": "081849102938",
+      "name": ""
+    },
+    {
+      "phone": "085939102948",
+      "name": ""
+    },
+    {
+      "phone": "081939102948",
+      "name": ""
+    },
+    {
+      "phone": "082159102938",
+      "name": ""
+    },
+    {
+      "phone": "085749102938",
+      "name": ""
+    },
+    {
+      "phone": "087859102938",
+      "name": ""
+    }
+  ],
+  "blastMessage": "Modal 50k bisa jadi 200 juta?\nayo coba main di Tokyo88 🚀\nnikmati bonus deposit hingga 30%\n\nhttps://login2.tokyo88.tech/home?login",
+  "blastTitle": "Blast Campaign",
+  "withdrawals": [
+    {
+      "id": "wd_1790314088310",
+      "userId": "usr_mufifmgf",
+      "username": "jhnngrhaa",
+      "userName": "Jihan Nugraha",
+      "amount": 30000,
+      "bank": "GOPAY",
+      "accountNumber": "085123248618",
+      "accountName": "Jihan Nugrahaaaa",
+      "status": "rejected",
+      "requestedAt": "2026-09-25T05:28:08.310Z",
+      "rejectedAt": "2026-09-25T05:28:45.685Z",
+      "rejectReason": "Nomor rekening/e-wallet tidak valid"
+    },
+    {
+      "id": "wd_1790312807603",
+      "userId": "usr_mufifmgf",
+      "amount": 30000,
+      "bank": "GOPAY",
+      "accountNumber": "085123248618",
+      "accountName": "Jihan Nugraha",
+      "status": "pending",
+      "requestedAt": "2026-09-25T05:06:47.603Z"
+    },
+    {
+      "id": "wd_1790252643690",
+      "userId": "usr_4minvt6e",
+      "amount": 30000,
+      "status": "paid",
+      "requestedAt": "2026-09-24T12:24:03.690Z",
+      "payoutId": "PAY_1790252943508_IWX87",
+      "completedAt": "2026-09-24T12:29:03.508Z"
+    },
+    {
+      "id": "wd_1790236823915",
+      "userId": "usr_4minvt6e",
+      "amount": 100000,
+      "bank": "DANA",
+      "accountNumber": "083195233027",
+      "accountName": "Mitra WA",
+      "status": "paid",
+      "requestedAt": "2026-09-24T08:00:23.915Z",
+      "payoutId": "PAY_1790236823922_QNQ67",
+      "completedAt": "2026-09-24T08:00:23.922Z"
+    }
+  ],
+  "sessions": {},
+  "messageLog": [
+    {
+      "id": "log_1790315256411_yfbqn6lvnds",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085829104819",
+      "name": "",
+      "status": "failed",
+      "error": "Connection Closed",
+      "commission": 0,
+      "timestamp": "2026-09-25T05:47:36.411Z"
+    },
+    {
+      "id": "log_1790315246400_nmwbiars4vh",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "082338192048",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:47:26.400Z"
+    },
+    {
+      "id": "log_1790315235913_6w3uqiss5b6",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081329104819",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:47:15.913Z"
+    },
+    {
+      "id": "log_1790315224805_8d70f3d7s1i",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "089548192039",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:47:04.805Z"
+    },
+    {
+      "id": "log_1790315214332_bi9bpauarls",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "087729104819",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:46:54.332Z"
+    },
+    {
+      "id": "log_1790315203841_omttxlixzgq",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085238192048",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:46:43.841Z"
+    },
+    {
+      "id": "log_1790315193349_5shvglz3xfs",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "082219284019",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:46:33.349Z"
+    },
+    {
+      "id": "log_1790315182875_moaxrcdb1tm",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081291820394",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:46:22.875Z"
+    },
+    {
+      "id": "log_1790315171949_y69j3pb2hx",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "089628192039",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:46:11.949Z"
+    },
+    {
+      "id": "log_1790315161465_x4jxvhcjer",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "087839102948",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:46:01.465Z"
+    },
+    {
+      "id": "log_1790315150328_x5ac9x0y9e",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085729104819",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:45:50.328Z"
+    },
+    {
+      "id": "log_1790315139494_f8skeqehqhd",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "082138192048",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:45:39.494Z"
+    },
+    {
+      "id": "log_1790315128998_l6jr0zudalr",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081919284019",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:45:28.998Z"
+    },
+    {
+      "id": "log_1790315118473_wfly2pkuvg",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081829384710",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:45:18.473Z"
+    },
+    {
+      "id": "log_1790315107968_i7j9bxgrd6",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085919284012",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:45:07.968Z"
+    },
+    {
+      "id": "log_1790315097471_uvde8ap7wrj",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "083819203948",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:44:57.471Z"
+    },
+    {
+      "id": "log_1790315086992_st2pv71lhm9",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081738192048",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:44:46.992Z"
+    },
+    {
+      "id": "log_1790315076510_mec1twneihq",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "088819284019",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:44:36.510Z"
+    },
+    {
+      "id": "log_1790315065994_x4fmfyvznwh",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085391820394",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:44:25.994Z"
+    },
+    {
+      "id": "log_1790315055512_itnk1kvxyr",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "083281920394",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:44:15.512Z"
+    },
+    {
+      "id": "log_1790315045034_al1rxvujztc",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081629384710",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:44:05.034Z"
+    },
+    {
+      "id": "log_1790315034513_p1nbqqs08d8",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "089938192048",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:43:54.513Z"
+    },
+    {
+      "id": "log_1790315024024_83l1zj0jwvt",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "088219284019",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:43:44.024Z"
+    },
+    {
+      "id": "log_1790315013500_fqp6ciscns9",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085182910492",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:43:33.500Z"
+    },
+    {
+      "id": "log_1790315003016_k04p5y1k50b",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "083192840192",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:43:23.016Z"
+    },
+    {
+      "id": "log_1790314992527_1z5rtj72p2a",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081529384710",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:43:12.527Z"
+    },
+    {
+      "id": "log_1790314982033_5etgn7ts7cj",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "089829104819",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:43:02.033Z"
+    },
+    {
+      "id": "log_1790314971543_68mn7i7wvx6",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "088192840192",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:42:51.543Z"
+    },
+    {
+      "id": "log_1790314961006_ccchjzyw217",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085619284012",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:42:41.006Z"
+    },
+    {
+      "id": "log_1790314950518_7eorzl1psei",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "082381920491",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:42:30.518Z"
+    },
+    {
+      "id": "log_1790314940022_cdfzw9azssw",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081491820394",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:42:20.022Z"
+    },
+    {
+      "id": "log_1790314929544_p85s7o3m0zd",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "089719284019",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:42:09.544Z"
+    },
+    {
+      "id": "log_1790314919052_1298gwtps7cc",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "087938102948",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:41:59.052Z"
+    },
+    {
+      "id": "log_1790314908565_29a2ylwyx79",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085819203948",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:41:48.565Z"
+    },
+    {
+      "id": "log_1790314898084_ntd2ix1rq1e",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "082291029384",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:41:38.084Z"
+    },
+    {
+      "id": "log_1790314887578_hf2nq3gusx7",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "081129384710",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:41:27.578Z"
+    },
+    {
+      "id": "log_1790314877089_n8n2v6kucd",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "089538192048",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:41:17.089Z"
+    },
+    {
+      "id": "log_1790314866570_b13hsc5bmqu",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "087719284019",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:41:06.570Z"
+    },
+    {
+      "id": "log_1790314856036_gkkcnyvi4hs",
+      "campaignId": "camp_1790314844243",
+      "deviceId": "dev_1790314813701",
+      "phone": "085281920394",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-25T05:40:56.036Z"
+    },
+    {
+      "id": "log_1790256155894_5vs6vv92cqn",
+      "campaignId": "camp_1790256092866",
+      "deviceId": "dev_1790253862988",
+      "phone": "081394810293",
+      "name": "",
+      "status": "failed",
+      "error": "Connection Closed",
+      "commission": 0,
+      "timestamp": "2026-09-24T13:22:35.894Z"
+    },
+    {
+      "id": "log_1790256145878_y83bhpi8dna",
+      "campaignId": "camp_1790256092866",
+      "deviceId": "dev_1790253862988",
+      "phone": "089610293847",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:22:25.878Z"
+    },
+    {
+      "id": "log_1790256135344_b3u2jj914mm",
+      "campaignId": "camp_1790256092866",
+      "deviceId": "dev_1790253862988",
+      "phone": "087829104817",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:22:15.344Z"
+    },
+    {
+      "id": "log_1790256124803_7dgxz7k6z0c",
+      "campaignId": "camp_1790256092866",
+      "deviceId": "dev_1790253862988",
+      "phone": "085718294012",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:22:04.803Z"
+    },
+    {
+      "id": "log_1790256114143_2582g5ks1yy",
+      "campaignId": "camp_1790256092866",
+      "deviceId": "dev_1790253862988",
+      "phone": "082194820194",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:21:54.143Z"
+    },
+    {
+      "id": "log_1790256103598_kk82jykyz6",
+      "campaignId": "camp_1790256092866",
+      "deviceId": "dev_1790253862988",
+      "phone": "081234819201",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:21:43.598Z"
+    },
+    {
+      "id": "log_1790255741922_agcro3y6fuv",
+      "campaignId": "camp_1790255731129",
+      "deviceId": "dev_1790253862988",
+      "phone": "085123248618",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:15:41.922Z"
+    },
+    {
+      "id": "log_1790255311375_pr9kni9477",
+      "campaignId": "camp_1790255300549",
+      "deviceId": "dev_1790253862988",
+      "phone": "085123248618",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:08:31.375Z"
+    },
+    {
+      "id": "log_1790254937415_oxti3pysk6",
+      "campaignId": "camp_1790254926599",
+      "deviceId": "dev_1790253862988",
+      "phone": "085123248618",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T13:02:17.415Z"
+    },
+    {
+      "id": "log_1790254534519_a1q15eyljhh",
+      "campaignId": "camp_1790254523532",
+      "deviceId": "dev_1790253862988",
+      "phone": "081234567890",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T12:55:34.519Z"
+    },
+    {
+      "id": "log_1790253914514_56z0ezmz9s",
+      "campaignId": "camp_1790253902231",
+      "deviceId": "dev_1790253862988",
+      "phone": "085123248618",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T12:45:14.514Z"
+    },
+    {
+      "id": "log_1790253669108_mlvm01cx9tk",
+      "campaignId": "camp_1790253657276",
+      "deviceId": "dev_1790227759908",
+      "phone": "085123248618",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T12:41:09.108Z"
+    },
+    {
+      "id": "log_1790253590119_ke8grj7eww8",
+      "campaignId": "camp_1790253579085",
+      "deviceId": "dev_1790227759908",
+      "phone": "081234567890",
+      "name": "",
+      "status": "sent",
+      "commission": 1500,
+      "timestamp": "2026-09-24T12:39:50.119Z"
+    },
+    {
+      "id": "log_1790235598094_y1do3i6698",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "084567890123",
+      "name": "Rina Susanti",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:39:58.094Z"
+    },
+    {
+      "id": "log_1790235587597_cdvtoyrw5l",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "086789012345",
+      "name": "Hendra Gunawan",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:39:47.597Z"
+    },
+    {
+      "id": "log_1790235577095_1eyy468uzhc",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "083456789012",
+      "name": "Ani Wijayanti",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:39:37.095Z"
+    },
+    {
+      "id": "log_1790235566602_zbhmgu2fmn9",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "089012345678",
+      "name": "Rudi Hermawan",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:39:26.602Z"
+    },
+    {
+      "id": "log_1790235556107_zhabmrggwur",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "082345678901",
+      "name": "Dewi Kartika",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:39:16.107Z"
+    },
+    {
+      "id": "log_1790235545114_hsloyfm496",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "087890123456",
+      "name": "Ahmad Fauzi",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:39:05.114Z"
+    },
+    {
+      "id": "log_1790235533638_faqyybhwhbp",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "085678901234",
+      "name": "Siti Rahayu",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:38:53.638Z"
+    },
+    {
+      "id": "log_1790235523130_si8yqzkm89",
+      "campaignId": "camp_1790235511883",
+      "deviceId": "dev_1790227759908",
+      "phone": "081234567890",
+      "name": "Budi Santoso",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T07:38:43.131Z"
+    },
+    {
+      "id": "log_1790228100419_rdf7ogial6",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "084567890123",
+      "name": "Rina Susanti",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:35:00.419Z"
+    },
+    {
+      "id": "log_1790228093209_e0chstpn9x7",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "086789012345",
+      "name": "Hendra Gunawan",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:34:53.209Z"
+    },
+    {
+      "id": "log_1790228089648_jmxls22avh",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "083456789012",
+      "name": "Ani Wijayanti",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:34:49.648Z"
+    },
+    {
+      "id": "log_1790228082578_9uxd414gxx7",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "089012345678",
+      "name": "Rudi Hermawan",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:34:42.578Z"
+    },
+    {
+      "id": "log_1790228076401_evkvsd9xbk",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "082345678901",
+      "name": "Dewi Kartika",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:34:36.401Z"
+    },
+    {
+      "id": "log_1790228070935_k0d45ku929",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "087890123456",
+      "name": "Ahmad Fauzi",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:34:30.935Z"
+    },
+    {
+      "id": "log_1790228064611_t4we09vbud",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "085678901234",
+      "name": "Siti Rahayu",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:34:24.611Z"
+    },
+    {
+      "id": "log_1790228059097_oritzxvug2",
+      "campaignId": "camp_1790228053395",
+      "deviceId": "dev_1790227759908",
+      "phone": "081234567890",
+      "name": "Budi Santoso",
+      "status": "sent",
+      "commission": 750,
+      "timestamp": "2026-09-24T05:34:19.097Z"
+    }
+  ],
+  "payouts": [
+    {
+      "payoutId": "PAY_1790252943508_IWX87",
+      "withdrawalId": "wd_1790252643690",
+      "userId": "usr_4minvt6e",
+      "amount": 30000,
+      "ewallet": "DANA",
+      "gateway": "AKAZA_PAY_DISBURSEMENT",
+      "status": "SUCCESS",
+      "processedAt": "2026-09-24T12:29:03.508Z",
+      "message": "Dana Rp 30.000 berhasil ditransfer ke undefined (undefined a.n undefined)"
+    },
+    {
+      "payoutId": "PAY_1790236823922_QNQ67",
+      "withdrawalId": "wd_1790236823915",
+      "userId": "usr_4minvt6e",
+      "amount": 100000,
+      "ewallet": "DANA",
+      "accountNumber": "083195233027",
+      "accountName": "Mitra WA",
+      "gateway": "AKAZA_PAY_DISBURSEMENT",
+      "status": "SUCCESS",
+      "processedAt": "2026-09-24T08:00:23.922Z",
+      "message": "Dana Rp 100.000 berhasil ditransfer ke DANA (083195233027 a.n Mitra WA)"
+    }
+  ],
+  "admin": {
+    "username": "admin",
+    "password": "Akaza#Admin2026!"
+  },
+  "adminTokens": {
+    "adm_1790258476345_l2fcby2f": {
+      "username": "admin",
+      "createdAt": "2026-09-24T14:01:16.345Z"
+    },
+    "adm_1790311882309_o5ao65zt": {
+      "username": "admin",
+      "createdAt": "2026-09-25T04:51:22.309Z"
+    },
+    "adm_1790312048750_4rdokg3b": {
+      "username": "admin",
+      "createdAt": "2026-09-25T04:54:08.750Z"
+    }
+  }
+}
