@@ -550,8 +550,9 @@
         max-height: none;
         position: relative;
         border-right: none;
-        border-bottom: none;
+        border-bottom: 1px solid #e2e8f0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        overflow: visible;
       }
       .sidebar-resizer {
         display: none !important;
@@ -559,6 +560,7 @@
       .sidebar-toggle-btn {
         display: none !important;
       }
+      /* Show all collapsed items on mobile */
       .admin-sidebar.collapsed .admin-brand-group,
       .admin-sidebar.collapsed .admin-brand-info,
       .admin-sidebar.collapsed .admin-brand-logo,
@@ -569,13 +571,60 @@
       .admin-sidebar.collapsed .logout-btn-text {
         display: inline-block !important;
       }
+      /* Hide SSE and user info from sidebar on mobile to save space */
+      .admin-sidebar-footer {
+        display: none !important;
+      }
+      /* Tab menu becomes horizontal scrollable pills */
       .admin-sidebar-menu {
         flex-direction: row;
         overflow-x: auto;
+        overflow-y: hidden;
         padding: 8px 12px;
+        gap: 6px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .admin-sidebar-menu::-webkit-scrollbar {
+        display: none;
       }
       .admin-menu-label {
         display: none;
+      }
+      /* Make nav items compact pills for mobile */
+      .admin-nav-item {
+        width: auto !important;
+        min-width: max-content;
+        flex-shrink: 0;
+        padding: 8px 14px !important;
+        border-radius: 99px !important;
+        font-size: 12px !important;
+        gap: 6px !important;
+        white-space: nowrap;
+      }
+      .admin-nav-item i {
+        font-size: 13px;
+        width: auto;
+      }
+      .admin-nav-item .nav-text {
+        flex: none;
+      }
+      .admin-nav-item .nav-badge {
+        font-size: 10px;
+        padding: 1px 6px;
+      }
+      .admin-nav-item.active {
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+      }
+      /* Collapsed sidebar nav item overrides for mobile */
+      .admin-sidebar.collapsed .admin-nav-item {
+        width: auto !important;
+        justify-content: center;
+        padding: 8px 14px !important;
+      }
+      .admin-sidebar.collapsed .admin-nav-item i {
+        margin: 0;
       }
       .admin-main-container {
         height: auto;
