@@ -165,13 +165,25 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
         const isLoggedOut = reason === DisconnectReason.loggedOut;
         const hasPairedPhone = Boolean(db.sessions[deviceId]?.phone);
 
-        // Jika belum terhubung (belum scan) dan timeout, batasi reconnect agar hemat RAM
+        // Jika belum terhubung (belum scan QR / pairing) dan batal/putus, langsung bersihkan total
         if (!hasPairedPhone) {
-          unpairedRetryCount[deviceId] = (unpairedRetryCount[deviceId] || 0) + 1;
+          try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
+          delete db.sessions[deviceId];
+          delete sessions[deviceId];
+          delete qrCodeStore[deviceId];
+          delete pairingCodes[deviceId];
+          delete sessionStatus[deviceId];
+          delete unpairedRetryCount[deviceId];
+          Object.values(db.users).forEach(u => {
+            if (u.devices) u.devices = u.devices.filter(d => d !== deviceId);
+          });
+          save();
+          broadcast('device_update', { deviceId, status: 'deleted' });
+          console.log(`[${deviceId}] Sesi belum di-pair dibersihkan otomatis.`);
+          return;
         }
 
-        const maxRetryReached = !hasPairedPhone && unpairedRetryCount[deviceId] >= 3;
-        const shouldReconnect = !isLoggedOut && !maxRetryReached;
+        const shouldReconnect = !isLoggedOut;
         const newStatus = shouldReconnect ? 'connecting' : 'offline';
         sessionStatus[deviceId] = newStatus;
 
@@ -181,7 +193,7 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
         }
 
         broadcast('device_update', { deviceId, status: newStatus });
-        console.log(`[${deviceId}] Disconnected (reason: ${reason}), reconnect: ${shouldReconnect}, retries: ${unpairedRetryCount[deviceId] || 0}`);
+        console.log(`[${deviceId}] Disconnected (reason: ${reason}), reconnect: ${shouldReconnect}`);
 
         if (shouldReconnect) {
           setTimeout(() => startBaileysSession(deviceId, false), 5000);
@@ -194,9 +206,6 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
           delete sessions[deviceId];
           delete qrCodeStore[deviceId];
           delete pairingCodes[deviceId];
-          if (maxRetryReached) {
-            console.log(`[${deviceId}] Pairing timeout (3x). Reconnection stopped to conserve RAM.`);
-          }
         }
       }
     });
@@ -794,7 +803,10 @@ app.delete('/api/admin/users/:id', (req, res) => {
 // Devices (Filtered by userId if requested by member portal)
 app.get('/api/devices', (req, res) => {
   const userId = req.query.userId;
-  let devEntries = Object.entries(db.sessions);
+  let devEntries = Object.entries(db.sessions).filter(([id, info]) => {
+    // Abaikan sesi sementara yang belum pernah scan/pair sama sekali
+    return Boolean(info.phone || info.connectedAt || sessionStatus[id] === 'online');
+  });
   if (userId) {
     const user = resolveUser(userId);
     if (user) {
@@ -885,12 +897,7 @@ app.post('/api/devices/add', async (req, res) => {
     totalSent: 0
   };
 
-  if (userId && db.users[userId]) {
-    if (!db.users[userId].devices) db.users[userId].devices = [];
-    if (!db.users[userId].devices.includes(deviceId)) {
-      db.users[userId].devices.push(deviceId);
-    }
-  }
+  // Jangan tambahkan ke user.devices dulu; hanya ditambahkan saat connection === 'open' (sudah scan/pair)
   save();
 
   startBaileysSession(deviceId, !!usePairingCode, phoneNumber || '');

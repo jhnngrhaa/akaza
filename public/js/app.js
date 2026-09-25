@@ -558,7 +558,14 @@ function closeDeviceModal() {
   document.getElementById('device-modal').style.display = 'none';
   clearInterval(qrPollingInterval);
   qrPollingInterval = null;
-  pendingDeviceId = null;
+
+  if (pendingDeviceId) {
+    const devIdToClean = pendingDeviceId;
+    pendingDeviceId = null;
+    fetch(`${API}/api/devices/${devIdToClean}`, { method: 'DELETE' }).catch(() => {});
+    setTimeout(() => refreshDevices(), 300);
+  }
+
   // Reset QR UI
   const img = document.getElementById('qr-image');
   if (img) { img.src = ''; img.style.display = 'none'; }
