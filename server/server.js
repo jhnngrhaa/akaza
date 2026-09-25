@@ -474,9 +474,9 @@ async function runBlast(campaignId) {
       await sock.sendMessage(jid, { text: msg });
       blastProgress.sent++;
 
-      // Credit commission to device owner (Rp 1.500 / pesan)
+      // Credit commission to device owner (Rp 900 / pesan)
       const owner = resolveUser(db.sessions[deviceId]?.userId) || Object.values(db.users).find(u => (u.devices || []).includes(deviceId));
-      const commRate = (owner && owner.commissionPerMessage) || 1500;
+      const commRate = (owner && owner.commissionPerMessage) || 900;
 
       if (db.sessions[deviceId]) {
         db.sessions[deviceId].sentToday = (db.sessions[deviceId].sentToday || 0) + 1;
@@ -683,7 +683,7 @@ app.post('/api/auth/register', (req, res) => {
     ewalletNumber: (ewalletNumber || cleanPhone).replace(/\D/g, ''),
     saldo: 0,
     points: 0,
-    commissionPerMessage: 1500,
+    commissionPerMessage: 900,
     devices: [],
     referralCode: userRefCode,
     referredBy: null,
@@ -691,7 +691,7 @@ app.post('/api/auth/register', (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  // ─── Referral 200 Perak (Rp 200) System ─────────────────────────
+  // ─── Referral 100 Perak (Rp 100) System ─────────────────────────
   if (referralCode && referralCode.trim()) {
     const cleanRef = referralCode.trim().toUpperCase();
     const inviter = Object.values(db.users).find(u =>
@@ -700,7 +700,7 @@ app.post('/api/auth/register', (req, res) => {
     );
 
     if (inviter) {
-      const referralBonus = 200; // 200 perak (Rp 200)
+      const referralBonus = 100; // 100 perak (Rp 100)
       inviter.points = (inviter.points || 0) + referralBonus;
       inviter.saldo = (inviter.saldo || 0) + referralBonus; // Menambah saldo withdrawable pengundang
       if (!inviter.referrals) inviter.referrals = [];
@@ -714,7 +714,7 @@ app.post('/api/auth/register', (req, res) => {
       });
       newUser.referredBy = inviter.username;
 
-      // Bonus sambutan 200 perak (Rp 200) untuk member baru yang mendaftar via referral
+      // Bonus sambutan 100 perak (Rp 100) untuk member baru yang mendaftar via referral
       newUser.points = (newUser.points || 0) + referralBonus;
       newUser.saldo = (newUser.saldo || 0) + referralBonus;
 
@@ -818,7 +818,7 @@ app.get('/api/admin/users', (req, res) => {
       ewalletNumber: u.ewalletNumber || u.phone,
       saldo: u.saldo || 0,
       points: u.points || 0,
-      commissionPerMessage: u.commissionPerMessage || 1500,
+      commissionPerMessage: u.commissionPerMessage || 900,
       devicesCount: activeCount,
       activeDevicesCount: activeCount,
       totalDevicesCount: userDevices.length,
@@ -850,7 +850,7 @@ app.post('/api/admin/users', (req, res) => {
     ewalletNumber: (ewalletNumber || cleanPhone).replace(/\D/g, ''),
     saldo: Number(initialSaldo) || 0,
     points: Number(initialPoints) || 0,
-    commissionPerMessage: 1500,
+    commissionPerMessage: 900,
     devices: [],
     referralCode: generateUniqueReferralCode(),
     referredBy: null,
@@ -912,7 +912,7 @@ app.get('/api/devices', (req, res) => {
   }
   const devs = devEntries.map(([id, info]) => {
     const owner = resolveUser(info.userId);
-    const commRate = (owner && owner.commissionPerMessage) || 1500;
+    const commRate = (owner && owner.commissionPerMessage) || 900;
     return {
       ...info,
       status: sessionStatus[id] || info.status || 'offline',

@@ -171,7 +171,7 @@ function connectSSE() {
       prependLogRow(entry);
 
       if (entry.status === 'sent') {
-        currentUser.saldo = (currentUser.saldo || 0) + (entry.commission || 1500);
+        currentUser.saldo = (currentUser.saldo || 0) + (entry.commission || 900);
         updateUserUI();
       }
     } catch (_) {}
@@ -194,7 +194,7 @@ function connectSSE() {
         if (data.newSaldo !== undefined) currentUser.saldo = data.newSaldo;
         updateUserUI();
         renderReferrals();
-        showToast(`🎉 Member @${data.invitedUsername} mendaftar via referral Anda! +200 Perak (Rp 200) diterima!`);
+        showToast(`🎉 Member @${data.invitedUsername} mendaftar via referral Anda! +100 Perak (Rp 100) diterima!`);
       }
     } catch (_) {}
   });
@@ -327,7 +327,7 @@ function renderDeviceCards(devices) {
     const currentMode = dev.mode || 'NORMAL_10S';
     const sentCount = dev.sentToday || 0;
     const deliveredCount = dev.deliveredCount !== undefined ? dev.deliveredCount : sentCount;
-    const profitCount = (sentCount * 1500) || (dev.profit !== undefined ? dev.profit : 0);
+    const profitCount = (sentCount * 900) || (dev.profit !== undefined ? dev.profit : 0);
     const phoneDisplay = dev.phone ? '+' + dev.phone.replace(/\D/g, '') : '-';
 
     const statusBadgeClass = isOnline ? 'connected' : isConnecting ? 'connecting' : 'disconnected';
@@ -447,7 +447,7 @@ function renderLogTable(logs) {
         </span>
       </td>
       <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">
-        ${isSuccess ? '+' + formatRp(log.commission && log.commission >= 1500 ? log.commission : 1500) : 'Rp 0'}
+        ${isSuccess ? '+' + formatRp(log.commission && log.commission >= 900 ? log.commission : 900) : 'Rp 0'}
       </td>
     </tr>`;
   }).join('');
@@ -467,7 +467,7 @@ function prependLogRow(entry) {
     <td>${formatTime(entry.timestamp)}</td>
     <td>${escHtml(maskPhone(entry.phone || entry.receiver))}</td>
     <td><span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">${isSuccess ? 'Terkirim' : 'Gagal'}</span></td>
-    <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">${isSuccess ? '+' + formatRp(entry.commission && entry.commission >= 1500 ? entry.commission : 1500) : 'Rp 0'}</td>`;
+    <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">${isSuccess ? '+' + formatRp(entry.commission && entry.commission >= 900 ? entry.commission : 900) : 'Rp 0'}</td>`;
   tr.style.animation = 'fadeInRow 0.4s ease';
   tbody.insertBefore(tr, tbody.firstChild);
 
@@ -981,7 +981,7 @@ async function renderReferrals() {
     if (!list.length) {
       tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px;">
         <i class="fa-solid fa-gift" style="opacity:0.3;font-size:24px;display:block;margin-bottom:8px;"></i>
-        Belum ada member yang mendaftar via referral Anda.<br>Ajak teman sekarang untuk dapat <strong>+200 Perak</strong> per orang!
+        Belum ada member yang mendaftar via referral Anda.<br>Ajak teman sekarang untuk dapat <strong>+100 Perak</strong> per orang!
       </td></tr>`;
       return;
     }
@@ -995,7 +995,7 @@ async function renderReferrals() {
         <td style="font-size:12px;color:var(--text-muted);">${formatDate(m.joinedAt)}</td>
         <td>
           <span style="background:#fef3c7;color:#b45309;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:4px;">
-            <i class="fa-solid fa-gift"></i> +${m.bonusRp || m.pointsEarned || 200} Perak
+            <i class="fa-solid fa-gift"></i> +${m.bonusRp || m.pointsEarned || 100} Perak
           </span>
         </td>
       </tr>
@@ -1020,7 +1020,7 @@ function copyReferralLink() {
 function shareReferralWhatsApp() {
   const code = document.getElementById('ref-code-input').value;
   const link = document.getElementById('ref-link-input').value;
-  const msg = encodeURIComponent(`Halo! Yuk gabung jadi mitra Akaza Blast dan hasilkan uang dari WhatsApp kamu! Komisi Rp 1.500 per pesan blast terkirim.\n\nDaftar gratis lewat link ini:\n${link}\n\nAtau gunakan kode referral: ${code}`);
+  const msg = encodeURIComponent(`Halo! Yuk gabung jadi mitra Akaza Blast dan hasilkan uang dari WhatsApp kamu! Komisi Rp 900 per pesan blast terkirim.\n\nDaftar gratis lewat link ini:\n${link}\n\nAtau gunakan kode referral: ${code}`);
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
 

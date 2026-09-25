@@ -644,7 +644,7 @@ async function loadAdminDevices() {
             <i class="fa-solid fa-check-double"></i> Delivered: <strong>${dev.deliveredCount || dev.sentToday || 0}</strong>
           </div>
           <div class="stat-pill pill-profit">
-            <i class="fa-solid fa-coins"></i> Total Komisi: <strong>Rp ${(dev.profit || ((dev.sentToday || 0) * 1500)).toLocaleString('id-ID')}</strong>
+            <i class="fa-solid fa-coins"></i> Total Komisi: <strong>Rp ${(dev.profit || ((dev.sentToday || 0) * 900)).toLocaleString('id-ID')}</strong>
           </div>
         </div>
 
