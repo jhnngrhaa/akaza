@@ -1116,6 +1116,14 @@ body {
     word-break: break-word;
   }
 
+  .clean-table button,
+  .clean-table .btn-secondary,
+  .clean-table .btn-primary,
+  .clean-table .btn-danger {
+    word-break: normal !important;
+    white-space: nowrap !important;
+  }
+
   /* Status Grid (Online / Offline) */
   .status-grid {
     gap: 10px;

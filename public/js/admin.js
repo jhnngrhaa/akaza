@@ -1007,12 +1007,12 @@ async function loadAdminUsers() {
           <code style="font-size:11.5px;background:#f8fafc;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-weight:700;">${escHtml(u.referralCode || '-')}</code>
           <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">${u.totalInvited || 0} diundang</div>
         </td>
-        <td>
-          <div style="display:flex;gap:6px;">
-            <button class="btn-secondary" style="font-size:11px;padding:4px 8px;" onclick="openEditSaldoModal('${u.id}', '${escHtml(u.name)}', ${u.saldo || 0})">
+        <td style="white-space:nowrap;">
+          <div style="display:flex;gap:6px;align-items:center;white-space:nowrap;">
+            <button class="btn-secondary" style="font-size:11px;padding:4px 10px;white-space:nowrap;flex-shrink:0;" onclick="openEditSaldoModal('${u.id}', '${escHtml(u.name)}', ${u.saldo || 0})">
               <i class="fa-solid fa-pen-to-square"></i> Saldo
             </button>
-            <button class="btn-danger" style="font-size:11px;padding:4px 8px;" onclick="deleteAdminUser('${u.id}', '${escHtml(u.name)}')">
+            <button class="btn-danger" style="font-size:11px;padding:4px 8px;white-space:nowrap;flex-shrink:0;" onclick="deleteAdminUser('${u.id}', '${escHtml(u.name)}')">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
