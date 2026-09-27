@@ -33,6 +33,9 @@ function loadDb() {
     blastContacts: [],
     blastMessage: '',
     blastTitle: '',
+    blastImageUrl: '',
+    blastButtonText: '',
+    blastButtonUrl: '',
     withdrawals: [],
     payouts: [],
     sessions: {},
@@ -552,7 +555,31 @@ async function runBlast(campaignId) {
     }
 
     try {
-      await sock.sendMessage(jid, { text: msg });
+      let payload = {};
+      const imgUrl = db.blastImageUrl ? db.blastImageUrl.trim() : '';
+      const btnText = db.blastButtonText ? db.blastButtonText.trim() : '';
+      const btnUrl = db.blastButtonUrl ? db.blastButtonUrl.trim() : '';
+
+      if (imgUrl && imgUrl.startsWith('http')) {
+        payload.image = { url: imgUrl };
+        payload.caption = msg;
+      } else {
+        payload.text = msg;
+      }
+
+      if (btnText && btnUrl) {
+        payload.templateButtons = [
+          {
+            index: 1,
+            urlButton: {
+              displayText: btnText,
+              url: btnUrl
+            }
+          }
+        ];
+      }
+
+      await sock.sendMessage(jid, payload);
       blastProgress.sent++;
 
       // Credit commission to device owner
@@ -1197,16 +1224,26 @@ app.get('/api/campaigns', (req, res) => res.json(db.campaigns.slice(0, 20)));
 app.get('/api/blast/current', (req, res) => res.json({ active: blastActive, progress: blastProgress }));
 
 app.get('/api/blast/contacts', (req, res) => {
-  res.json({ contacts: db.blastContacts, message: db.blastMessage, title: db.blastTitle });
+  res.json({
+    contacts: db.blastContacts,
+    message: db.blastMessage,
+    title: db.blastTitle,
+    imageUrl: db.blastImageUrl || '',
+    buttonText: db.blastButtonText || '',
+    buttonUrl: db.blastButtonUrl || ''
+  });
 });
 
 app.post('/api/blast/setup', (req, res) => {
-  const { contacts, message, title } = req.body;
+  const { contacts, message, title, imageUrl, buttonText, buttonUrl } = req.body;
   if (contacts !== undefined) {
     db.blastContacts = parseContacts(contacts || '');
   }
-  if (message) db.blastMessage = message;
-  if (title) db.blastTitle = title;
+  if (message !== undefined) db.blastMessage = message;
+  if (title !== undefined) db.blastTitle = title;
+  if (imageUrl !== undefined) db.blastImageUrl = imageUrl;
+  if (buttonText !== undefined) db.blastButtonText = buttonText;
+  if (buttonUrl !== undefined) db.blastButtonUrl = buttonUrl;
   save();
 
   if (blastActive) {

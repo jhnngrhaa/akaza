@@ -868,11 +868,30 @@
 
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label" style="font-size:11px;">Template Pesan WhatsApp</label>
-            <textarea class="form-textarea" id="admin-message-input" style="height:190px;font-size:12.5px;"
+            <textarea class="form-textarea" id="admin-message-input" style="height:140px;font-size:12.5px;"
               placeholder="{Halo|Hai|Selamat Siang} kak {nama}! Kami ada penawaran promo spesial diskon hingga 50% untuk kamu hari ini. Jangan lewatkan ya!"></textarea>
           </div>
 
-          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label" style="font-size:11px;">URL Gambar Banner / Header (Opsional)</label>
+            <input type="text" class="form-input" id="admin-image-input" style="font-size:12px;"
+              placeholder="https://example.com/banner-promo.jpg" oninput="updatePreviewBubble()">
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size:11px;">Teks Tombol CTA (Opsional)</label>
+              <input type="text" class="form-input" id="admin-button-text-input" style="font-size:12px;"
+                placeholder="🚀 Join & Jeeto!" oninput="updatePreviewBubble()">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:11px;">Link Website Target (Button URL)</label>
+              <input type="text" class="form-input" id="admin-button-url-input" style="font-size:12px;"
+                placeholder="https://website-kamu.com" oninput="updatePreviewBubble()">
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:5px;">
             <button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="saveMessageTemplateOnly()">
               <i class="fa-solid fa-floppy-disk"></i> Simpan Template Pesan
             </button>

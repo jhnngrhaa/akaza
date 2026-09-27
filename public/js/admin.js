@@ -379,6 +379,9 @@ function removeContactFromTextarea(phone) {
 
 function updatePreviewBubble() {
   const msgInput = document.getElementById('admin-message-input');
+  const imgInput = document.getElementById('admin-image-input');
+  const btnTextInput = document.getElementById('admin-button-text-input');
+  const btnUrlInput = document.getElementById('admin-button-url-input');
   const bubble = document.getElementById('preview-bubble');
   const clock = document.getElementById('preview-clock');
   if (!msgInput || !bubble) return;
@@ -393,8 +396,29 @@ function updatePreviewBubble() {
   const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   if (clock) clock.textContent = timeStr;
 
+  const imageUrl = imgInput ? imgInput.value.trim() : '';
+  const buttonText = btnTextInput ? btnTextInput.value.trim() : '';
+  const buttonUrl = btnUrlInput ? btnUrlInput.value.trim() : '';
+
+  let html = '';
+  if (imageUrl) {
+    html += `<div style="margin:-8px -10px 8px -10px;border-radius:8px 8px 0 0;overflow:hidden;background:#000;">
+      <img src="${escHtml(imageUrl)}" style="width:100%;max-height:200px;object-fit:cover;display:block;" onerror="this.style.display='none'">
+    </div>`;
+  }
+
   const formattedHtml = escHtml(parsed).replace(/\r\n/g, '<br>').replace(/\n/g, '<br>');
-  bubble.innerHTML = `<div style="white-space:pre-wrap;word-break:break-word;line-height:1.45;">${formattedHtml}</div><div class="preview-chat-time"><span>${timeStr}</span> <i class="fa-solid fa-check-double" style="color:#53bdeb;margin-left:3px;"></i></div>`;
+  html += `<div style="white-space:pre-wrap;word-break:break-word;line-height:1.45;">${formattedHtml}</div>`;
+
+  if (buttonText) {
+    html += `<div style="margin:8px -10px -8px -10px;border-top:1px solid rgba(0,0,0,0.08);padding:8px;text-align:center;background:rgba(16,185,129,0.12);color:#059669;font-weight:700;font-size:12.5px;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> ${escHtml(buttonText)}
+    </div>`;
+  } else {
+    html += `<div class="preview-chat-time"><span>${timeStr}</span> <i class="fa-solid fa-check-double" style="color:#53bdeb;margin-left:3px;"></i></div>`;
+  }
+
+  bubble.innerHTML = html;
 }
 
 // ─── Draft Setup (Contacts & Template) ─────────────────────────────
@@ -404,15 +428,23 @@ async function loadDraftSetup() {
     if (!res.ok) return;
     const data = await res.json();
     if (data.contacts && data.contacts.length) {
-      // Just plain phone numbers! No name needed!
       const raw = data.contacts.map(c => c.phone || c).join('\n');
       document.getElementById('admin-contacts-input').value = raw;
       updateTargetCount();
     }
     if (data.message) {
       document.getElementById('admin-message-input').value = data.message;
-      updatePreviewBubble();
     }
+    if (data.imageUrl && document.getElementById('admin-image-input')) {
+      document.getElementById('admin-image-input').value = data.imageUrl;
+    }
+    if (data.buttonText && document.getElementById('admin-button-text-input')) {
+      document.getElementById('admin-button-text-input').value = data.buttonText;
+    }
+    if (data.buttonUrl && document.getElementById('admin-button-url-input')) {
+      document.getElementById('admin-button-url-input').value = data.buttonUrl;
+    }
+    updatePreviewBubble();
   } catch (_) {}
 }
 
@@ -442,6 +474,10 @@ async function saveContactsOnly() {
 
 async function saveMessageTemplateOnly() {
   const message = document.getElementById('admin-message-input').value.trim();
+  const imageUrl = (document.getElementById('admin-image-input')?.value || '').trim();
+  const buttonText = (document.getElementById('admin-button-text-input')?.value || '').trim();
+  const buttonUrl = (document.getElementById('admin-button-url-input')?.value || '').trim();
+
   if (!message) {
     showAdminToast('Masukkan isi template pesan!');
     return false;
@@ -450,10 +486,10 @@ async function saveMessageTemplateOnly() {
     const r = await fetch(`${API}/api/blast/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message, imageUrl, buttonText, buttonUrl })
     });
     if (r.ok) {
-      showAdminToast('✅ Template pesan berhasil disimpan!');
+      showAdminToast('✅ Template pesan & Media Button berhasil disimpan!');
       return true;
     }
   } catch (err) {
@@ -465,6 +501,9 @@ async function saveMessageTemplateOnly() {
 async function saveDraftSetup() {
   const contactsRaw = document.getElementById('admin-contacts-input').value;
   const message = document.getElementById('admin-message-input').value.trim();
+  const imageUrl = (document.getElementById('admin-image-input')?.value || '').trim();
+  const buttonText = (document.getElementById('admin-button-text-input')?.value || '').trim();
+  const buttonUrl = (document.getElementById('admin-button-url-input')?.value || '').trim();
   const title = 'Blast Campaign';
 
   const contacts = contactsRaw.split('\n').map(l => l.trim()).filter(Boolean);
@@ -481,7 +520,7 @@ async function saveDraftSetup() {
     const r = await fetch(`${API}/api/blast/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contacts, message, title })
+      body: JSON.stringify({ contacts, message, imageUrl, buttonText, buttonUrl, title })
     });
     if (r.ok) {
       showAdminToast('✅ Setup campaign berhasil disimpan!');
