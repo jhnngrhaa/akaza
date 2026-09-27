@@ -31,6 +31,49 @@
       position: relative;
     }
 
+    /* Table & Card UI Styling */
+    .admin-table-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .admin-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    .admin-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .admin-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .admin-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .admin-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
     /* ─── SIDEBAR NAVBAR KIRI (TELEGRAM DESKTOP STYLE) ─── */
     body.is-resizing {
       cursor: col-resize !important;
@@ -740,7 +783,78 @@
     <main class="admin-main-container">
 
 
-      <!-- MAINTENANCE CONTROL BAR -->
+      <!-- METRICS OVERVIEW -->
+      <div class="admin-metric-grid" style="margin-bottom:16px;">
+        <div class="admin-metric-card">
+          <span class="label">Device Online</span>
+          <span class="val" id="metric-devices-online" style="color:#10b981;">0</span>
+          <span class="sub"><span id="metric-devices-total">0</span> total terhubung</span>
+        </div>
+        <div class="admin-metric-card">
+          <span class="label">Target Database</span>
+          <span class="val" id="metric-target-count" style="color:var(--primary);">0</span>
+          <span class="sub">Nomor siap blast</span>
+        </div>
+        <div class="admin-metric-card">
+          <span class="label">Pesan Hari Ini</span>
+          <span class="val" id="metric-sent-today">0</span>
+          <span class="sub">Terkirim otomatis</span>
+        </div>
+        <div class="admin-metric-card">
+          <span class="label">Status Engine</span>
+          <span class="val" id="metric-blast-status" style="font-size:16px;text-transform:uppercase;color:#64748b;">IDLE</span>
+          <span class="sub" id="metric-blast-sub">Siap meluncurkan</span>
+        </div>
+      </div>
+
+    <!-- ==============================================================
+         TAB 0: BERANDA DASHBOARD ADMIN
+         ============================================================== -->
+    <section id="admin-view-dashboard">
+      <div class="admin-table-card">
+        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:#ffffff;">
+          <div>
+            <div style="font-size:14px;font-weight:800;color:var(--text-main);">
+              <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);margin-right:6px;"></i> Log Blast User Real-Time
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+              Pantau seluruh aktivitas pengiriman pesan otomatis dari akun WhatsApp mitra/user secara real-time.
+            </div>
+          </div>
+          <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="loadAdminLogs()">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh Log
+          </button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>WAKTU</th>
+                <th>USER / DEVICE</th>
+                <th>NOMOR TUJUAN</th>
+                <th>STATUS</th>
+                <th>KOMISI</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-logs-tbody">
+              <tr>
+                <td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">
+                  <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i> Memuat data log pengiriman real-time...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         TAB 1: BLAST CONTROL & TARGET DATABASE
+         ============================================================== -->
+    <section id="admin-view-blast" style="display:none;">
+
+      <!-- MAINTENANCE CONTROL BAR (Khusus Tab Kontrol Blast) -->
       <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="display:flex; align-items:center; gap:12px;">
           <div id="maint-icon-badge" style="width:40px; height:40px; border-radius:10px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:18px; transition:all 0.2s;">
@@ -763,7 +877,7 @@
         </div>
       </div>
 
-      <!-- GLOBAL RATE CONTROL BAR -->
+      <!-- GLOBAL RATE CONTROL BAR (Khusus Tab Kontrol Blast) -->
       <div class="admin-rate-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="width:40px; height:40px; border-radius:10px; background:#eef2ff; display:flex; align-items:center; justify-content:center; color:#4f46e5; font-size:18px;">
@@ -801,77 +915,6 @@
           </button>
         </div>
       </div>
-
-      <!-- METRICS OVERVIEW -->
-      <div class="admin-metric-grid">
-        <div class="admin-metric-card">
-          <span class="label">Device Online</span>
-          <span class="val" id="metric-devices-online" style="color:#10b981;">0</span>
-          <span class="sub"><span id="metric-devices-total">0</span> total terhubung</span>
-        </div>
-        <div class="admin-metric-card">
-          <span class="label">Target Database</span>
-          <span class="val" id="metric-target-count" style="color:var(--primary);">0</span>
-          <span class="sub">Nomor siap blast</span>
-        </div>
-        <div class="admin-metric-card">
-          <span class="label">Pesan Hari Ini</span>
-          <span class="val" id="metric-sent-today">0</span>
-          <span class="sub">Terkirim otomatis</span>
-        </div>
-        <div class="admin-metric-card">
-          <span class="label">Status Engine</span>
-          <span class="val" id="metric-blast-status" style="font-size:16px;text-transform:uppercase;color:#64748b;">IDLE</span>
-          <span class="sub" id="metric-blast-sub">Siap meluncurkan</span>
-        </div>
-      </div>
-
-    <!-- ==============================================================
-         TAB 0: BERANDA DASHBOARD ADMIN
-         ============================================================== -->
-    <section id="admin-view-dashboard">
-      <div class="clean-panel" style="margin-top:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <div>
-            <div style="font-size:14px;font-weight:800;color:var(--text-main);">
-              <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);margin-right:6px;"></i> Log Blast User Real-Time
-            </div>
-            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
-              Pantau seluruh aktivitas pengiriman pesan otomatis dari akun WhatsApp mitra/user secara real-time.
-            </div>
-          </div>
-          <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="loadAdminLogs()">
-            <i class="fa-solid fa-arrows-rotate"></i> Refresh Log
-          </button>
-        </div>
-
-        <div style="overflow-x:auto;">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>WAKTU</th>
-                <th>USER / DEVICE</th>
-                <th>NOMOR TUJUAN</th>
-                <th>STATUS</th>
-                <th>KOMISI</th>
-              </tr>
-            </thead>
-            <tbody id="dashboard-logs-tbody">
-              <tr>
-                <td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">
-                  Memuat data log pengiriman real-time...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==============================================================
-         TAB 1: BLAST CONTROL & TARGET DATABASE
-         ============================================================== -->
-    <section id="admin-view-blast" style="display:none;">
 
       <div class="admin-blast-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         
