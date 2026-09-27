@@ -47,6 +47,24 @@
         </div>
       </div>
 
+      <!-- Peringatan Anti-Hapus / Tarik Pesan -->
+      <div style="background:#fff1f2;border:1px solid #fecdd3;border-left:5px solid #ef4444;border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 2px 8px rgba(239,68,68,0.06);">
+        <div style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:2px;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:13.5px;font-weight:800;color:#991b1b;display:flex;align-items:center;gap:8px;">
+            PERINGATAN: DILARANG MENARIK / MENGHAPUS PESAN BLAST!
+          </div>
+          <div style="font-size:12.5px;color:#7f1d1d;margin-top:4px;line-height:1.5;">
+            Dilarang menggunakan fitur <strong>"Hapus untuk Semua Orang" (Tarik Pesan)</strong> pada pesan blast WhatsApp. Sistem mendeteksi setiap penarikan pesan secara realtime. Setiap penarikan pesan blast akan mengakibatkan <strong>pembatalan komisi</strong> dan <strong>PEMBLOKIRAN PERMANEN PADA AKUN MEMBER</strong>.
+          </div>
+          <div style="font-size:11.5px;color:#b91c1c;margin-top:6px;font-weight:600;">
+            <i class="fa-solid fa-shield-halved"></i> Chat blast otomatis dibersihkan oleh sistem (Delete for Me) secara aman setelah 5 menit tanpa perlu Anda hapus manual.
+          </div>
+        </div>
+      </div>
+
       <!-- Info Komisi (Bisa dihapus / dismissible & muncul di awal login) -->
       <div class="card-info-blue" id="commission-banner" style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;">
         <div style="display:flex;gap:14px;align-items:flex-start;">
@@ -458,6 +476,7 @@
           <li>Setiap pesan blast yang sukses terkirim lewat nomormu otomatis menambah saldo sebesar <strong>Rp 900</strong>.</li>
           <li>Undang teman menggunakan <strong>Kode Referral</strong> kamu untuk mendapatkan <strong>pasif komisi 100 Perak (Rp 100)</strong> dari setiap 1 pesan yang berhasil dikirim oleh temanmu.</li>
           <li>Tarik saldo dan poin kapan saja ke akun E-Wallet kamu di menu <strong>Wallets</strong>.</li>
+          <li style="color:#dc2626;font-weight:700;">Dilarang menarik pesan (Hapus untuk Semua Orang). Penarikan pesan akan membatalkan komisi dan berakibat pemblokiran akun secara permanen.</li>
         </ol>
       </div>
     </section>
@@ -509,6 +528,9 @@
       </div>
 
       <div class="modal-body">
+        <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11.5px;color:#991b1b;line-height:1.4;">
+          <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;margin-right:4px;"></i> <strong>Peringatan Mitra:</strong> Dilarang keras menarik / menghapus pesan blast. Pelanggaran akan memicu pembatalan komisi dan sanksi pemblokiran akun.
+        </div>
         <!-- Device Name -->
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Nama Device</label>
@@ -567,7 +589,7 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script src="js/app.js?v=3.7"></script>
+  <script src="js/app.js?v=3.8"></script>
 
   <script>
     // SSE Indicator Update
