@@ -693,8 +693,22 @@
       .admin-metric-card {
         padding: 12px 14px;
       }
-      .admin-metric-card .val {
-        font-size: 18px;
+    .admin-rate-bar, .admin-maintenance-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    @media (max-width: 1100px) {
+      .admin-rate-bar, .admin-maintenance-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+      }
+      .admin-rate-bar .rate-controls-wrap, .admin-maintenance-bar .maint-controls-wrap {
+        width: 100% !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
       }
     }
   </style>
@@ -855,13 +869,13 @@
     <section id="admin-view-blast" style="display:none;">
 
       <!-- MAINTENANCE CONTROL BAR (Khusus Tab Kontrol Blast) -->
-      <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div id="maint-icon-badge" style="width:40px; height:40px; border-radius:10px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:18px; transition:all 0.2s;">
+      <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 20px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div id="maint-icon-badge" style="width:42px; height:42px; border-radius:12px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:19px; transition:all 0.2s; flex-shrink:0;">
             <i class="fa-solid fa-screwdriver-wrench"></i>
           </div>
           <div>
-            <div style="font-size:14px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+            <div style="font-size:14.5px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
               Status Mode Maintenance
               <span id="maint-status-badge" style="padding:3px 10px; border-radius:99px; font-size:11px; font-weight:800; background:#f1f5f9; color:#475569; letter-spacing:0.5px;">OFF</span>
             </div>
@@ -870,47 +884,43 @@
             </div>
           </div>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <button type="button" id="btn-toggle-maintenance" onclick="toggleAdminMaintenance()" style="padding:8px 18px; border-radius:10px; font-weight:700; font-size:12.5px; border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:7px; background:#e2e8f0; color:#334155;">
+        <div class="maint-controls-wrap" style="flex-shrink:0;">
+          <button type="button" id="btn-toggle-maintenance" onclick="toggleAdminMaintenance()" style="padding:9px 18px; border-radius:10px; font-weight:700; font-size:12.5px; border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:7px; background:#e2e8f0; color:#334155; white-space:nowrap;">
             <i class="fa-solid fa-power-off"></i> <span id="maint-btn-label">Aktifkan Maintenance</span>
           </button>
         </div>
       </div>
 
       <!-- GLOBAL RATE CONTROL BAR (Khusus Tab Kontrol Blast) -->
-      <div class="admin-rate-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div style="width:40px; height:40px; border-radius:10px; background:#eef2ff; display:flex; align-items:center; justify-content:center; color:#4f46e5; font-size:18px;">
+      <div class="admin-rate-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="width:42px; height:42px; border-radius:12px; background:#eef2ff; display:flex; align-items:center; justify-content:center; color:#4f46e5; font-size:19px; flex-shrink:0;">
             <i class="fa-solid fa-coins"></i>
           </div>
           <div>
-            <div style="font-size:14px; font-weight:800; color:var(--text-main);">
+            <div style="font-size:14.5px; font-weight:800; color:var(--text-main);">
               Pengaturan Rate Komisi &amp; Referral Global
             </div>
             <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
-              Atur tarif default komisi per pesan dan bonus komisi referral untuk user baru
+              Atur tarif default komisi per pesan dan bonus komisi referral untuk seluruh user
             </div>
           </div>
         </div>
 
-        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:12px; font-weight:700; color:#475569;">Rate Pesan:</span>
-            <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:4px 8px;">
-              <span style="font-size:12px; color:#64748b; font-weight:600; margin-right:4px;">Rp</span>
-              <input type="number" id="admin-global-msg-rate" value="900" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="900">
-            </div>
+        <div class="rate-controls-wrap" style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+          <div style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:6px 12px;">
+            <span style="font-size:12px; font-weight:700; color:#475569; white-space:nowrap;">Rate Pesan:</span>
+            <span style="font-size:12px; color:#64748b; font-weight:700;">Rp</span>
+            <input type="number" id="admin-global-msg-rate" value="900" style="width:75px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="900">
           </div>
 
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:12px; font-weight:700; color:#475569;">Bonus Referral:</span>
-            <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:4px 8px;">
-              <span style="font-size:12px; color:#64748b; font-weight:600; margin-right:4px;">Rp</span>
-              <input type="number" id="admin-global-ref-rate" value="100" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="100">
-            </div>
+          <div style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:6px 12px;">
+            <span style="font-size:12px; font-weight:700; color:#475569; white-space:nowrap;">Bonus Referral:</span>
+            <span style="font-size:12px; color:#64748b; font-weight:700;">Rp</span>
+            <input type="number" id="admin-global-ref-rate" value="100" style="width:75px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="100">
           </div>
 
-          <button type="button" id="save-rates-btn" onclick="saveGlobalRates()" class="btn-primary" style="padding:8px 16px; font-size:12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+          <button type="button" id="save-rates-btn" onclick="saveGlobalRates()" class="btn-primary" style="padding:9px 18px; font-size:12.5px; border-radius:10px; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; box-shadow:0 4px 12px rgba(99,102,241,0.25);">
             <i class="fa-solid fa-floppy-disk"></i> Simpan Rate Global
           </button>
         </div>
@@ -1493,6 +1503,6 @@
 
   <!-- SheetJS Library for Excel (.xlsx) Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/admin.js?v=3.8"></script>
+  <script src="js/admin.js?v=3.9"></script>
 </body>
 </html>
