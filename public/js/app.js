@@ -22,7 +22,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   connectSSE();
   await refreshAll();
   switchTab('dashboard');
+
+  // Tampilkan popup peringatan saat pertama kali masuk / buka dashboard
+  const warnModal = document.getElementById('warning-notice-modal');
+  if (warnModal) {
+    warnModal.addEventListener('click', (e) => {
+      if (e.target === warnModal) closeWarningModal();
+    });
+    setTimeout(checkShowWarningModal, 600);
+  }
 });
+
+function checkShowWarningModal() {
+  if (sessionStorage.getItem('akaza_warning_modal_seen')) return;
+  const modal = document.getElementById('warning-notice-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeWarningModal() {
+  const modal = document.getElementById('warning-notice-modal');
+  if (modal) modal.style.display = 'none';
+  sessionStorage.setItem('akaza_warning_modal_seen', 'true');
+}
 
 function checkUrlReferral() {
   const urlParams = new URLSearchParams(window.location.search);
