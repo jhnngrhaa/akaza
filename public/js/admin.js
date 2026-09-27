@@ -202,13 +202,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ─── Tab Switching ─────────────────────────────────────────────────
 function switchAdminTab(tabName) {
   currentAdminTab = tabName;
-  ['blast', 'users', 'devices', 'withdrawals', 'logs', 'server-logs'].forEach(t => {
+  ['dashboard', 'blast', 'users', 'devices', 'withdrawals', 'logs', 'server-logs'].forEach(t => {
     const view = document.getElementById(`admin-view-${t}`);
     const btn = document.getElementById(`tab-btn-${t}`);
     if (view) view.style.display = t === tabName ? 'block' : 'none';
     if (btn) btn.classList.toggle('active', t === tabName);
   });
 
+  if (tabName === 'dashboard') loadAdminLogs();
   if (tabName === 'users') loadAdminUsers();
   if (tabName === 'devices') loadAdminDevices();
   if (tabName === 'withdrawals') loadAdminWithdrawals();
@@ -1328,11 +1329,46 @@ async function loadAdminLogs() {
     const badgeEl = document.getElementById('tab-logs-badge');
     if (badgeEl) badgeEl.textContent = allBlastReports.length;
 
+    renderDashboardLogs(allBlastReports);
     filterAdminLogs();
   } catch (err) {
     console.error('Error loading blast reports:', err);
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#ef4444;padding:24px;">Gagal memuat laporan blast</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#ef4444;padding:24px;">Gagal memuat laporan blast</td></tr>';
   }
+}
+
+function renderDashboardLogs(reports) {
+  const tbody = document.getElementById('dashboard-logs-tbody');
+  if (!tbody) return;
+
+  if (!reports || !reports.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Belum ada log pengiriman blast real-time.</td></tr>';
+    return;
+  }
+
+  const recent = reports.slice(0, 50);
+  tbody.innerHTML = recent.map(l => {
+    const isSuccess = l.status === 'sent' || l.status === 'SUCCESS' || l.status === 'Terkirim';
+    const timeStr = l.timestamp ? new Date(l.timestamp).toLocaleTimeString('id-ID') : '--:--:--';
+    const phoneStr = formatReceiverPhone(l.phone || l.receiver || l.target || '-');
+    const commVal = l.commission !== undefined ? l.commission : 900;
+    const userStr = l.userId || l.user || (l.deviceId ? `Dev: ${l.deviceId}` : 'System');
+
+    return `
+      <tr>
+        <td style="font-size:12px;color:var(--text-muted);">${timeStr}</td>
+        <td style="font-size:12px;font-weight:700;">${escHtml(userStr)}</td>
+        <td style="font-size:12.5px;font-family:monospace;">${escHtml(maskPhone(phoneStr))}</td>
+        <td>
+          <span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">
+            ${isSuccess ? 'Terkirim' : 'Gagal'}
+          </span>
+        </td>
+        <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:700;font-size:12.5px;">
+          ${isSuccess ? '+Rp ' + formatRp(commVal) : 'Rp 0'}
+        </td>
+      </tr>`;
+  }).join('');
 }
 
 function filterAdminLogs() {

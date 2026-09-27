@@ -678,7 +678,12 @@
       <div class="admin-sidebar-menu">
         <div class="admin-menu-label">Menu Navigasi</div>
 
-        <button class="admin-nav-item active" id="tab-btn-blast" onclick="switchAdminTab('blast')" title="Kontrol Blast & Target">
+        <button class="admin-nav-item active" id="tab-btn-dashboard" onclick="switchAdminTab('dashboard')" title="Beranda Admin">
+          <i class="fa-solid fa-house"></i>
+          <span class="nav-text">Beranda</span>
+        </button>
+
+        <button class="admin-nav-item" id="tab-btn-blast" onclick="switchAdminTab('blast')" title="Kontrol Blast & Target">
           <i class="fa-solid fa-paper-plane"></i>
           <span class="nav-text">Kontrol Blast &amp; Target</span>
         </button>
@@ -779,7 +784,7 @@
             <span style="font-size:12px; font-weight:700; color:#475569;">Rate Pesan:</span>
             <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:4px 8px;">
               <span style="font-size:12px; color:#64748b; font-weight:600; margin-right:4px;">Rp</span>
-              <input type="number" id="setting-msg-rate" value="900" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="900">
+              <input type="number" id="admin-global-msg-rate" value="900" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="900">
             </div>
           </div>
 
@@ -787,11 +792,11 @@
             <span style="font-size:12px; font-weight:700; color:#475569;">Bonus Referral:</span>
             <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:4px 8px;">
               <span style="font-size:12px; color:#64748b; font-weight:600; margin-right:4px;">Rp</span>
-              <input type="number" id="setting-ref-rate" value="100" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="100">
+              <input type="number" id="admin-global-ref-rate" value="100" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="100">
             </div>
           </div>
 
-          <button type="button" onclick="saveGlobalRates()" class="btn-primary" style="padding:8px 16px; font-size:12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+          <button type="button" id="save-rates-btn" onclick="saveGlobalRates()" class="btn-primary" style="padding:8px 16px; font-size:12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
             <i class="fa-solid fa-floppy-disk"></i> Simpan Rate Global
           </button>
         </div>
@@ -822,9 +827,51 @@
       </div>
 
     <!-- ==============================================================
+         TAB 0: BERANDA DASHBOARD ADMIN
+         ============================================================== -->
+    <section id="admin-view-dashboard">
+      <div class="clean-panel" style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:14px;font-weight:800;color:var(--text-main);">
+              <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);margin-right:6px;"></i> Log Blast User Real-Time
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+              Pantau seluruh aktivitas pengiriman pesan otomatis dari akun WhatsApp mitra/user secara real-time.
+            </div>
+          </div>
+          <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="loadAdminLogs()">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh Log
+          </button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>WAKTU</th>
+                <th>USER / DEVICE</th>
+                <th>NOMOR TUJUAN</th>
+                <th>STATUS</th>
+                <th>KOMISI</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-logs-tbody">
+              <tr>
+                <td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">
+                  Memuat data log pengiriman real-time...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
          TAB 1: BLAST CONTROL & TARGET DATABASE
          ============================================================== -->
-    <section id="admin-view-blast">
+    <section id="admin-view-blast" style="display:none;">
 
       <div class="admin-blast-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         

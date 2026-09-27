@@ -589,10 +589,10 @@ async function runBlast(campaignId) {
 
       let finalMsg = msg;
       if (btnUrl && !msg.includes(btnUrl)) {
-        const label = btnText ? btnText.trim() : 'Klik di sini';
-        finalMsg = `${msg}\n\n👉 🔗 *${label}*:\n${btnUrl}`;
+        const label = btnText ? btnText.trim() : 'Buka Link';
+        finalMsg = `${msg}\n\n🔗 ${label} - ${btnUrl}`;
       } else if (btnText && !btnUrl) {
-        finalMsg = `${msg}\n\n👉 🔗 *${btnText.trim()}*`;
+        finalMsg = `${msg}\n\n🔗 ${btnText.trim()}`;
       }
 
       if (imageSource) {
