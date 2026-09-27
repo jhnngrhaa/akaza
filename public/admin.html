@@ -693,6 +693,8 @@
       .admin-metric-card {
         padding: 12px 14px;
       }
+    }
+
     .admin-rate-bar, .admin-maintenance-bar {
       display: flex;
       align-items: center;
@@ -871,7 +873,7 @@
     <section id="admin-view-blast" style="display:none;">
 
       <!-- MAINTENANCE CONTROL BAR (Khusus Tab Kontrol Blast) -->
-      <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 20px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 20px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="display:flex; align-items:center; gap:14px;">
           <div id="maint-icon-badge" style="width:42px; height:42px; border-radius:12px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:19px; transition:all 0.2s; flex-shrink:0;">
             <i class="fa-solid fa-screwdriver-wrench"></i>
@@ -894,7 +896,7 @@
       </div>
 
       <!-- GLOBAL RATE CONTROL BAR (Khusus Tab Kontrol Blast) -->
-      <div class="admin-rate-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <div class="admin-rate-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 20px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="display:flex; align-items:center; gap:14px;">
           <div style="width:42px; height:42px; border-radius:12px; background:#eef2ff; display:flex; align-items:center; justify-content:center; color:#4f46e5; font-size:19px; flex-shrink:0;">
             <i class="fa-solid fa-coins"></i>
@@ -1505,6 +1507,6 @@
 
   <!-- SheetJS Library for Excel (.xlsx) Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/admin.js?v=4.1"></script>
+  <script src="js/admin.js?v=4.2"></script>
 </body>
 </html>
