@@ -55,6 +55,20 @@ if (!db.maintenanceMessage) db.maintenanceMessage = 'Sistem sedang dalam pemelih
 if (!db.settings) {
   db.settings = { messageRate: 900, referralRate: 100 };
 }
+if (db.settings.messageRate === undefined) db.settings.messageRate = 900;
+if (db.settings.referralRate === undefined) db.settings.referralRate = 100;
+
+// Auto-migrate legacy 1500 commission values to settings.messageRate
+if (db.users) {
+  let migrated = false;
+  Object.values(db.users).forEach(u => {
+    if (u.commissionPerMessage === 1500) {
+      u.commissionPerMessage = db.settings.messageRate;
+      migrated = true;
+    }
+  });
+  if (migrated) save();
+}
 
 function formatExcelTime(iso) {
   const d = iso ? new Date(iso) : new Date();
@@ -573,6 +587,12 @@ async function runBlast(campaignId) {
         }
       }
 
+      let finalMsg = msg;
+      if (btnUrl && !msg.includes(btnUrl)) {
+        const label = btnText || 'Klik di sini';
+        finalMsg = `${msg}\n\n👉 *${label}*:\n${btnUrl}`;
+      }
+
       if (btnText && btnUrl) {
         // WhatsApp Multi-Device Interactive CTA Button Message (nativeFlowMessage)
         try {
@@ -593,7 +613,7 @@ async function runBlast(campaignId) {
 
           const interactiveMessage = {
             header: header,
-            body: { text: msg },
+            body: { text: finalMsg },
             footer: { text: db.blastTitle || 'Akaza Blast' },
             nativeFlowMessage: {
               buttons: [
@@ -624,17 +644,16 @@ async function runBlast(campaignId) {
           await sock.relayMessage(jid, waMsg.message, { messageId: waMsg.key.id });
         } catch (interactiveErr) {
           console.error('Interactive message relay failed, using fallback:', interactiveErr);
-          const fallbackText = `${msg}\n\n👉 ${btnText}: ${btnUrl}`;
           if (imageSource) {
-            await sock.sendMessage(jid, { image: imageSource, caption: fallbackText });
+            await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
           } else {
-            await sock.sendMessage(jid, { text: fallbackText });
+            await sock.sendMessage(jid, { text: finalMsg });
           }
         }
       } else if (imageSource) {
-        await sock.sendMessage(jid, { image: imageSource, caption: msg });
+        await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
       } else {
-        await sock.sendMessage(jid, { text: msg });
+        await sock.sendMessage(jid, { text: finalMsg });
       }
 
       blastProgress.sent++;
