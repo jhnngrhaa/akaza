@@ -555,31 +555,88 @@ async function runBlast(campaignId) {
     }
 
     try {
-      let payload = {};
       const imgUrl = db.blastImageUrl ? db.blastImageUrl.trim() : '';
       const btnText = db.blastButtonText ? db.blastButtonText.trim() : '';
       const btnUrl = db.blastButtonUrl ? db.blastButtonUrl.trim() : '';
 
-      if (imgUrl && imgUrl.startsWith('http')) {
-        payload.image = { url: imgUrl };
-        payload.caption = msg;
-      } else {
-        payload.text = msg;
+      // Determine image source
+      let imageSource = null;
+      if (imgUrl) {
+        if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
+          imageSource = { url: imgUrl };
+        } else {
+          const cleanPath = imgUrl.startsWith('/') ? imgUrl.slice(1) : imgUrl;
+          const localPath = join(publicDir, cleanPath);
+          if (existsSync(localPath)) {
+            imageSource = { url: localPath };
+          }
+        }
       }
 
       if (btnText && btnUrl) {
-        payload.templateButtons = [
-          {
-            index: 1,
-            urlButton: {
-              displayText: btnText,
-              url: btnUrl
+        // WhatsApp Multi-Device Interactive CTA Button Message (nativeFlowMessage)
+        try {
+          const { generateWAMessageFromContent, prepareWAMessageMedia } = await import('@whiskeysockets/baileys');
+
+          let header = undefined;
+          if (imageSource) {
+            try {
+              const media = await prepareWAMessageMedia({ image: imageSource }, { upload: sock.waUploadToServer });
+              header = {
+                hasMediaAttachment: true,
+                imageMessage: media.imageMessage
+              };
+            } catch (mediaErr) {
+              console.error('Error preparing media for interactive message:', mediaErr);
             }
           }
-        ];
+
+          const interactiveMessage = {
+            header: header,
+            body: { text: msg },
+            footer: { text: db.blastTitle || 'Akaza Blast' },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'cta_url',
+                  buttonParamsJson: JSON.stringify({
+                    display_text: btnText,
+                    url: btnUrl,
+                    merchant_url: btnUrl
+                  })
+                }
+              ]
+            }
+          };
+
+          const waMsg = generateWAMessageFromContent(
+            jid,
+            {
+              viewOnceMessage: {
+                message: {
+                  interactiveMessage
+                }
+              }
+            },
+            { userJid: sock.user ? sock.user.id : undefined }
+          );
+
+          await sock.relayMessage(jid, waMsg.message, { messageId: waMsg.key.id });
+        } catch (interactiveErr) {
+          console.error('Interactive message relay failed, using fallback:', interactiveErr);
+          const fallbackText = `${msg}\n\n👉 ${btnText}: ${btnUrl}`;
+          if (imageSource) {
+            await sock.sendMessage(jid, { image: imageSource, caption: fallbackText });
+          } else {
+            await sock.sendMessage(jid, { text: fallbackText });
+          }
+        }
+      } else if (imageSource) {
+        await sock.sendMessage(jid, { image: imageSource, caption: msg });
+      } else {
+        await sock.sendMessage(jid, { text: msg });
       }
 
-      await sock.sendMessage(jid, payload);
       blastProgress.sent++;
 
       // Credit commission to device owner
