@@ -569,6 +569,7 @@ function renderWithdrawals(wds) {
 
 // ─── Device Modal ──────────────────────────────────────────────────
 function openDeviceModal() {
+  pendingDeviceId = null;
   document.getElementById('device-modal').style.display = 'flex';
   switchDeviceModalTab('qr');
   // Auto-start QR generation immediately

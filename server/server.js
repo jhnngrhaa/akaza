@@ -218,11 +218,12 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
 
       if (connection === 'close') {
         const reason = lastDisconnect?.error?.output?.statusCode;
-        const isLoggedOut = reason === DisconnectReason.loggedOut;
-        const hasPairedPhone = Boolean(db.sessions[deviceId]?.phone);
+        const isLoggedOut = reason === DisconnectReason.loggedOut || reason === 401;
+        const shouldReconnect = !isLoggedOut && reason !== DisconnectReason.connectionReplaced;
 
-        // Jika belum terhubung (belum scan QR / pairing) dan batal/putus, langsung bersihkan total
-        if (!hasPairedPhone) {
+        console.log(`[${deviceId}] Connection closed (reason: ${reason || 'unknown'}), isLoggedOut: ${isLoggedOut}, shouldReconnect: ${shouldReconnect}`);
+
+        if (isLoggedOut) {
           try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
           delete db.sessions[deviceId];
           delete sessions[deviceId];
@@ -235,11 +236,10 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
           });
           save();
           broadcast('device_update', { deviceId, status: 'deleted' });
-          console.log(`[${deviceId}] Sesi belum di-pair dibersihkan otomatis.`);
+          console.log(`[${deviceId}] Sesi di-logout atau tidak terotorisasi, dibersihkan otomatis.`);
           return;
         }
 
-        const shouldReconnect = !isLoggedOut;
         const newStatus = shouldReconnect ? 'connecting' : 'offline';
         sessionStatus[deviceId] = newStatus;
 
@@ -249,16 +249,16 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
         }
 
         broadcast('device_update', { deviceId, status: newStatus });
-        console.log(`[${deviceId}] Disconnected (reason: ${reason}), reconnect: ${shouldReconnect}`);
 
         if (shouldReconnect) {
-          setTimeout(() => startBaileysSession(deviceId, false), 5000);
+          setTimeout(() => {
+            if (!sessions[deviceId] || sessionStatus[deviceId] === 'connecting') {
+              startBaileysSession(deviceId, false).catch(err => {
+                console.error(`[${deviceId}] Reconnect error:`, err.message);
+              });
+            }
+          }, 3000);
         } else {
-          if (isLoggedOut) {
-            try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
-            delete db.sessions[deviceId];
-            save();
-          }
           delete sessions[deviceId];
           delete qrCodeStore[deviceId];
           delete pairingCodes[deviceId];
