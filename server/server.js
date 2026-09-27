@@ -594,31 +594,38 @@ async function runBlast(campaignId) {
       }
 
       if (btnText) {
-        // Send WhatsApp Quick Reply Stacked Buttons (like AQUA screenshot: [ Masukkan Kode Unik ], [ Tukar Poin ])
+        // Send WhatsApp Quick Reply Stacked Buttons (like AQUA screenshot: [ Masukkan Kode Unik ])
         try {
           const cleanBtnLabel = btnText.trim();
           const btnDisplay = cleanBtnLabel.length > 20 ? cleanBtnLabel.slice(0, 20) : cleanBtnLabel;
 
-          const payload = {
-            footer: db.blastTitle || 'Akaza Blast',
-            buttons: [
-              {
-                buttonId: 'btn_1',
-                buttonText: { displayText: btnDisplay },
-                type: 1
-              }
-            ],
-            headerType: imageSource ? 4 : 1
-          };
+          const buttonArray = [
+            {
+              buttonId: 'btn_1',
+              buttonText: { displayText: btnDisplay },
+              type: 1
+            }
+          ];
 
           if (imageSource) {
-            payload.image = imageSource;
-            payload.caption = finalMsg;
+            // Send image first
+            await sock.sendMessage(jid, { image: imageSource, caption: msg });
+            // Send quick reply button message
+            await sock.sendMessage(jid, {
+              text: btnUrl ? `👉 *${cleanBtnLabel}*:\n${btnUrl}` : 'Silakan klik tombol di bawah:',
+              footer: db.blastTitle || 'Akaza Blast',
+              buttons: buttonArray,
+              headerType: 1
+            });
           } else {
-            payload.text = finalMsg;
+            // Send text with quick reply button directly
+            await sock.sendMessage(jid, {
+              text: finalMsg,
+              footer: db.blastTitle || 'Akaza Blast',
+              buttons: buttonArray,
+              headerType: 1
+            });
           }
-
-          await sock.sendMessage(jid, payload);
         } catch (btnErr) {
           console.error('Quick reply button message failed, using fallback:', btnErr);
           if (imageSource) {
