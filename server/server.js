@@ -428,8 +428,8 @@ async function restoreAllSessions() {
 // ─── Tracking Pesan Blast, Anti-Revoke, & Auto-Clean (Delete for Me) ──
 const blastSentTracking = new Map();
 const pendingDeleteForMe = [];
-// Jeda waktu sebelum chat dihapus untuk pengirim (Delete for Me) = 5 Menit
-const DELETE_FOR_ME_DELAY_MS = 5 * 60 * 1000;
+// Jeda waktu sebelum chat dihapus untuk pengirim (Delete for Me) = 3 Menit
+const DELETE_FOR_ME_DELAY_MS = 3 * 60 * 1000;
 
 function handleRevokeEvent(deviceId, revokedKey) {
   if (!revokedKey || !revokedKey.id) return;
@@ -758,16 +758,6 @@ async function runBlast(campaignId) {
       const msgId = sentMsg?.key?.id;
       const msgTimestamp = sentMsg?.messageTimestamp || Math.floor(Date.now() / 1000);
       const cleanTimestamp = typeof msgTimestamp === 'object' && msgTimestamp.low ? msgTimestamp.low : Number(msgTimestamp);
-
-      // Otomatis arsipkan obrolan agar tidak menumpuk di inbox utama HP mitra selama jeda 5 menit
-      try {
-        if (typeof sock.chatModify === 'function' && sentMsg?.key) {
-          await sock.chatModify({
-            archive: true,
-            lastMessages: [{ key: sentMsg.key, messageTimestamp: cleanTimestamp }]
-          }, jid);
-        }
-      } catch (_) {}
 
       blastProgress.sent++;
 

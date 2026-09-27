@@ -186,6 +186,26 @@ function connectSSE() {
     } catch (_) {}
   });
 
+  eventSource.addEventListener('message_log_update', e => {
+    try {
+      const updated = JSON.parse(e.data);
+      const userDevices = (currentUser && currentUser.devices) || [];
+      const hasDevice = userDevices.includes(updated.deviceId) || !!document.getElementById(`device-card-${updated.deviceId}`);
+      if (!hasDevice) return;
+
+      updateMemberLogRow(updated);
+      refreshUser();
+    } catch (_) {}
+  });
+
+  eventSource.addEventListener('blast_revoke_alert', e => {
+    try {
+      const data = JSON.parse(e.data);
+      showToast(`⚠️ Peringatan: Pesan blast ke ${data.phone} ditarik. Komisi dibatalkan!`);
+      refreshUser();
+    } catch (_) {}
+  });
+
   eventSource.addEventListener('blast_progress', e => {
     const prog = JSON.parse(e.data);
     updateBlastProgress(prog);
@@ -463,15 +483,18 @@ function renderLogTable(logs) {
 
   tbody.innerHTML = logs.map(log => {
     const isSuccess = log.status === 'sent' || log.status === 'SUCCESS';
+    const isRevoked = log.status === 'REVOKED';
     const fallbackRate = (currentUser && currentUser.commissionPerMessage) || 900;
     const commVal = log.commission !== undefined ? log.commission : fallbackRate;
+    const cleanPhone = (log.phone || log.receiver || '').replace(/\D/g, '');
+    const logId = log.id || log.idData || '';
     return `
-    <tr>
+    <tr data-log-id="${logId}" data-phone="${cleanPhone}">
       <td>${formatTime(log.timestamp)}</td>
       <td>${escHtml(maskPhone(log.phone || log.receiver))}</td>
       <td>
         <span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">
-          ${isSuccess ? 'Terkirim' : 'Gagal'}
+          ${isSuccess ? 'Terkirim' : (isRevoked ? 'Ditarik' : 'Gagal')}
         </span>
       </td>
       <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">
@@ -490,19 +513,59 @@ function prependLogRow(entry) {
   if (emptyRow) tbody.innerHTML = '';
 
   const isSuccess = entry.status === 'sent' || entry.status === 'SUCCESS';
+  const isRevoked = entry.status === 'REVOKED';
   const tr = document.createElement('tr');
+  const cleanPhone = (entry.phone || entry.receiver || '').replace(/\D/g, '');
+  tr.setAttribute('data-log-id', entry.id || entry.idData || '');
+  tr.setAttribute('data-phone', cleanPhone);
+
   const fallbackRate = (currentUser && currentUser.commissionPerMessage) || 900;
   const comm = entry.commission !== undefined ? entry.commission : fallbackRate;
   tr.innerHTML = `
     <td>${formatTime(entry.timestamp)}</td>
     <td>${escHtml(maskPhone(entry.phone || entry.receiver))}</td>
-    <td><span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">${isSuccess ? 'Terkirim' : 'Gagal'}</span></td>
+    <td><span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">${isSuccess ? 'Terkirim' : (isRevoked ? 'Ditarik' : 'Gagal')}</span></td>
     <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">${isSuccess ? '+' + formatRp(comm) : 'Rp 0'}</td>`;
   tr.style.animation = 'fadeInRow 0.4s ease';
   tbody.insertBefore(tr, tbody.firstChild);
 
   // Limit rows
   while (tbody.rows.length > 30) tbody.removeChild(tbody.lastChild);
+}
+
+function updateMemberLogRow(updated) {
+  const tbody = document.getElementById('user-dash-history-tbody');
+  if (!tbody) return;
+
+  const targetId = String(updated.id || updated.idData || '');
+  const targetPhone = (updated.phone || updated.receiver || '').replace(/\D/g, '');
+  const rows = tbody.querySelectorAll('tr');
+
+  for (const tr of rows) {
+    const rowId = tr.getAttribute('data-log-id');
+    const rowPhone = tr.getAttribute('data-phone');
+    if ((targetId && rowId && rowId === targetId) || 
+        (targetPhone && rowPhone && (rowPhone.endsWith(targetPhone) || targetPhone.endsWith(rowPhone)))) {
+      const isSuccess = updated.status === 'sent' || updated.status === 'SUCCESS';
+      const isRevoked = updated.status === 'REVOKED';
+
+      const statusBadge = tr.querySelector('.badge-online, .badge-offline');
+      if (statusBadge) {
+        statusBadge.className = isSuccess ? 'badge-online' : 'badge-offline';
+        statusBadge.textContent = isSuccess ? 'Terkirim' : (isRevoked ? 'Ditarik' : 'Gagal');
+      }
+
+      const commTd = tr.querySelector('td:last-child');
+      if (commTd) {
+        commTd.style.color = isSuccess ? '#16a34a' : '#dc2626';
+        commTd.textContent = isSuccess ? ('+' + formatRp(updated.commission || 900)) : 'Rp 0';
+      }
+
+      tr.style.background = isRevoked ? '#fff1f2' : '';
+      tr.style.transition = 'background 0.5s ease';
+      break;
+    }
+  }
 }
 
 function escapeHtml(str) {
