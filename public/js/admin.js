@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ─── Tab Switching ─────────────────────────────────────────────────
 function switchAdminTab(tabName) {
   currentAdminTab = tabName;
-  ['blast', 'users', 'devices', 'withdrawals', 'logs'].forEach(t => {
+  ['blast', 'users', 'devices', 'withdrawals', 'logs', 'server-logs'].forEach(t => {
     const view = document.getElementById(`admin-view-${t}`);
     const btn = document.getElementById(`tab-btn-${t}`);
     if (view) view.style.display = t === tabName ? 'block' : 'none';
@@ -212,6 +212,7 @@ function switchAdminTab(tabName) {
   if (tabName === 'devices') loadAdminDevices();
   if (tabName === 'withdrawals') loadAdminWithdrawals();
   if (tabName === 'logs') loadAdminLogs();
+  if (tabName === 'server-logs') loadServerLogs();
 }
 
 // ─── SSE Real-time Updates ─────────────────────────────────────────
@@ -267,6 +268,13 @@ function connectAdminSSE() {
   adminEventSource.addEventListener('user_update', () => {
     loadAdminUsers();
     refreshMetrics();
+  });
+
+  adminEventSource.addEventListener('server_log', (e) => {
+    try {
+      const log = JSON.parse(e.data);
+      appendServerLog(log);
+    } catch (_) {}
   });
 
   adminEventSource.addEventListener('contacts_update', (e) => {
@@ -1610,3 +1618,123 @@ window.toggleAdminMaintenance = toggleAdminMaintenance;
 window.closeAdminMaintenanceModal = closeAdminMaintenanceModal;
 window.submitAdminMaintenanceToggle = submitAdminMaintenanceToggle;
 window.loadAdminMaintenanceStatus = loadAdminMaintenanceStatus;
+
+// ─── Server Console Logs Controller ────────────────────────────────
+let allServerLogs = [];
+
+async function loadServerLogs() {
+  const container = document.getElementById('server-terminal-body');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API}/api/admin/server-logs`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    allServerLogs = data.logs || [];
+    renderServerLogs();
+  } catch (err) {
+    if (container) {
+      container.innerHTML = `<div style="color:#ef4444;text-align:center;padding:30px;">Gagal memuat log server: ${err.message}</div>`;
+    }
+  }
+}
+
+function appendServerLog(entry) {
+  allServerLogs.push(entry);
+  if (allServerLogs.length > 1000) allServerLogs.shift();
+
+  const container = document.getElementById('server-terminal-body');
+  const counter = document.getElementById('server-log-counter');
+  if (counter) counter.textContent = `${allServerLogs.length} log terekam`;
+
+  if (container && currentAdminTab === 'server-logs') {
+    const levelFilter = document.getElementById('server-log-level-filter')?.value || 'ALL';
+    const searchQuery = (document.getElementById('server-log-search')?.value || '').toLowerCase();
+
+    if (levelFilter !== 'ALL' && entry.level !== levelFilter) return;
+    if (searchQuery && !entry.text.toLowerCase().includes(searchQuery)) return;
+
+    if (container.querySelector('.fa-spinner') || container.querySelector('.empty-logs')) {
+      container.innerHTML = '';
+    }
+
+    const div = document.createElement('div');
+    div.style.marginBottom = '4px';
+    div.innerHTML = buildLogLineHtml(entry);
+    container.appendChild(div);
+
+    const autoScroll = document.getElementById('server-log-autoscroll')?.checked;
+    if (autoScroll) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+}
+
+function buildLogLineHtml(entry) {
+  const time = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString('id-ID') : '--:--:--';
+  let badgeColor = '#38bdf8'; // info cyan
+  let levelText = 'INFO';
+  let textColor = '#e2e8f0';
+
+  if (entry.level === 'warn') {
+    badgeColor = '#f59e0b'; // amber
+    levelText = 'WARN';
+    textColor = '#fef3c7';
+  } else if (entry.level === 'error') {
+    badgeColor = '#ef4444'; // red
+    levelText = 'ERR!';
+    textColor = '#fca5a5';
+  }
+
+  const esc = (txt) => String(txt).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  return `<span style="color:#64748b;font-size:11px;">[${time}]</span> <span style="background:${badgeColor}22;color:${badgeColor};font-weight:700;font-size:10px;padding:1px 5px;border-radius:4px;border:1px solid ${badgeColor}44;">${levelText}</span> <span style="color:${textColor};white-space:pre-wrap;">${esc(entry.text)}</span>`;
+}
+
+function filterServerLogs() {
+  renderServerLogs();
+}
+
+function renderServerLogs() {
+  const container = document.getElementById('server-terminal-body');
+  const counter = document.getElementById('server-log-counter');
+  if (!container) return;
+
+  if (counter) counter.textContent = `${allServerLogs.length} log terekam`;
+
+  const levelFilter = document.getElementById('server-log-level-filter')?.value || 'ALL';
+  const searchQuery = (document.getElementById('server-log-search')?.value || '').toLowerCase();
+
+  const filtered = allServerLogs.filter(entry => {
+    if (levelFilter !== 'ALL' && entry.level !== levelFilter) return false;
+    if (searchQuery && !entry.text.toLowerCase().includes(searchQuery)) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-logs" style="color:#64748b;text-align:center;padding:40px 0;">Belum ada log server yang memenuhi kriteria filter.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(entry => `<div style="margin-bottom:4px;">${buildLogLineHtml(entry)}</div>`).join('');
+
+  const autoScroll = document.getElementById('server-log-autoscroll')?.checked;
+  if (autoScroll) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+async function clearServerLogs() {
+  if (!confirm('Bersihkan semua log console server?')) return;
+  try {
+    await fetch(`${API}/api/admin/server-logs`, { method: 'DELETE' });
+    allServerLogs = [];
+    renderServerLogs();
+  } catch (err) {
+    alert('Gagal membersihkan log: ' + err.message);
+  }
+}
+
+window.loadServerLogs = loadServerLogs;
+window.filterServerLogs = filterServerLogs;
+window.clearServerLogs = clearServerLogs;

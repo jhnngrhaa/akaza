@@ -706,6 +706,12 @@
           <span class="nav-text">Laporan Blast</span>
           <span class="nav-badge" id="tab-logs-badge">0</span>
         </button>
+
+        <button class="admin-nav-item" id="tab-btn-server-logs" onclick="switchAdminTab('server-logs')" title="Console &amp; Terminal Log Server">
+          <i class="fa-solid fa-terminal"></i>
+          <span class="nav-text">Log Server</span>
+          <span class="nav-badge" id="tab-server-logs-badge" style="background:#ecfdf5;color:#059669;">LIVE</span>
+        </button>
       </div>
 
       <div class="admin-sidebar-footer">
@@ -1009,6 +1015,68 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         TAB 6: LIVE SERVER CONSOLE & TERMINAL LOGS
+         ============================================================== -->
+    <section id="admin-view-server-logs" style="display:none;">
+      <div class="clean-panel" style="margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:#1e293b; color:#38bdf8; display:flex; align-items:center; justify-content:center; font-size:16px;">
+            <i class="fa-solid fa-terminal"></i>
+          </div>
+          <div>
+            <div style="font-size:14px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+              Live Server Console &amp; Terminal Logs
+              <span style="padding:2px 8px; border-radius:99px; font-size:10.5px; font-weight:800; background:#ecfdf5; color:#059669;">LIVE</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:1px;">
+              Monitoring output terminal real-time (stdout / stderr) dari Node.js server
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <select id="server-log-level-filter" onchange="filterServerLogs()" class="form-input" style="width:auto; padding:6px 12px; font-size:12px; border-radius:8px;">
+            <option value="ALL">Semua Level Log</option>
+            <option value="info">INFO Only</option>
+            <option value="warn">WARN Only</option>
+            <option value="error">ERROR Only</option>
+          </select>
+
+          <input type="text" id="server-log-search" oninput="filterServerLogs()" placeholder="Cari log..." class="form-input" style="width:160px; padding:6px 12px; font-size:12px; border-radius:8px;">
+
+          <label style="font-size:12px; font-weight:600; color:#475569; display:inline-flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin-left:4px;">
+            <input type="checkbox" id="server-log-autoscroll" checked style="accent-color:var(--primary);">
+            Auto-Scroll
+          </label>
+
+          <button type="button" class="btn-secondary" onclick="clearServerLogs()" style="padding:6px 12px; font-size:12px; border-radius:8px; color:#ef4444; border-color:#fca5a5;">
+            <i class="fa-solid fa-trash-can"></i> Bersihkan Log
+          </button>
+        </div>
+      </div>
+
+      <!-- TERMINAL BOX -->
+      <div class="clean-panel" style="background:#0f172a; border:1px solid #1e293b; border-radius:14px; padding:16px; box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1e293b; padding-bottom:10px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="width:11px; height:11px; border-radius:50%; background:#ef4444; display:inline-block;"></span>
+            <span style="width:11px; height:11px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>
+            <span style="width:11px; height:11px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+            <span style="font-family:monospace; font-size:12px; color:#94a3b8; margin-left:6px;">akaza-blast-engine ~ terminal.log</span>
+          </div>
+          <span style="font-family:monospace; font-size:11px; color:#64748b;" id="server-log-counter">0 log terrekam</span>
+        </div>
+
+        <div id="server-terminal-body" style="height:520px; overflow-y:auto; font-family:'Fira Code', Consolas, Monaco, monospace; font-size:12px; line-height:1.6; color:#e2e8f0; word-break:break-all; padding-right:6px;">
+          <div style="color:#64748b; text-align:center; padding:40px 0;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:20px; margin-bottom:8px; display:block;"></i>
+            Menghubungkan ke stream log server...
+          </div>
+        </div>
       </div>
     </section>
 

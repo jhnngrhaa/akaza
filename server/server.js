@@ -120,6 +120,51 @@ function broadcast(event, data) {
   sseClients.forEach(res => { try { res.write(msg); } catch (_) {} });
 }
 
+// ─── Server Console Logs Interceptor ──────────────────────────────
+const serverLogs = [];
+const MAX_SERVER_LOGS = 1000;
+
+function formatLogArg(arg) {
+  if (arg === null || arg === undefined) return String(arg);
+  if (arg instanceof Error) return `${arg.name}: ${arg.message}\n${arg.stack || ''}`;
+  if (typeof arg === 'object') {
+    try { return JSON.stringify(arg, null, 2); } catch (_) { return String(arg); }
+  }
+  return String(arg);
+}
+
+function pushServerLog(level, args) {
+  const text = args.map(formatLogArg).join(' ');
+  const entry = {
+    id: `slog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    timestamp: new Date().toISOString(),
+    level,
+    text
+  };
+  serverLogs.push(entry);
+  if (serverLogs.length > MAX_SERVER_LOGS) serverLogs.shift();
+  try {
+    broadcast('server_log', entry);
+  } catch (_) {}
+}
+
+const rawConsoleLog = console.log;
+const rawConsoleWarn = console.warn;
+const rawConsoleError = console.error;
+
+console.log = (...args) => {
+  rawConsoleLog.apply(console, args);
+  pushServerLog('info', args);
+};
+console.warn = (...args) => {
+  rawConsoleWarn.apply(console, args);
+  pushServerLog('warn', args);
+};
+console.error = (...args) => {
+  rawConsoleError.apply(console, args);
+  pushServerLog('error', args);
+};
+
 // ─── Baileys Session ──────────────────────────────────────────────
 async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber = '') {
   try {
@@ -1088,6 +1133,16 @@ app.delete('/api/devices/:id', async (req, res) => {
 
   save();
   broadcast('device_update', { deviceId: id, status: 'deleted' });
+  res.json({ success: true });
+});
+
+// Server Console Logs API
+app.get('/api/admin/server-logs', (req, res) => {
+  res.json({ logs: serverLogs });
+});
+
+app.delete('/api/admin/server-logs', (req, res) => {
+  serverLogs.length = 0;
   res.json({ success: true });
 });
 
