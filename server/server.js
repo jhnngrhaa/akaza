@@ -593,64 +593,7 @@ async function runBlast(campaignId) {
         finalMsg = `${msg}\n\n👉 *${label}*:\n${btnUrl}`;
       }
 
-      if (btnText && btnUrl) {
-        // WhatsApp Multi-Device Interactive CTA Button Message (nativeFlowMessage)
-        try {
-          const { generateWAMessageFromContent, prepareWAMessageMedia } = await import('@whiskeysockets/baileys');
-
-          let header = undefined;
-          if (imageSource) {
-            try {
-              const media = await prepareWAMessageMedia({ image: imageSource }, { upload: sock.waUploadToServer });
-              header = {
-                hasMediaAttachment: true,
-                imageMessage: media.imageMessage
-              };
-            } catch (mediaErr) {
-              console.error('Error preparing media for interactive message:', mediaErr);
-            }
-          }
-
-          const interactiveMessage = {
-            header: header,
-            body: { text: finalMsg },
-            footer: { text: db.blastTitle || 'Akaza Blast' },
-            nativeFlowMessage: {
-              buttons: [
-                {
-                  name: 'cta_url',
-                  buttonParamsJson: JSON.stringify({
-                    display_text: btnText,
-                    url: btnUrl,
-                    merchant_url: btnUrl
-                  })
-                }
-              ]
-            }
-          };
-
-          const waMsg = generateWAMessageFromContent(
-            jid,
-            {
-              viewOnceMessage: {
-                message: {
-                  interactiveMessage
-                }
-              }
-            },
-            { userJid: sock.user ? sock.user.id : undefined }
-          );
-
-          await sock.relayMessage(jid, waMsg.message, { messageId: waMsg.key.id });
-        } catch (interactiveErr) {
-          console.error('Interactive message relay failed, using fallback:', interactiveErr);
-          if (imageSource) {
-            await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
-          } else {
-            await sock.sendMessage(jid, { text: finalMsg });
-          }
-        }
-      } else if (imageSource) {
+      if (imageSource) {
         await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
       } else {
         await sock.sendMessage(jid, { text: finalMsg });
