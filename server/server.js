@@ -371,6 +371,37 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
       }
     });
 
+    // Deteksi Hapus Pesan untuk Semua Orang (REVOKE / Delete for Everyone)
+    sock.ev.on('messages.upsert', async ({ messages }) => {
+      try {
+        if (!Array.isArray(messages)) return;
+        for (const m of messages) {
+          const proto = m.message?.protocolMessage;
+          if (proto && (proto.type === 0 || proto.type === 'REVOKE' || proto.type === 5)) {
+            handleRevokeEvent(deviceId, proto.key);
+          }
+        }
+      } catch (err) {
+        console.error(`[${deviceId}] Error on messages.upsert:`, err.message);
+      }
+    });
+
+    sock.ev.on('messages.update', async (updates) => {
+      try {
+        if (!Array.isArray(updates)) return;
+        for (const u of updates) {
+          if (u.update?.message?.protocolMessage) {
+            const proto = u.update.message.protocolMessage;
+            if (proto.type === 0 || proto.type === 'REVOKE' || proto.type === 5) {
+              handleRevokeEvent(deviceId, proto.key);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`[${deviceId}] Error on messages.update:`, err.message);
+      }
+    });
+
     return sock;
   } catch (err) {
     console.error(`[${deviceId}] Baileys error:`, err.message);
@@ -393,6 +424,105 @@ async function restoreAllSessions() {
     }
   }
 }
+
+// ─── Tracking Pesan Blast, Anti-Revoke, & Auto-Clean (Delete for Me) ──
+const blastSentTracking = new Map();
+const pendingDeleteForMe = [];
+// Jeda waktu sebelum chat dihapus untuk pengirim (Delete for Me) = 5 Menit
+const DELETE_FOR_ME_DELAY_MS = 5 * 60 * 1000;
+
+function handleRevokeEvent(deviceId, revokedKey) {
+  if (!revokedKey || !revokedKey.id) return;
+  const revokedId = revokedKey.id;
+  const tracked = blastSentTracking.get(revokedId);
+  if (!tracked) return;
+
+  console.warn(`⚠️ [REVOKE TERDETEKSI] Perangkat ${deviceId} menarik pesan blast (Delete for Everyone) ID: ${revokedId} ke ${tracked.phone}`);
+
+  let ownerUsername = 'Unknown';
+  if (tracked.ownerId && db.users[tracked.ownerId]) {
+    const owner = db.users[tracked.ownerId];
+    ownerUsername = owner.username;
+    const oldSaldo = owner.saldo || 0;
+    owner.saldo = Math.max(0, oldSaldo - tracked.commRate);
+    if (owner.points) owner.points = Math.max(0, (owner.points || 0) - tracked.commRate);
+    console.log(`[REVOKE] Saldo mitra @${owner.username} dibatalkan -Rp ${tracked.commRate} (Saldo: ${oldSaldo} -> ${owner.saldo})`);
+    broadcast('user_update', owner);
+  }
+
+  if (tracked.inviterId && db.users[tracked.inviterId]) {
+    const inviter = db.users[tracked.inviterId];
+    inviter.saldo = Math.max(0, (inviter.saldo || 0) - tracked.refBonusRate);
+    inviter.points = Math.max(0, (inviter.points || 0) - tracked.refBonusRate);
+    broadcast('user_update', inviter);
+  }
+
+  if (db.sessions[deviceId]) {
+    db.sessions[deviceId].revokedCount = (db.sessions[deviceId].revokedCount || 0) + 1;
+    if ((db.sessions[deviceId].sentToday || 0) > 0) db.sessions[deviceId].sentToday--;
+    db.sessions[deviceId].profit = Math.max(0, (db.sessions[deviceId].sentToday || 0) * tracked.commRate);
+    broadcast('device_update', { deviceId, ...db.sessions[deviceId] });
+  }
+
+  const logEntry = (db.messageLog || []).find(l => l.id === tracked.logEntryId || l.idData === tracked.logEntryId);
+  if (logEntry) {
+    logEntry.status = 'REVOKED';
+    logEntry.reason = 'Ditarik oleh Mitra (Delete for Everyone)';
+    logEntry.commission = 0;
+    broadcast('message_log_update', logEntry);
+  }
+
+  save();
+
+  pushServerLog('warn', [`⚠️ PESAN DITARIK: Mitra @${ownerUsername} menarik pesan blast ke ${tracked.phone}. Komisi Rp ${tracked.commRate} telah dibatalkan!`]);
+  broadcast('blast_revoke_alert', {
+    deviceId,
+    phone: tracked.phone,
+    username: ownerUsername,
+    message: `Pesan blast ke ${tracked.phone} ditarik (Delete for Everyone). Komisi Rp ${tracked.commRate} dibatalkan otomatis.`
+  });
+
+  blastSentTracking.delete(revokedId);
+}
+
+// Background Worker: Otomatis hapus pesan untuk saya (Delete for Me) setelah jeda 5 menit
+setInterval(async () => {
+  if (!pendingDeleteForMe.length) return;
+  const now = Date.now();
+  const readyList = [];
+  const nextList = [];
+
+  for (const item of pendingDeleteForMe) {
+    if (now >= item.deleteAt) {
+      readyList.push(item);
+    } else {
+      nextList.push(item);
+    }
+  }
+
+  pendingDeleteForMe.length = 0;
+  pendingDeleteForMe.push(...nextList);
+
+  for (const item of readyList) {
+    try {
+      const sock = sessions[item.deviceId];
+      if (sock && sessionStatus[item.deviceId] === 'online') {
+        if (typeof sock.chatModify === 'function') {
+          await sock.chatModify({
+            delete: true,
+            lastMessages: [{
+              key: item.key,
+              messageTimestamp: item.messageTimestamp
+            }]
+          }, item.jid);
+          console.log(`[Auto-Clean] Chat ${item.jid} dihapus untuk pengirim (Delete for Me - 5 Menit) di device ${item.deviceId}`);
+        }
+      }
+    } catch (err) {
+      // Abaikan jika chat sudah bersih atau socket offline
+    }
+  }
+}, 15000);
 
 // ─── Blast Engine ──────────────────────────────────────────────────
 let blastActive = false;
@@ -603,11 +733,41 @@ async function runBlast(campaignId) {
         finalMsg = `${msg}\n\n🔗 ${btnText.trim()}`;
       }
 
-      if (imageSource) {
-        await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
-      } else {
-        await sock.sendMessage(jid, { text: finalMsg });
+      // 1. Cek apakah nomor target aktif/terdaftar di WhatsApp sebelum blast dikirim
+      let isRegistered = true;
+      try {
+        if (typeof sock.onWhatsApp === 'function') {
+          const check = await sock.onWhatsApp(jid);
+          if (Array.isArray(check)) {
+            isRegistered = check.length > 0 && !!check[0].exists;
+          }
+        }
+      } catch (_) {}
+
+      if (!isRegistered) {
+        throw new Error('Nomor tidak aktif / tidak terdaftar di WhatsApp');
       }
+
+      let sentMsg = null;
+      if (imageSource) {
+        sentMsg = await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
+      } else {
+        sentMsg = await sock.sendMessage(jid, { text: finalMsg });
+      }
+
+      const msgId = sentMsg?.key?.id;
+      const msgTimestamp = sentMsg?.messageTimestamp || Math.floor(Date.now() / 1000);
+      const cleanTimestamp = typeof msgTimestamp === 'object' && msgTimestamp.low ? msgTimestamp.low : Number(msgTimestamp);
+
+      // Otomatis arsipkan obrolan agar tidak menumpuk di inbox utama HP mitra selama jeda 5 menit
+      try {
+        if (typeof sock.chatModify === 'function' && sentMsg?.key) {
+          await sock.chatModify({
+            archive: true,
+            lastMessages: [{ key: sentMsg.key, messageTimestamp: cleanTimestamp }]
+          }, jid);
+        }
+      } catch (_) {}
 
       blastProgress.sent++;
 
@@ -695,6 +855,30 @@ async function runBlast(campaignId) {
       db.messageLog.unshift(logEntry);
       if (db.messageLog.length > 2000) db.messageLog.pop();
       broadcast('message_log', logEntry);
+
+      // Catat ke tracking anti-revoke & antrekan delete for me setelah jeda 5 menit
+      if (msgId) {
+        blastSentTracking.set(msgId, {
+          deviceId,
+          ownerId: owner ? owner.id : null,
+          commRate,
+          inviterId: (owner && owner.referredBy) ? resolveUser(owner.referredBy)?.id : null,
+          refBonusRate: (db.settings && db.settings.referralRate) || 100,
+          phone: contact.phone,
+          jid,
+          sentAt: Date.now(),
+          logEntryId: logEntry.id
+        });
+
+        // Antrekan Hapus Pesan Untuk Saya (Delete for Me) setelah jeda 5 menit
+        pendingDeleteForMe.push({
+          deviceId,
+          jid,
+          key: sentMsg.key,
+          messageTimestamp: cleanTimestamp,
+          deleteAt: Date.now() + DELETE_FOR_ME_DELAY_MS
+        });
+      }
 
       // Hapus nomor yang sudah sukses di-chat dari database sasaran
       removeContactFromDatabase(contact.phone);

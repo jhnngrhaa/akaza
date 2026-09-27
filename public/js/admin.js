@@ -284,6 +284,25 @@ function connectAdminSSE() {
     } catch (_) {}
   });
 
+  adminEventSource.addEventListener('message_log_update', (e) => {
+    try {
+      const updated = JSON.parse(e.data);
+      const idx = allBlastReports.findIndex(r => r.id === updated.id || r.idData === updated.idData);
+      if (idx !== -1) {
+        allBlastReports[idx] = { ...allBlastReports[idx], ...updated };
+        renderDashboardLogs(allBlastReports);
+        filterAdminLogs();
+      }
+    } catch (_) {}
+  });
+
+  adminEventSource.addEventListener('blast_revoke_alert', (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      showAdminToast(`⚠️ ${data.message || 'Pesan blast ditarik oleh mitra!'}`);
+    } catch (_) {}
+  });
+
   adminEventSource.addEventListener('contacts_update', (e) => {
     try {
       const data = JSON.parse(e.data);
@@ -1510,22 +1529,23 @@ function renderAdminLogsTable(reports) {
 
   tbody.innerHTML = reports.map((r, i) => {
     const isSuccess = r.status === 'SUCCESS' || r.status === 'sent';
-    const statusLabel = isSuccess ? 'SUCCESS' : 'FAILED';
-    const statusClass = isSuccess ? 'device-status-pill connected' : 'device-status-pill disconnected';
+    const isRevoked = r.status === 'REVOKED';
+    let statusLabel = isSuccess ? 'SUCCESS' : (isRevoked ? 'REVOKED' : 'FAILED');
+    let statusClass = isSuccess ? 'device-status-pill connected' : (isRevoked ? 'device-status-pill pairing' : 'device-status-pill disconnected');
     const idData = r.idData || (71936 + i);
     const blastId = r.blastId || (r.campaignId ? 'GSP' + String(r.campaignId).slice(-3).toUpperCase() : 'GSP001');
     const userId = r.userId || '-';
     const sender = r.sender || r.deviceId || '-';
     const receiver = formatReceiverPhone(r.receiver || r.phone);
     const textPreview = r.text || '-';
-    const reason = isSuccess ? '-' : (r.reason || r.error || 'Gagal terkirim');
+    const reason = isSuccess ? '-' : (r.reason || r.error || (isRevoked ? 'Ditarik oleh Mitra' : 'Gagal terkirim'));
     const jamKirim = r.jamKirim || formatExcelTime(r.timestamp);
 
     // Styling baris selang-seling lembut (mirip spreadsheet Excel di gambar pengguna)
-    const rowBg = i % 2 === 0 ? '#ffffff' : '#f0fdf4';
+    const rowBg = i % 2 === 0 ? '#ffffff' : (isRevoked ? '#fffbeb' : '#f0fdf4');
 
     return `
-      <tr style="background:${rowBg};transition:background 0.15s ease;" onmouseover="this.style.background='#e6f4ea'" onmouseout="this.style.background='${rowBg}'">
+      <tr style="background:${rowBg};transition:background 0.15s ease;" onmouseover="this.style.background='${isRevoked ? '#fef3c7' : '#e6f4ea'}'" onmouseout="this.style.background='${rowBg}'">
         <td style="text-align:center;font-weight:700;color:#64748b;font-size:11.5px;padding:10px 8px;">${i + 1}</td>
         <td style="font-family:monospace;font-weight:700;color:#1e3a8a;font-size:12px;padding:10px 8px;">${idData}</td>
         <td style="font-family:monospace;font-weight:700;color:#059669;font-size:12px;padding:10px 8px;">${escHtml(blastId)}</td>
@@ -1542,7 +1562,7 @@ function renderAdminLogsTable(reports) {
             ${statusLabel}
           </span>
         </td>
-        <td style="font-size:11.5px;color:${isSuccess ? '#64748b' : '#dc2626'};padding:10px 8px;white-space:nowrap;">
+        <td style="font-size:11.5px;color:${isSuccess ? '#64748b' : (isRevoked ? '#d97706' : '#dc2626')};padding:10px 8px;white-space:nowrap;">
           ${escHtml(reason)}
         </td>
         <td style="font-size:11.5px;font-family:monospace;color:#475569;padding:10px 8px;white-space:nowrap;">
@@ -1596,6 +1616,8 @@ function exportBlastReportExcel() {
   // Format array of object dengan header persis sesuai screenshot Excel user
   const excelData = dataToExport.map((r, i) => {
     const isSuccess = r.status === 'SUCCESS' || r.status === 'sent';
+    const isRevoked = r.status === 'REVOKED';
+    const statusText = isSuccess ? 'SUCCESS' : (isRevoked ? 'REVOKED' : 'FAILED');
     return {
       'No': i + 1,
       'ID Data': r.idData || (71936 + i),
@@ -1604,8 +1626,8 @@ function exportBlastReportExcel() {
       'Pengirim': r.sender || r.deviceId || '-',
       'Penerima': formatReceiverPhone(r.receiver || r.phone),
       'Teks': r.text || '-',
-      'Status': isSuccess ? 'SUCCESS' : 'FAILED',
-      'Alasan': isSuccess ? '-' : (r.reason || r.error || 'Gagal'),
+      'Status': statusText,
+      'Alasan': isSuccess ? '-' : (r.reason || r.error || (isRevoked ? 'Ditarik oleh Mitra' : 'Gagal')),
       'Jam Kirim': r.jamKirim || formatExcelTime(r.timestamp)
     };
   });
