@@ -1574,9 +1574,11 @@ const server = createServer(app);
 
 function startServer(port) {
   server.listen(port, async () => {
+    const appUrl = process.env.APP_URL || 'https://akazablast.my.id';
     console.log(`==========================================================`);
     console.log(`🚀 Akaza Blast v3.0 - Real WhatsApp Blast Engine`);
-    console.log(`👉 http://localhost:${port}`);
+    console.log(`👉 Domain Web: ${appUrl}`);
+    console.log(`🔌 Internal Port: http://localhost:${port}`);
     console.log(`==========================================================`);
     await restoreAllSessions();
     setTimeout(() => triggerAutoBlastIfNeeded(), 5000);
