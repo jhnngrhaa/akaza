@@ -152,7 +152,18 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
       generateHighQualityLinkPreview: false
     });
 
-    sock.ev.on('creds.update', saveCreds);
+    const safeSaveCreds = async () => {
+      try {
+        if (!existsSync(sessionDir)) {
+          mkdirSync(sessionDir, { recursive: true });
+        }
+        await saveCreds();
+      } catch (err) {
+        console.error(`[${deviceId}] Error saving creds:`, err.message);
+      }
+    };
+
+    sock.ev.on('creds.update', safeSaveCreds);
 
     sessions[deviceId] = sock;
     sessionStatus[deviceId] = 'connecting';

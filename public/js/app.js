@@ -434,7 +434,8 @@ function handleDeviceUpdate(data) {
   refreshDevices();
 
   if (data.deviceId === pendingDeviceId && data.status === 'online') {
-    closeDeviceModal();
+    pendingDeviceId = null;
+    closeDeviceModal(false);
     showToast(`✅ WhatsApp berhasil terhubung! (${data.phone})`);
     refreshUser();
   }
@@ -576,16 +577,18 @@ function openDeviceModal() {
   setTimeout(() => startQRSession(), 300);
 }
 
-function closeDeviceModal() {
+function closeDeviceModal(isCancel = false) {
   document.getElementById('device-modal').style.display = 'none';
   clearInterval(qrPollingInterval);
   qrPollingInterval = null;
 
-  if (pendingDeviceId) {
+  if (pendingDeviceId && isCancel) {
     const devIdToClean = pendingDeviceId;
     pendingDeviceId = null;
     fetch(`${API}/api/devices/${devIdToClean}`, { method: 'DELETE' }).catch(() => {});
     setTimeout(() => refreshDevices(), 300);
+  } else {
+    pendingDeviceId = null;
   }
 
   // Reset QR UI
@@ -646,7 +649,8 @@ async function startQRSession() {
 
       if (statusData.status === 'online') {
         clearInterval(qrPollingInterval);
-        closeDeviceModal();
+        pendingDeviceId = null;
+        closeDeviceModal(false);
         showToast('✅ WhatsApp berhasil terhubung!');
         refreshAll();
         return;
@@ -706,7 +710,8 @@ function startOnlinePoller(deviceId) {
       if (d.status === 'online') {
         clearInterval(poll);
         if (deviceId === pendingDeviceId) {
-          closeDeviceModal();
+          pendingDeviceId = null;
+          closeDeviceModal(false);
           showToast('✅ WhatsApp berhasil terhubung!');
           refreshAll();
         }
@@ -752,7 +757,8 @@ async function generatePairingCode() {
       }
       if (d.status === 'online') {
         clearInterval(poll);
-        closeDeviceModal();
+        pendingDeviceId = null;
+        closeDeviceModal(false);
         showToast('✅ WhatsApp berhasil terhubung!');
         refreshAll();
       }
@@ -767,7 +773,8 @@ async function generatePairingCode() {
       const d = await r.json();
       if (d.status === 'online') {
         clearInterval(qrPollingInterval);
-        closeDeviceModal();
+        pendingDeviceId = null;
+        closeDeviceModal(false);
         showToast('✅ WhatsApp berhasil terhubung!');
         refreshAll();
       }
