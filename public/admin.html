@@ -953,7 +953,7 @@
             </div>
           </div>
 
-          <textarea class="form-textarea" id="admin-contacts-input" style="flex:1;min-height:380px;height:420px;font-family:monospace;font-size:12.5px;resize:vertical;"
+          <textarea class="form-textarea" id="admin-contacts-input" style="width:100%;height:250px;min-height:200px;font-family:monospace;font-size:12.5px;resize:vertical;box-sizing:border-box;"
             placeholder="081234567890&#10;085788990011&#10;089612345678&#10;082155443322"></textarea>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;">
@@ -1006,23 +1006,12 @@
             <div class="form-group">
               <label class="form-label" style="font-size:11px;">Teks Tombol CTA (Opsional)</label>
               <input type="text" class="form-input" id="admin-button-text-input" style="font-size:12px;"
-                placeholder="🚀 Join & Jeeto!" oninput="updatePreviewBubble()">
+                placeholder="🚀 Join & Jeeto!">
             </div>
             <div class="form-group">
               <label class="form-label" style="font-size:11px;">Link Website Target (Button URL)</label>
               <input type="text" class="form-input" id="admin-button-url-input" style="font-size:12px;"
-                placeholder="https://website-kamu.com" oninput="updatePreviewBubble()">
-            </div>
-          </div>
-
-          <!-- Live Preview Box -->
-          <div style="margin-top:12px;">
-            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;">
-              Preview Pesan di WhatsApp Pelanggan:
-            </div>
-            <div class="preview-chat-bubble" id="preview-bubble">
-              Halo kak Pelanggan! Kami ada penawaran promo spesial...
-              <div class="preview-chat-time"><span id="preview-clock">12:00</span> <i class="fa-solid fa-check-double" style="color:#53bdeb;"></i></div>
+                placeholder="https://website-kamu.com">
             </div>
           </div>
         </div>
@@ -1507,6 +1496,6 @@
 
   <!-- SheetJS Library for Excel (.xlsx) Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/admin.js?v=4.2"></script>
+  <script src="js/admin.js?v=4.3"></script>
 </body>
 </html>
