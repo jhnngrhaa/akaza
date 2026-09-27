@@ -146,9 +146,13 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
       },
       printQRInTerminal: false,
       logger,
-      browser: ['Akaza Blast', 'Chrome', '1.0.0'],
-      syncFullHistory: false
+      browser: Browsers.ubuntu('Chrome'),
+      syncFullHistory: false,
+      markOnlineOnConnect: true,
+      generateHighQualityLinkPreview: false
     });
+
+    sock.ev.on('creds.update', saveCreds);
 
     sessions[deviceId] = sock;
     sessionStatus[deviceId] = 'connecting';
@@ -266,7 +270,6 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
       }
     });
 
-    sock.ev.on('creds.update', saveCreds);
     return sock;
   } catch (err) {
     console.error(`[${deviceId}] Baileys error:`, err.message);
