@@ -401,6 +401,14 @@ function updatePreviewBubble() {
   const buttonText = btnTextInput ? btnTextInput.value.trim() : '';
   const buttonUrl = btnUrlInput ? btnUrlInput.value.trim() : '';
 
+  let fullText = parsed;
+  if (buttonUrl && !parsed.includes(buttonUrl)) {
+    const label = buttonText ? buttonText.trim() : 'Buka Link';
+    fullText = `${parsed}\n\n🔗 ${label} - ${buttonUrl}`;
+  } else if (buttonText && !buttonUrl) {
+    fullText = `${parsed}\n\n🔗 ${buttonText.trim()}`;
+  }
+
   let html = '';
   if (imageUrl) {
     html += `<div style="margin:-8px -10px 8px -10px;border-radius:8px 8px 0 0;overflow:hidden;background:#000;">
@@ -408,16 +416,16 @@ function updatePreviewBubble() {
     </div>`;
   }
 
-  const formattedHtml = escHtml(parsed).replace(/\r\n/g, '<br>').replace(/\n/g, '<br>');
-  html += `<div style="white-space:pre-wrap;word-break:break-word;line-height:1.45;">${formattedHtml}</div>`;
+  let formattedHtml = escHtml(fullText).replace(/\r\n/g, '<br>').replace(/\n/g, '<br>');
 
-  if (buttonText) {
-    html += `<div style="margin:8px -10px -8px -10px;border-top:1px solid rgba(0,0,0,0.08);padding:8px;text-align:center;background:rgba(16,185,129,0.12);color:#059669;font-weight:700;font-size:12.5px;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:center;gap:6px;">
-      <i class="fa-solid fa-arrow-up-right-from-square"></i> ${escHtml(buttonText)}
-    </div>`;
-  } else {
-    html += `<div class="preview-chat-time"><span>${timeStr}</span> <i class="fa-solid fa-check-double" style="color:#53bdeb;margin-left:3px;"></i></div>`;
-  }
+  // Make http/https links blue and underlined in preview like WhatsApp
+  formattedHtml = formattedHtml.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" style="color:#0284c7;text-decoration:underline;word-break:break-all;">$1</a>'
+  );
+
+  html += `<div style="white-space:pre-wrap;word-break:break-word;line-height:1.45;">${formattedHtml}</div>`;
+  html += `<div class="preview-chat-time"><span>${timeStr}</span> <i class="fa-solid fa-check-double" style="color:#53bdeb;margin-left:3px;"></i></div>`;
 
   bubble.innerHTML = html;
 }
