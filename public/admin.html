@@ -920,41 +920,52 @@
         
         <!-- Target Database Panel -->
         <div class="clean-panel" style="display:flex;flex-direction:column;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <div style="font-size:14px;font-weight:800;">
-              <i class="fa-solid fa-address-book" style="color:var(--primary);margin-right:4px;"></i> Database Nomor Sasaran
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-address-book" style="color:var(--primary);"></i> Database Nomor Sasaran
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin:3px 0 0 0;">
+                Cukup masukkan nomor saja (1 nomor per baris). Contoh: <code>081234567890</code>
+              </p>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+              <button class="btn-primary" style="padding:7px 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;" onclick="saveContactsOnly()">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Database
+              </button>
+              <button class="btn-secondary" style="padding:7px 10px;font-size:12px;" onclick="clearContactsInput()" title="Bersihkan Sasaran">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
             </div>
           </div>
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
-            Cukup masukkan nomor saja (1 nomor per baris). Contoh: <code>081234567890</code>
-          </p>
 
           <textarea class="form-textarea" id="admin-contacts-input" style="flex:1;min-height:380px;height:420px;font-family:monospace;font-size:12.5px;resize:vertical;"
             placeholder="081234567890&#10;085788990011&#10;089612345678&#10;082155443322"></textarea>
 
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;">
             <span style="font-size:12px;color:var(--text-muted);">
               Total Target: <strong id="target-count-indicator">0</strong> nomor
             </span>
-            <div style="display:flex;gap:6px;">
-              <button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="saveContactsOnly()">
-                <i class="fa-solid fa-floppy-disk"></i> Simpan Database
-              </button>
-              <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="clearContactsInput()">
-                <i class="fa-solid fa-trash-can"></i> Bersihkan
-              </button>
-            </div>
           </div>
         </div>
 
         <!-- Custom Message & Spintax Panel -->
         <div class="clean-panel" style="display:flex;flex-direction:column;">
-          <div style="font-size:14px;font-weight:800;margin-bottom:8px;">
-            <i class="fa-solid fa-message" style="color:var(--primary);margin-right:4px;"></i> Custom Pesan Promosi
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-message" style="color:var(--primary);"></i> Custom Pesan Promosi
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin:3px 0 0 0;">
+                Gunakan Spintax <code>{Halo|Hai|Pagi}</code> untuk variasi pesan otomatis anti-banned.
+              </p>
+            </div>
+            <div style="flex-shrink:0;">
+              <button class="btn-primary" style="padding:7px 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;" onclick="saveMessageTemplateOnly()">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Template Pesan
+              </button>
+            </div>
           </div>
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
-            Gunakan Spintax <code>{Halo|Hai|Pagi}</code> untuk variasi pesan otomatis anti-banned.
-          </p>
 
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label" style="font-size:11px;">Template Pesan WhatsApp</label>
@@ -988,12 +999,6 @@
               <input type="text" class="form-input" id="admin-button-url-input" style="font-size:12px;"
                 placeholder="https://website-kamu.com" oninput="updatePreviewBubble()">
             </div>
-          </div>
-
-          <div style="display:flex;justify-content:flex-end;margin-top:5px;">
-            <button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="saveMessageTemplateOnly()">
-              <i class="fa-solid fa-floppy-disk"></i> Simpan Template Pesan
-            </button>
           </div>
 
           <!-- Live Preview Box -->
@@ -1488,6 +1493,6 @@
 
   <!-- SheetJS Library for Excel (.xlsx) Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/admin.js?v=3.7"></script>
+  <script src="js/admin.js?v=3.8"></script>
 </body>
 </html>
