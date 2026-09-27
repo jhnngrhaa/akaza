@@ -620,6 +620,7 @@ async function runBlast(campaignId) {
         id: `log_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         idData: db.lastLogId,
         blastId: blastCode,
+        ownerId: owner ? owner.id : null,
         userId: ownerUser,
         sender: senderNum,
         receiver: receiverNum,
@@ -653,6 +654,7 @@ async function runBlast(campaignId) {
         id: `log_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         idData: db.lastLogId,
         blastId: blastCode,
+        ownerId: owner ? owner.id : null,
         userId: ownerUser,
         sender: senderNum,
         receiver: receiverNum,
@@ -1224,7 +1226,28 @@ app.get('/api/log', (req, res) => {
           userDeviceIds.add(id);
         }
       });
-      logs = logs.filter(l => userDeviceIds.has(l.deviceId));
+
+      const userCleanId = user.id.replace(/^usr_/, '').toLowerCase();
+      const userUsername = user.username ? user.username.toLowerCase() : '';
+      const userPhone = user.phone ? user.phone.replace(/\D/g, '') : '';
+
+      logs = logs.filter(l => {
+        // 1. Device match if device is currently active/known
+        if (l.deviceId && userDeviceIds.has(l.deviceId)) return true;
+
+        // 2. Direct ownerId match in log entry
+        if (l.ownerId && (l.ownerId === user.id || l.ownerId.replace(/^usr_/, '').toLowerCase() === userCleanId)) return true;
+
+        // 3. Match userId / username / phone in log entry
+        if (l.userId) {
+          const logUid = String(l.userId).toLowerCase().replace(/^usr_/, '');
+          if (logUid === userCleanId) return true;
+          if (userUsername && logUid === userUsername) return true;
+          if (userPhone && (logUid === userPhone || logUid.replace(/\D/g, '') === userPhone)) return true;
+        }
+
+        return false;
+      });
     } else {
       logs = [];
     }
