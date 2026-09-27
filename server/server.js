@@ -593,27 +593,22 @@ async function runBlast(campaignId) {
         finalMsg = `${msg}\n\n👉 *${label}*:\n${btnUrl}`;
       }
 
-      if (btnText && btnUrl) {
-        // Send WhatsApp List Menu Button Message (like AQUA screenshot: [ 📑 Menu ])
+      if (btnText) {
+        // Send WhatsApp Quick Reply Stacked Buttons (like AQUA screenshot: [ Masukkan Kode Unik ], [ Tukar Poin ])
         try {
           const cleanBtnLabel = btnText.trim();
-          const listTitle = cleanBtnLabel.length > 24 ? cleanBtnLabel.slice(0, 24) : cleanBtnLabel;
+          const btnDisplay = cleanBtnLabel.length > 20 ? cleanBtnLabel.slice(0, 20) : cleanBtnLabel;
+
           const payload = {
-            title: 'INFORMASI PROMO',
-            buttonText: listTitle.startsWith('📑') || listTitle.startsWith('🚀') ? listTitle : `📑 ${listTitle}`,
             footer: db.blastTitle || 'Akaza Blast',
-            sections: [
+            buttons: [
               {
-                title: 'Tautan Website Target',
-                rows: [
-                  {
-                    title: listTitle,
-                    rowId: 'opt_url_1',
-                    description: btnUrl
-                  }
-                ]
+                buttonId: 'btn_1',
+                buttonText: { displayText: btnDisplay },
+                type: 1
               }
-            ]
+            ],
+            headerType: imageSource ? 4 : 1
           };
 
           if (imageSource) {
@@ -624,8 +619,8 @@ async function runBlast(campaignId) {
           }
 
           await sock.sendMessage(jid, payload);
-        } catch (listErr) {
-          console.error('List menu message failed, using fallback:', listErr);
+        } catch (btnErr) {
+          console.error('Quick reply button message failed, using fallback:', btnErr);
           if (imageSource) {
             await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
           } else {
