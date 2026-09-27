@@ -61,6 +61,26 @@ function formatExcelTime(iso) {
   return `${day}/${month}/${year}, ${hh}.${mm}.${ss}`;
 }
 
+function formatReceiverPhone(raw) {
+  if (!raw || raw === '-') return '-';
+  let str = String(raw).trim();
+  if (str.startsWith('+')) {
+    if (str.startsWith('+0')) {
+      let digits = str.slice(2).replace(/\D/g, '');
+      return '+62' + digits;
+    }
+    return '+' + str.replace(/\D/g, '');
+  }
+  let digits = str.replace(/\D/g, '');
+  if (!digits) return '-';
+  if (digits.startsWith('0')) {
+    digits = '62' + digits.slice(1);
+  } else if (!digits.startsWith('62')) {
+    digits = '62' + digits;
+  }
+  return '+' + digits;
+}
+
 function enrichLogEntry(log, idx = 0) {
   const idData = log.idData || (71935 + (idx + 1));
   const blastId = log.blastId || db.blastTitle || (log.campaignId ? 'GSP' + String(log.campaignId).slice(-3).toUpperCase() : 'GSP001');
@@ -77,10 +97,7 @@ function enrichLogEntry(log, idx = 0) {
     sender = devPhone ? (devPhone.startsWith('+') ? devPhone : '+' + devPhone) : (log.deviceId || '+22998479169');
   }
 
-  let receiver = log.receiver || log.phone || '-';
-  if (receiver && !receiver.startsWith('+')) {
-    receiver = '+' + receiver.replace(/\D/g, '');
-  }
+  let receiver = formatReceiverPhone(log.receiver || log.phone);
 
   const isSuccess = log.status === 'sent' || log.status === 'SUCCESS';
   const status = isSuccess ? 'SUCCESS' : 'FAILED';
@@ -596,7 +613,7 @@ async function runBlast(campaignId) {
       const senderNum = db.sessions[deviceId]?.phone 
         ? (db.sessions[deviceId].phone.startsWith('+') ? db.sessions[deviceId].phone : '+' + db.sessions[deviceId].phone) 
         : (deviceId || '+22998479169');
-      const receiverNum = contact.phone.startsWith('+') ? contact.phone : '+' + contact.phone;
+      const receiverNum = formatReceiverPhone(contact.phone);
       const ownerUser = owner ? (owner.phone || owner.username || owner.id.replace(/^usr_/, '')) : (db.sessions[deviceId]?.userId ? db.sessions[deviceId].userId.replace(/^usr_/, '') : '8028738067');
 
       const logEntry = {
@@ -628,7 +645,7 @@ async function runBlast(campaignId) {
       const senderNum = db.sessions[deviceId]?.phone 
         ? (db.sessions[deviceId].phone.startsWith('+') ? db.sessions[deviceId].phone : '+' + db.sessions[deviceId].phone) 
         : (deviceId || '+22998479169');
-      const receiverNum = contact.phone.startsWith('+') ? contact.phone : '+' + contact.phone;
+      const receiverNum = formatReceiverPhone(contact.phone);
       const owner = resolveUser(db.sessions[deviceId]?.userId);
       const ownerUser = owner ? (owner.phone || owner.username || owner.id.replace(/^usr_/, '')) : (db.sessions[deviceId]?.userId ? db.sessions[deviceId].userId.replace(/^usr_/, '') : '8028738067');
 

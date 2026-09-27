@@ -1210,6 +1210,26 @@ function filterAdminLogs() {
   renderAdminLogsTable(filteredBlastReports);
 }
 
+function formatReceiverPhone(raw) {
+  if (!raw || raw === '-') return '-';
+  let str = String(raw).trim();
+  if (str.startsWith('+')) {
+    if (str.startsWith('+0')) {
+      let digits = str.slice(2).replace(/\D/g, '');
+      return '+62' + digits;
+    }
+    return '+' + str.replace(/\D/g, '');
+  }
+  let digits = str.replace(/\D/g, '');
+  if (!digits) return '-';
+  if (digits.startsWith('0')) {
+    digits = '62' + digits.slice(1);
+  } else if (!digits.startsWith('62')) {
+    digits = '62' + digits;
+  }
+  return '+' + digits;
+}
+
 function renderAdminLogsTable(reports) {
   const tbody = document.getElementById('admin-logs-tbody');
   const countIndicator = document.getElementById('log-count-indicator');
@@ -1241,7 +1261,7 @@ function renderAdminLogsTable(reports) {
     const blastId = r.blastId || (r.campaignId ? 'GSP' + String(r.campaignId).slice(-3).toUpperCase() : 'GSP001');
     const userId = r.userId || '-';
     const sender = r.sender || r.deviceId || '-';
-    const receiver = r.receiver || (r.phone ? (r.phone.startsWith('+') ? r.phone : '+' + r.phone) : '-');
+    const receiver = formatReceiverPhone(r.receiver || r.phone);
     const textPreview = r.text || '-';
     const reason = isSuccess ? '-' : (r.reason || r.error || 'Gagal terkirim');
     const jamKirim = r.jamKirim || formatExcelTime(r.timestamp);
@@ -1285,7 +1305,7 @@ function prependAdminLogRow(l) {
     blastId: l.blastId || 'GSP001',
     userId: l.userId || '-',
     sender: l.sender || l.deviceId || '-',
-    receiver: l.receiver || l.phone || '-',
+    receiver: formatReceiverPhone(l.receiver || l.phone),
     text: l.text || '-',
     status: (l.status === 'sent' || l.status === 'SUCCESS') ? 'SUCCESS' : 'FAILED',
     reason: (l.status === 'sent' || l.status === 'SUCCESS') ? '-' : (l.reason || l.error || 'Gagal terkirim'),
@@ -1326,7 +1346,7 @@ function exportBlastReportExcel() {
       'BLAST ID': r.blastId || 'GSP001',
       'User ID': r.userId || '-',
       'Pengirim': r.sender || r.deviceId || '-',
-      'Penerima': r.receiver || (r.phone ? (r.phone.startsWith('+') ? r.phone : '+' + r.phone) : '-'),
+      'Penerima': formatReceiverPhone(r.receiver || r.phone),
       'Teks': r.text || '-',
       'Status': isSuccess ? 'SUCCESS' : 'FAILED',
       'Alasan': isSuccess ? '-' : (r.reason || r.error || 'Gagal'),
