@@ -1300,28 +1300,46 @@ let allBlastReports = [];
 let filteredBlastReports = [];
 
 async function loadAdminLogs() {
-  const tbody = document.getElementById('admin-logs-tbody');
-  if (!tbody) return;
+  const adminTbody = document.getElementById('admin-logs-tbody');
+  const dashTbody = document.getElementById('dashboard-logs-tbody');
+  if (!adminTbody && !dashTbody) return;
 
   try {
+    let reports = [];
     const res = await fetch(`${API}/api/admin/blast-reports?limit=1000`);
-    if (!res.ok) {
-      // Fallback ke /api/log jika endpoint baru belum tersedia
-      const fallbackRes = await fetch(`${API}/api/log?limit=200`);
-      if (fallbackRes.ok) {
-        allBlastReports = await fallbackRes.json();
-      }
-    } else {
+    if (res.ok) {
       const data = await res.json();
-      allBlastReports = data.reports || [];
+      reports = data.reports || [];
+    } else {
+      // Fallback ke /api/log jika server belum direstart
+      const fallbackRes = await fetch(`${API}/api/log?limit=500`);
+      if (fallbackRes.ok) {
+        const rawLogs = await fallbackRes.json();
+        reports = Array.isArray(rawLogs) ? rawLogs.map((l, idx) => ({
+          idData: l.idData || (71936 + idx),
+          blastId: l.blastId || 'GSP001',
+          userId: l.userId || l.user || '-',
+          sender: l.sender || l.deviceId || '-',
+          receiver: l.phone || l.receiver || '-',
+          text: l.text || '-',
+          status: (l.status === 'sent' || l.status === 'SUCCESS' || l.status === 'Terkirim') ? 'SUCCESS' : 'FAILED',
+          reason: l.reason || l.error || '-',
+          timestamp: l.timestamp || new Date().toISOString(),
+          commission: l.commission !== undefined ? l.commission : 900
+        })) : [];
+      }
     }
+
+    allBlastReports = reports;
 
     // Update Counter Metric Pesan Hari Ini
     const todayCount = allBlastReports.filter(l => {
+      if (!l.timestamp) return false;
       const d = new Date(l.timestamp);
       const now = new Date();
       return d.toDateString() === now.toDateString();
     }).length;
+
     const sentTodayEl = document.getElementById('metric-sent-today');
     if (sentTodayEl) sentTodayEl.textContent = todayCount;
 
@@ -1333,7 +1351,8 @@ async function loadAdminLogs() {
     filterAdminLogs();
   } catch (err) {
     console.error('Error loading blast reports:', err);
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#ef4444;padding:24px;">Gagal memuat laporan blast</td></tr>';
+    if (adminTbody) adminTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#ef4444;padding:24px;">Gagal memuat laporan blast. Silakan lakukan pm2 restart all di VPS.</td></tr>';
+    if (dashTbody) dashTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#ef4444;padding:24px;">Gagal memuat log real-time. Silakan lakukan pm2 restart all di VPS.</td></tr>';
   }
 }
 
