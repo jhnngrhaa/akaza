@@ -1392,7 +1392,7 @@ function renderDashboardLogs(reports) {
           </span>
         </td>
         <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:700;font-size:12.5px;">
-          ${isSuccess ? '+Rp ' + formatRp(commVal) : 'Rp 0'}
+          ${isSuccess ? '+Rp ' + Number(commVal || 0).toLocaleString('id-ID') : 'Rp 0'}
         </td>
       </tr>`;
   }).join('');
