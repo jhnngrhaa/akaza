@@ -621,5 +621,37 @@
       text-transform: uppercase;
     }
   </style>
+  <!-- MAINTENANCE SCREEN OVERLAY (USER APP) -->
+  <div id="maintenance-screen-overlay" class="maintenance-overlay" style="display: none;">
+    <div class="maintenance-card">
+      <div class="maintenance-icon-wrapper">
+        <div class="maintenance-pulse-ring"></div>
+        <div class="maintenance-icon-box">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+      </div>
+      
+      <div class="maintenance-badge">
+        <span class="pulse-dot"></span> PEMELIHARAAN SISTEM
+      </div>
+
+      <h1 class="maintenance-title">Sistem Dalam Pemeliharaan</h1>
+      
+      <p class="maintenance-message" id="maintenance-message-text">
+        Sistem sedang dalam pemeliharaan rutin untuk peningkatan performa. Silakan coba beberapa saat lagi.
+      </p>
+
+      <div class="maintenance-actions">
+        <button type="button" class="btn-maint-check" onclick="checkUserMaintenanceStatus(true)">
+          <i class="fa-solid fa-rotate-right" id="maint-refresh-icon"></i> Cek Status Terkini
+        </button>
+      </div>
+
+      <div class="maintenance-footer-note">
+        <i class="fa-solid fa-shield-halved"></i> Tim teknis sedang melakukan optimalisasi server.
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

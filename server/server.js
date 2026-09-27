@@ -47,6 +47,8 @@ if (!db.admin) db.admin = { username: 'admin', password: 'Akaza#Admin2026!' };
 if (!db.adminTokens) db.adminTokens = {};
 if (!db.lastLogId) db.lastLogId = 71935;
 if (!db.messageLog) db.messageLog = [];
+if (db.maintenance === undefined) db.maintenance = false;
+if (!db.maintenanceMessage) db.maintenanceMessage = 'Sistem sedang dalam pemeliharaan rutin. Silakan coba beberapa saat lagi.';
 
 function formatExcelTime(iso) {
   const d = iso ? new Date(iso) : new Date();
@@ -1433,6 +1435,42 @@ app.post('/api/admin/logout', (req, res) => {
   }
 
   res.json({ success: true, message: 'Berhasil keluar dari sesi admin' });
+});
+
+// ─── Maintenance Mode API ──────────────────────────────────────────
+app.get('/api/system/maintenance', (req, res) => {
+  res.json({
+    success: true,
+    maintenance: Boolean(db.maintenance),
+    message: db.maintenanceMessage || 'Sistem sedang dalam pemeliharaan rutin. Silakan coba beberapa saat lagi.'
+  });
+});
+
+app.post('/api/admin/system/maintenance', (req, res) => {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '') || req.headers['x-admin-token'] || (req.body && req.body.token);
+
+  if (!token || !db.adminTokens || !db.adminTokens[token]) {
+    return res.status(401).json({ error: 'Sesi admin tidak valid atau sudah kedaluwarsa' });
+  }
+
+  const { maintenance, message } = req.body || {};
+  db.maintenance = Boolean(maintenance);
+  if (message !== undefined && message !== null) {
+    db.maintenanceMessage = String(message).trim() || 'Sistem sedang dalam pemeliharaan rutin. Silakan coba beberapa saat lagi.';
+  }
+
+  save();
+  broadcast('system_maintenance', {
+    maintenance: db.maintenance,
+    message: db.maintenanceMessage
+  });
+
+  res.json({
+    success: true,
+    maintenance: db.maintenance,
+    message: db.maintenanceMessage
+  });
 });
 
 // Admin Portal Route

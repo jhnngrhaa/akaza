@@ -17,6 +17,7 @@ let pendingDeviceMode = 'qr';
 // ─── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   checkUrlReferral();
+  await checkUserMaintenanceStatus();
   await initUser();
   connectSSE();
   await refreshAll();
@@ -205,6 +206,22 @@ function connectSSE() {
       if (currentUser && currentUser.id === data.userId) {
         refreshWithdrawals();
         showToast(`⚡ Transfer Rp ${Number(data.amount).toLocaleString('id-ID')} ke ${data.ewallet} (${data.accountNumber}) sukses! Ref: ${data.payoutId}`);
+      }
+    } catch (_) {}
+  });
+
+  eventSource.addEventListener('system_maintenance', e => {
+    try {
+      const data = JSON.parse(e.data);
+      const overlay = document.getElementById('maintenance-screen-overlay');
+      const msgText = document.getElementById('maintenance-message-text');
+      if (data.maintenance) {
+        if (overlay) overlay.style.display = 'flex';
+        if (msgText) msgText.textContent = data.message || 'Sistem sedang dalam pemeliharaan rutin untuk peningkatan performa. Silakan coba beberapa saat lagi.';
+        showToast('🚨 Perhatian: Admin telah mengaktifkan mode maintenance.');
+      } else {
+        if (overlay) overlay.style.display = 'none';
+        showToast('✅ Mode maintenance telah dinonaktifkan. Layanan beroperasi normal.');
       }
     } catch (_) {}
   });
@@ -1238,3 +1255,39 @@ window.handleAuthClick = handleAuthClick;
 window.handleUpdateProfile = handleUpdateProfile;
 window.dismissCommissionBanner = dismissCommissionBanner;
 window.checkCommissionBanner = checkCommissionBanner;
+
+// ─── Maintenance Mode User Logic ──────────────────────────────────
+async function checkUserMaintenanceStatus(showToastFeedback = false) {
+  const refreshBtnIcon = document.getElementById('maint-refresh-icon');
+  if (refreshBtnIcon) refreshBtnIcon.classList.add('fa-spin');
+
+  try {
+    const res = await fetch(`${API}/api/system/maintenance`);
+    const data = await res.json();
+    const overlay = document.getElementById('maintenance-screen-overlay');
+    const msgText = document.getElementById('maintenance-message-text');
+
+    if (data.maintenance) {
+      if (overlay) overlay.style.display = 'flex';
+      if (msgText) msgText.textContent = data.message || 'Sistem sedang dalam pemeliharaan rutin untuk peningkatan performa. Silakan coba beberapa saat lagi.';
+      if (showToastFeedback) {
+        showToast('⚠️ Sistem masih dalam pemeliharaan rutin. Silakan coba lagi nanti.');
+      }
+    } else {
+      if (overlay && overlay.style.display !== 'none') {
+        overlay.style.display = 'none';
+        if (showToastFeedback) {
+          showToast('✅ Pemeliharaan selesai! Sistem sudah aktif kembali.');
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to check maintenance status:', err);
+  } finally {
+    if (refreshBtnIcon) {
+      setTimeout(() => refreshBtnIcon.classList.remove('fa-spin'), 600);
+    }
+  }
+}
+
+window.checkUserMaintenanceStatus = checkUserMaintenanceStatus;

@@ -729,6 +729,29 @@
     <main class="admin-main-container">
 
 
+      <!-- MAINTENANCE CONTROL BAR -->
+      <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="maint-icon-badge" style="width:40px; height:40px; border-radius:10px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:18px; transition:all 0.2s;">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+          </div>
+          <div>
+            <div style="font-size:14px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+              Status Mode Maintenance
+              <span id="maint-status-badge" style="padding:3px 10px; border-radius:99px; font-size:11px; font-weight:800; background:#f1f5f9; color:#475569; letter-spacing:0.5px;">OFF</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;" id="maint-status-sub">
+              Sistem beroperasi normal untuk semua user.
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" id="btn-toggle-maintenance" onclick="toggleAdminMaintenance()" style="padding:8px 18px; border-radius:10px; font-weight:700; font-size:12.5px; border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:7px; background:#e2e8f0; color:#334155;">
+            <i class="fa-solid fa-power-off"></i> <span id="maint-btn-label">Aktifkan Maintenance</span>
+          </button>
+        </div>
+      </div>
+
       <!-- METRICS OVERVIEW -->
       <div class="admin-metric-grid">
         <div class="admin-metric-card">
