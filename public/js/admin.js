@@ -1538,6 +1538,7 @@ function prependAdminLogRow(l) {
   };
 
   allBlastReports.unshift(enriched);
+  renderDashboardLogs(allBlastReports);
   filterAdminLogs();
 
   const sentTodayEl = document.getElementById('metric-sent-today');
@@ -1652,6 +1653,19 @@ function formatDateTime(iso) {
 
 function escHtml(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function maskPhone(phone) {
+  if (!phone) return '-';
+  const str = phone.toString().trim();
+  if (str.length <= 7) return str;
+  const start = str.slice(0, 4);
+  const end = str.slice(-4);
+  return `${start}****${end}`;
+}
+
+function formatRp(amount) {
+  return 'Rp ' + Number(amount || 0).toLocaleString('id-ID');
 }
 
 function showAdminToast(msg) {
