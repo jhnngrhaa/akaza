@@ -172,7 +172,8 @@ function connectSSE() {
       prependLogRow(entry);
 
       if (entry.status === 'sent') {
-        currentUser.saldo = (currentUser.saldo || 0) + (entry.commission || 900);
+        const comm = entry.commission !== undefined ? entry.commission : 900;
+        currentUser.saldo = (currentUser.saldo || 0) + comm;
         updateUserUI();
       }
     } catch (_) {}
@@ -465,7 +466,7 @@ function renderLogTable(logs) {
         </span>
       </td>
       <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">
-        ${isSuccess ? '+' + formatRp(log.commission && log.commission >= 900 ? log.commission : 900) : 'Rp 0'}
+        ${isSuccess ? '+' + formatRp(log.commission !== undefined ? log.commission : 900) : 'Rp 0'}
       </td>
     </tr>`;
   }).join('');
@@ -481,11 +482,12 @@ function prependLogRow(entry) {
 
   const isSuccess = entry.status === 'sent' || entry.status === 'SUCCESS';
   const tr = document.createElement('tr');
+  const comm = entry.commission !== undefined ? entry.commission : 900;
   tr.innerHTML = `
     <td>${formatTime(entry.timestamp)}</td>
     <td>${escHtml(maskPhone(entry.phone || entry.receiver))}</td>
     <td><span class="${isSuccess ? 'badge-online' : 'badge-offline'}" style="font-size:10px;">${isSuccess ? 'Terkirim' : 'Gagal'}</span></td>
-    <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">${isSuccess ? '+' + formatRp(entry.commission && entry.commission >= 900 ? entry.commission : 900) : 'Rp 0'}</td>`;
+    <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">${isSuccess ? '+' + formatRp(comm) : 'Rp 0'}</td>`;
   tr.style.animation = 'fadeInRow 0.4s ease';
   tbody.insertBefore(tr, tbody.firstChild);
 

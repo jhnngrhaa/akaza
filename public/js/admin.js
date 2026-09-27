@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAdminWithdrawals();
   await loadAdminLogs();
   await loadAdminMaintenanceStatus();
+  await loadGlobalRates();
 
   // Close modals on backdrop click
   ['reject-wd-modal', 'approve-wd-modal', 'create-user-modal', 'edit-saldo-modal', 'admin-maintenance-modal'].forEach(id => {
@@ -1043,8 +1044,8 @@ async function loadAdminUsers() {
         </td>
         <td style="white-space:nowrap;">
           <div style="display:flex;gap:6px;align-items:center;white-space:nowrap;">
-            <button class="btn-secondary" style="font-size:11px;padding:4px 10px;white-space:nowrap;flex-shrink:0;" onclick="openEditSaldoModal('${u.id}', '${escHtml(u.name)}', ${u.saldo || 0})">
-              <i class="fa-solid fa-pen-to-square"></i> Saldo
+            <button class="btn-secondary" style="font-size:11px;padding:4px 10px;white-space:nowrap;flex-shrink:0;" onclick="openEditSaldoModal('${u.id}', '${escHtml(u.name)}', ${u.saldo || 0}, ${u.commissionPerMessage || 900}, ${u.referralBonusRate || 100})">
+              <i class="fa-solid fa-pen-to-square"></i> Edit Saldo &amp; Rate
             </button>
             <button class="btn-danger" style="font-size:11px;padding:4px 8px;white-space:nowrap;flex-shrink:0;" onclick="deleteAdminUser('${u.id}', '${escHtml(u.name)}')">
               <i class="fa-solid fa-trash-can"></i>
@@ -1096,10 +1097,12 @@ async function submitCreateUser() {
   }
 }
 
-function openEditSaldoModal(uid, name, currentSaldo) {
+function openEditSaldoModal(uid, name, currentSaldo, currentRate, currentRefRate) {
   document.getElementById('edit-saldo-uid').value = uid;
   document.getElementById('edit-saldo-user-display').textContent = `${name} (${uid})`;
   document.getElementById('edit-saldo-input').value = currentSaldo || 0;
+  document.getElementById('edit-rate-input').value = currentRate || 900;
+  document.getElementById('edit-ref-rate-input').value = currentRefRate || 100;
   document.getElementById('edit-saldo-modal').style.display = 'flex';
 }
 function closeEditSaldoModal() {
@@ -1108,20 +1111,29 @@ function closeEditSaldoModal() {
 async function submitEditSaldo() {
   const uid = document.getElementById('edit-saldo-uid').value;
   const saldo = document.getElementById('edit-saldo-input').value;
+  const commRate = document.getElementById('edit-rate-input').value;
+  const refRate = document.getElementById('edit-ref-rate-input').value;
 
   try {
     const res = await fetch(`${API}/api/admin/users/${uid}/update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ saldo })
+      body: JSON.stringify({
+        saldo: Number(saldo),
+        commissionPerMessage: Number(commRate),
+        referralBonusRate: Number(refRate)
+      })
     });
-    if (res.ok) {
-      showAdminToast('✅ Saldo user berhasil diperbarui!');
+    const d = await res.json();
+    if (d.success) {
+      showAdminToast(`✅ Data user @${d.user.username} berhasil diperbarui!`);
       closeEditSaldoModal();
       loadAdminUsers();
+    } else {
+      alert(`❌ ${d.error || 'Gagal memperbarui user'}`);
     }
   } catch (err) {
-    showAdminToast('❌ Gagal memperbarui saldo');
+    showAdminToast('❌ Gagal memperbarui data user');
   }
 }
 
@@ -1771,3 +1783,56 @@ async function clearServerLogs() {
 window.loadServerLogs = loadServerLogs;
 window.filterServerLogs = filterServerLogs;
 window.clearServerLogs = clearServerLogs;
+
+// ─── Rate & Setting Management ─────────────────────────────────────
+async function loadGlobalRates() {
+  try {
+    const res = await fetch(`${API}/api/settings`);
+    if (res.ok) {
+      const settings = await res.json();
+      const msgRateInput = document.getElementById('admin-global-msg-rate');
+      const refRateInput = document.getElementById('admin-global-ref-rate');
+      if (msgRateInput) msgRateInput.value = settings.messageRate ?? 900;
+      if (refRateInput) refRateInput.value = settings.referralRate ?? 100;
+    }
+  } catch (err) {
+    console.error('Error loading global rates:', err);
+  }
+}
+
+async function saveGlobalRates() {
+  const msgRateInput = document.getElementById('admin-global-msg-rate');
+  const refRateInput = document.getElementById('admin-global-ref-rate');
+  const btn = document.getElementById('save-rates-btn');
+
+  const messageRate = parseInt(msgRateInput?.value, 10);
+  const referralRate = parseInt(refRateInput?.value, 10);
+
+  if (isNaN(messageRate) || isNaN(referralRate) || messageRate < 0 || referralRate < 0) {
+    alert('Masukkan nilai rate yang valid (angka 0 atau lebih).');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/api/admin/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageRate, referralRate })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert('Rate Komisi & Referral berhasil diperbarui secara global!');
+    } else {
+      alert(data.error || 'Gagal menyimpan settings.');
+    }
+  } catch (err) {
+    alert('Terjadi kesalahan: ' + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+window.loadGlobalRates = loadGlobalRates;
+window.saveGlobalRates = saveGlobalRates;
+

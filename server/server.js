@@ -49,6 +49,9 @@ if (!db.lastLogId) db.lastLogId = 71935;
 if (!db.messageLog) db.messageLog = [];
 if (db.maintenance === undefined) db.maintenance = false;
 if (!db.maintenanceMessage) db.maintenanceMessage = 'Sistem sedang dalam pemeliharaan rutin. Silakan coba beberapa saat lagi.';
+if (!db.settings) {
+  db.settings = { messageRate: 900, referralRate: 100 };
+}
 
 function formatExcelTime(iso) {
   const d = iso ? new Date(iso) : new Date();
@@ -552,9 +555,9 @@ async function runBlast(campaignId) {
       await sock.sendMessage(jid, { text: msg });
       blastProgress.sent++;
 
-      // Credit commission to device owner (Rp 900 / pesan)
+      // Credit commission to device owner
       const owner = resolveUser(db.sessions[deviceId]?.userId) || Object.values(db.users).find(u => (u.devices || []).includes(deviceId));
-      const commRate = (owner && owner.commissionPerMessage) || 900;
+      const commRate = (owner && owner.commissionPerMessage) || (db.settings && db.settings.messageRate) || 900;
 
       if (db.sessions[deviceId]) {
         db.sessions[deviceId].sentToday = (db.sessions[deviceId].sentToday || 0) + 1;
@@ -568,11 +571,11 @@ async function runBlast(campaignId) {
       if (owner) {
         owner.saldo = (owner.saldo || 0) + commRate;
 
-        // Credit referral passive commission to inviter (User A gets Rp 100 per 1 message sent by User B)
+        // Credit referral passive commission to inviter
         if (owner.referredBy) {
           const inviter = resolveUser(owner.referredBy);
           if (inviter && inviter.id !== owner.id) {
-            const refBonusRate = 100;
+            const refBonusRate = (inviter && inviter.referralBonusRate) || (db.settings && db.settings.referralRate) || 100;
             inviter.saldo = (inviter.saldo || 0) + refBonusRate;
             inviter.points = (inviter.points || 0) + refBonusRate;
 
@@ -937,7 +940,8 @@ app.get('/api/admin/users', (req, res) => {
       ewalletNumber: u.ewalletNumber || u.phone,
       saldo: u.saldo || 0,
       points: u.points || 0,
-      commissionPerMessage: u.commissionPerMessage || 900,
+      commissionPerMessage: u.commissionPerMessage || (db.settings && db.settings.messageRate) || 900,
+      referralBonusRate: u.referralBonusRate || (db.settings && db.settings.referralRate) || 100,
       devicesCount: activeCount,
       activeDevicesCount: activeCount,
       totalDevicesCount: userDevices.length,
@@ -987,7 +991,7 @@ app.post('/api/admin/users/:id/update', (req, res) => {
   const user = db.users[req.params.id];
   if (!user) return res.status(404).json({ error: 'User tidak ditemukan' });
 
-  const { name, phone, ewallet, ewalletName, ewalletNumber, saldo, points, commissionPerMessage } = req.body;
+  const { name, phone, ewallet, ewalletName, ewalletNumber, saldo, points, commissionPerMessage, referralBonusRate } = req.body;
   if (name !== undefined) user.name = name.trim();
   if (phone !== undefined) user.phone = phone.replace(/\D/g, '');
   if (ewallet !== undefined) user.ewallet = ewallet.toUpperCase();
@@ -996,10 +1000,26 @@ app.post('/api/admin/users/:id/update', (req, res) => {
   if (saldo !== undefined) user.saldo = Number(saldo);
   if (points !== undefined) user.points = Number(points);
   if (commissionPerMessage !== undefined) user.commissionPerMessage = Number(commissionPerMessage);
+  if (referralBonusRate !== undefined) user.referralBonusRate = Number(referralBonusRate);
 
   save();
   const { password: _, ...userSafe } = user;
   res.json({ success: true, user: userSafe });
+});
+
+// Settings API for Message Rate & Referral Rate
+app.get('/api/settings', (req, res) => {
+  res.json(db.settings || { messageRate: 900, referralRate: 100 });
+});
+
+app.post('/api/admin/settings', (req, res) => {
+  const { messageRate, referralRate } = req.body || {};
+  if (!db.settings) db.settings = { messageRate: 900, referralRate: 100 };
+  if (messageRate !== undefined) db.settings.messageRate = Number(messageRate) || 900;
+  if (referralRate !== undefined) db.settings.referralRate = Number(referralRate) || 100;
+  save();
+  broadcast('settings_update', db.settings);
+  res.json({ success: true, settings: db.settings });
 });
 
 app.delete('/api/admin/users/:id', (req, res) => {

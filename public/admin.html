@@ -736,7 +736,7 @@
 
 
       <!-- MAINTENANCE CONTROL BAR -->
-      <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <div class="admin-maintenance-bar" id="admin-maintenance-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="display:flex; align-items:center; gap:12px;">
           <div id="maint-icon-badge" style="width:40px; height:40px; border-radius:10px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:18px; transition:all 0.2s;">
             <i class="fa-solid fa-screwdriver-wrench"></i>
@@ -754,6 +754,45 @@
         <div style="display:flex; align-items:center; gap:10px;">
           <button type="button" id="btn-toggle-maintenance" onclick="toggleAdminMaintenance()" style="padding:8px 18px; border-radius:10px; font-weight:700; font-size:12.5px; border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:7px; background:#e2e8f0; color:#334155;">
             <i class="fa-solid fa-power-off"></i> <span id="maint-btn-label">Aktifkan Maintenance</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- GLOBAL RATE CONTROL BAR -->
+      <div class="admin-rate-bar" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:40px; height:40px; border-radius:10px; background:#eef2ff; display:flex; align-items:center; justify-content:center; color:#4f46e5; font-size:18px;">
+            <i class="fa-solid fa-coins"></i>
+          </div>
+          <div>
+            <div style="font-size:14px; font-weight:800; color:var(--text-main);">
+              Pengaturan Rate Komisi &amp; Referral Global
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Atur tarif default komisi per pesan dan bonus komisi referral untuk user baru
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px; font-weight:700; color:#475569;">Rate Pesan:</span>
+            <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:4px 8px;">
+              <span style="font-size:12px; color:#64748b; font-weight:600; margin-right:4px;">Rp</span>
+              <input type="number" id="setting-msg-rate" value="900" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="900">
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px; font-weight:700; color:#475569;">Bonus Referral:</span>
+            <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:4px 8px;">
+              <span style="font-size:12px; color:#64748b; font-weight:600; margin-right:4px;">Rp</span>
+              <input type="number" id="setting-ref-rate" value="100" style="width:70px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="100">
+            </div>
+          </div>
+
+          <button type="button" onclick="saveGlobalRates()" class="btn-primary" style="padding:8px 16px; font-size:12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Rate Global
           </button>
         </div>
       </div>
@@ -1132,24 +1171,32 @@
     </div>
   </div>
 
-  <!-- MODAL: EDIT USER SALDO -->
+  <!-- MODAL: EDIT USER SALDO & RATE -->
   <div class="modal-overlay" id="edit-saldo-modal" style="display:none;">
-    <div class="modal-content" style="max-width:400px;">
+    <div class="modal-content" style="max-width:440px;">
       <div class="modal-header">
-        <h3>Edit Saldo Komisi User</h3>
+        <h3>Edit Saldo &amp; Rate User</h3>
         <button class="modal-close" onclick="closeEditSaldoModal()">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="edit-saldo-uid">
-        <div style="font-size:13px;margin-bottom:12px;">
+        <div style="font-size:13px;margin-bottom:14px;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;">
           User: <strong id="edit-saldo-user-display">-</strong>
         </div>
-        <div class="form-group" style="margin-bottom:16px;">
+        <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Jumlah Saldo Baru (Rp)</label>
           <input type="number" class="form-input" id="edit-saldo-input" placeholder="Contoh: 50000">
         </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Rate Komisi Per Pesan (Rp)</label>
+          <input type="number" class="form-input" id="edit-rate-input" placeholder="Default: 900">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Rate Bonus Referral (Rp)</label>
+          <input type="number" class="form-input" id="edit-ref-rate-input" placeholder="Default: 100">
+        </div>
         <button class="btn-primary" style="width:100%;padding:10px;" onclick="submitEditSaldo()">
-          <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Saldo
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Data User
         </button>
       </div>
     </div>
