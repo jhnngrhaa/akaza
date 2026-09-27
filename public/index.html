@@ -121,24 +121,79 @@
          TAB 2: DEVICES
          ========================================== -->
     <section id="tab-devices" class="page-view" style="display:none;">
-      <div class="section-header">
-        <div class="section-icon-box"><i class="fa-solid fa-mobile-screen"></i></div>
-        <div class="section-title-group">
-          <h2>Devices</h2>
-          <p>Kelola nomor WhatsApp yang terhubung</p>
+      <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-icon-box"><i class="fa-solid fa-mobile-screen"></i></div>
+          <div class="section-title-group">
+            <h2>Devices</h2>
+            <p>Kelola perangkat WhatsApp kamu</p>
+          </div>
+        </div>
+        <button type="button" onclick="refreshDevices()" style="width:38px; height:38px; border-radius:12px; background:#f1f5f9; border:none; color:#64748b; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0';this.style.color='#0f172a'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b'" title="Refresh Devices">
+          <i class="fa-solid fa-rotate"></i>
+        </button>
+      </div>
+
+      <!-- Device Stats Grid (Total, Online, Offline) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div class="clean-panel" style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0; border-radius:14px;">
+          <div>
+            <div style="font-size:11px; font-weight:700; color:#94a3b8; letter-spacing:0.5px; text-transform:uppercase;">TOTAL</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:2px;" id="devices-stat-total">0</div>
+          </div>
+          <div style="width:36px; height:36px; border-radius:10px; background:#eff6ff; color:#3b82f6; display:flex; align-items:center; justify-content:center; font-size:16px;">
+            <i class="fa-solid fa-desktop"></i>
+          </div>
+        </div>
+
+        <div class="clean-panel" style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0; border-radius:14px;">
+          <div>
+            <div style="font-size:11px; font-weight:700; color:#94a3b8; letter-spacing:0.5px; text-transform:uppercase;">ONLINE</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:2px;" id="devices-stat-online">0</div>
+          </div>
+          <div style="width:36px; height:36px; border-radius:10px; background:#eff6ff; color:#3b82f6; display:flex; align-items:center; justify-content:center; font-size:16px;">
+            <i class="fa-solid fa-wifi"></i>
+          </div>
+        </div>
+
+        <div class="clean-panel" style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0; border-radius:14px;">
+          <div>
+            <div style="font-size:11px; font-weight:700; color:#ef4444; letter-spacing:0.5px; text-transform:uppercase;">OFFLINE</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:2px;" id="devices-stat-offline">0</div>
+          </div>
+          <div style="width:36px; height:36px; border-radius:10px; background:#fff1f2; color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:16px;">
+            <i class="fa-solid fa-wifi" style="opacity:0.6;"></i>
+          </div>
         </div>
       </div>
 
-      <div class="clean-panel" style="margin-bottom:16px;">
-        <div class="panel-header-flex" style="margin-bottom:0;">
-          <div class="panel-title-area">
-            <div style="font-size:14px;font-weight:700;">Tautkan WhatsApp Baru</div>
-            <div style="font-size:12.5px;color:var(--text-muted);">Scan QR Code atau gunakan 8 digit kode pairing</div>
-          </div>
-          <button class="btn-primary btn-action-top" onclick="openDeviceModal()">
-            <i class="fa-solid fa-plus"></i> Tambah Device
-          </button>
-        </div>
+      <!-- Action Buttons: Scan QR & Pairing Code -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <button type="button" onclick="openDeviceModalWithTab('qr')" style="padding:13px 18px; border-radius:14px; border:none; background:var(--primary, #6366f1); color:#ffffff; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(99,102,241,0.25); transition:all 0.2s;">
+          <i class="fa-solid fa-qrcode"></i> Scan QR
+        </button>
+        <button type="button" onclick="openDeviceModalWithTab('pair')" style="padding:13px 18px; border-radius:14px; border:1px solid #e2e8f0; background:#ffffff; color:#334155; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.03); transition:all 0.2s;" onmouseover="this.style.borderColor='#cbd5e1'" onmouseout="this.style.borderColor='#e2e8f0'">
+          <i class="fa-solid fa-link"></i> Pairing Code
+        </button>
+      </div>
+
+      <!-- Search Input -->
+      <div style="position:relative; margin-bottom:14px;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px;"></i>
+        <input type="text" id="devices-search-input" oninput="filterDevicesList()" placeholder="Cari Device ID / nomor WhatsApp..." style="width:100%; padding:12px 16px 12px 42px; border-radius:12px; border:1px solid #e2e8f0; background:#ffffff; font-size:13px; color:#1e293b; outline:none; box-sizing:border-box; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition:border 0.2s;">
+      </div>
+
+      <!-- Filter Tabs -->
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button type="button" class="dev-filter-pill active" id="dev-filter-all" onclick="setDeviceFilter('all')" style="padding:6px 16px; border-radius:20px; border:none; background:#ede9fe; color:#6366f1; font-size:12.5px; font-weight:700; cursor:pointer; transition:all 0.15s;">
+          Semua
+        </button>
+        <button type="button" class="dev-filter-pill" id="dev-filter-online" onclick="setDeviceFilter('online')" style="padding:6px 16px; border-radius:20px; border:none; background:#f8fafc; color:#64748b; font-size:12.5px; font-weight:700; cursor:pointer; transition:all 0.15s;">
+          Online
+        </button>
+        <button type="button" class="dev-filter-pill" id="dev-filter-offline" onclick="setDeviceFilter('offline')" style="padding:6px 16px; border-radius:20px; border:none; background:#f8fafc; color:#64748b; font-size:12.5px; font-weight:700; cursor:pointer; transition:all 0.15s;">
+          Offline
+        </button>
       </div>
 
       <div id="devices-list-cards">
@@ -600,7 +655,7 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script src="js/app.js?v=4.0"></script>
+  <script src="js/app.js?v=4.1"></script>
 
   <script>
     // SSE Indicator Update

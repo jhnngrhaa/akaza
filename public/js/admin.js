@@ -859,13 +859,8 @@ async function loadAdminDevices() {
         </div>
 
         <div style="display:flex;justify-content:flex-end;gap:8px;">
-          ${isOnline ? `
-            <button class="btn-secondary" style="font-size:12px;padding:6px 12px;color:#ef4444;" onclick="adminDisconnectDevice('${dev.id}')">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i> Putuskan WA
-            </button>
-          ` : ''}
-          <button class="btn-danger" style="font-size:12px;padding:6px 12px;" onclick="adminDeleteDevice('${dev.id}')">
-            <i class="fa-solid fa-trash-can"></i> Hapus
+          <button class="btn-danger" style="font-size:12px;padding:6px 14px;border-radius:8px;" onclick="adminDeleteDevice('${dev.id}')">
+            <i class="fa-solid fa-trash-can"></i> Hapus Device
           </button>
         </div>
       </div>`;

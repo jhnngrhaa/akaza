@@ -375,21 +375,59 @@ async function changeDeviceMode(deviceId, mode) {
   }
 }
 
-function renderDeviceCards(devices) {
+let allDevicesList = [];
+let currentDeviceFilter = 'all';
+
+function setDeviceFilter(filter) {
+  currentDeviceFilter = filter;
+  ['all', 'online', 'offline'].forEach(f => {
+    const el = document.getElementById(`dev-filter-${f}`);
+    if (el) {
+      if (f === filter) {
+        el.style.background = '#ede9fe';
+        el.style.color = '#6366f1';
+      } else {
+        el.style.background = '#f8fafc';
+        el.style.color = '#64748b';
+      }
+    }
+  });
+  filterDevicesList();
+}
+
+function filterDevicesList() {
   const container = document.getElementById('devices-list-cards');
   if (!container) return;
 
-  if (!devices.length) {
+  const query = (document.getElementById('devices-search-input')?.value || '').toLowerCase().trim();
+  let filtered = allDevicesList;
+
+  if (currentDeviceFilter === 'online') {
+    filtered = filtered.filter(d => d.status === 'online');
+  } else if (currentDeviceFilter === 'offline') {
+    filtered = filtered.filter(d => d.status !== 'online');
+  }
+
+  if (query) {
+    filtered = filtered.filter(d => {
+      const devId = (d.id || '').toLowerCase();
+      const phone = (d.phone || '').toLowerCase();
+      const name = (d.name || '').toLowerCase();
+      return devId.includes(query) || phone.includes(query) || name.includes(query);
+    });
+  }
+
+  if (!filtered.length) {
     container.innerHTML = `
       <div class="clean-panel" style="text-align:center;color:var(--text-muted);padding:32px 16px;">
         <i class="fa-solid fa-mobile-screen" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.3;"></i>
-        <div style="font-weight:600;">Belum ada device terhubung</div>
-        <div style="font-size:12px;margin-top:4px;">Klik "Tambah Device" untuk mulai pairing WhatsApp</div>
+        <div style="font-weight:600;">Tidak ada perangkat ditemukan</div>
+        <div style="font-size:12px;margin-top:4px;">Klik "Scan QR" atau "Pairing Code" untuk menautkan WhatsApp</div>
       </div>`;
     return;
   }
 
-  container.innerHTML = devices.map(dev => {
+  container.innerHTML = filtered.map(dev => {
     const isOnline = dev.status === 'online';
     const isConnecting = dev.status === 'connecting' || dev.status === 'qr_ready' || dev.status === 'pairing_code_ready';
     const currentMode = dev.mode || 'NORMAL_10S';
@@ -444,19 +482,11 @@ function renderDeviceCards(devices) {
         <select class="device-mode-select" onchange="changeDeviceMode('${dev.id}', this.value)" title="Pilih mode kecepatan chat">
           ${optionsHtml}
         </select>
-        ${isOnline ? `
-          <button class="device-btn-icon btn-disconnect" onclick="disconnectDevice('${dev.id}')" title="Putuskan WhatsApp">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-          </button>
-        ` : isConnecting ? `
-          <button class="device-btn-icon btn-disconnect" disabled title="Menghubungkan...">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-          </button>
-        ` : `
-          <button class="device-btn-icon btn-reconnect" onclick="openDeviceModal()" title="Tautkan Ulang">
+        ${!isOnline && !isConnecting ? `
+          <button class="device-btn-icon btn-reconnect" onclick="openDeviceModalWithTab('qr')" title="Tautkan Ulang">
             <i class="fa-solid fa-rotate"></i>
           </button>
-        `}
+        ` : ''}
         <button class="device-btn-icon btn-del" onclick="deleteDevice('${dev.id}')" title="Hapus Device">
           <i class="fa-solid fa-trash-can"></i>
         </button>
@@ -465,13 +495,35 @@ function renderDeviceCards(devices) {
   }).join('');
 }
 
+function renderDeviceCards(devices) {
+  allDevicesList = devices || [];
+  filterDevicesList();
+}
+
 function updateDashboardCounts(devices) {
   const online = devices.filter(d => d.status === 'online').length;
   const offline = devices.filter(d => d.status !== 'online').length;
+  const total = devices.length;
+
   const elOn = document.getElementById('dash-online-count');
   const elOff = document.getElementById('dash-offline-count');
   if (elOn) elOn.textContent = online;
   if (elOff) elOff.textContent = offline;
+
+  const statTot = document.getElementById('devices-stat-total');
+  const statOn = document.getElementById('devices-stat-online');
+  const statOff = document.getElementById('devices-stat-offline');
+  if (statTot) statTot.textContent = total;
+  if (statOn) statOn.textContent = online;
+  if (statOff) statOff.textContent = offline;
+}
+
+function openDeviceModalWithTab(tab = 'qr') {
+  openDeviceModal();
+  switchDeviceModalTab(tab);
+  if (tab === 'pair') {
+    clearInterval(qrPollingInterval);
+  }
 }
 
 function handleDeviceUpdate(data) {
