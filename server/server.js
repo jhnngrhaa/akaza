@@ -1258,6 +1258,39 @@ app.post('/api/blast/setup', (req, res) => {
   res.json({ success: true, count: db.blastContacts.length, blastActive });
 });
 
+// Image Upload Endpoint
+const uploadsDir = join(publicDir, 'uploads');
+if (!existsSync(uploadsDir)) mkdirSync(uploadsDir, { recursive: true });
+
+app.post('/api/upload', (req, res) => {
+  try {
+    const { base64 } = req.body;
+    if (!base64) return res.status(400).json({ error: 'No image data provided' });
+
+    const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer;
+    let ext = 'png';
+    if (matches && matches.length === 3) {
+      ext = matches[1].split('/')[1] || 'png';
+      buffer = Buffer.from(matches[2], 'base64');
+    } else {
+      buffer = Buffer.from(base64, 'base64');
+    }
+
+    const safeExt = ext.replace(/[^a-zA-Z0-9]/g, '').slice(0, 5) || 'png';
+    const newFilename = `upload_${Date.now()}_${Math.floor(Math.random() * 1000)}.${safeExt}`;
+    const filePath = join(uploadsDir, newFilename);
+
+    writeFileSync(filePath, buffer);
+
+    const fileUrl = `/uploads/${newFilename}`;
+    res.json({ success: true, url: fileUrl });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Failed to upload file: ' + err.message });
+  }
+});
+
 app.post('/api/blast/start', async (req, res) => {
   if (blastActive) return res.json({ success: true, message: 'Blast sudah aktif' });
   if (!db.blastContacts.length) return res.status(400).json({ error: 'Database nomor kosong' });

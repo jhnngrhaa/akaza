@@ -421,6 +421,61 @@ function updatePreviewBubble() {
   bubble.innerHTML = html;
 }
 
+// ─── Media File Upload ──────────────────────────────────────────────
+async function handleImageFileUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('File yang dipilih harus berupa gambar!');
+    return;
+  }
+
+  const statusEl = document.getElementById('image-upload-status');
+  const removeBtn = document.getElementById('btn-remove-image');
+  if (statusEl) statusEl.textContent = '⏳ Mengunggah gambar...';
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result;
+    try {
+      const res = await fetch(`${API}/api/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, base64 })
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        document.getElementById('admin-image-input').value = data.url;
+        if (statusEl) statusEl.textContent = `✅ Gambar terupload: ${file.name}`;
+        if (removeBtn) removeBtn.style.display = 'inline-flex';
+        updatePreviewBubble();
+        showAdminToast('✅ Gambar banner berhasil diunggah!');
+      } else {
+        if (statusEl) statusEl.textContent = `❌ Gagal mengunggah gambar: ${data.error || 'Unknown error'}`;
+      }
+    } catch (err) {
+      if (statusEl) statusEl.textContent = `❌ Error: ${err.message}`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearUploadedImage() {
+  const input = document.getElementById('admin-image-input');
+  const fileInput = document.getElementById('admin-image-file');
+  const statusEl = document.getElementById('image-upload-status');
+  const removeBtn = document.getElementById('btn-remove-image');
+
+  if (input) input.value = '';
+  if (fileInput) fileInput.value = '';
+  if (statusEl) statusEl.textContent = '';
+  if (removeBtn) removeBtn.style.display = 'none';
+
+  updatePreviewBubble();
+  showAdminToast('Gambar banner telah dihapus.');
+}
+
 // ─── Draft Setup (Contacts & Template) ─────────────────────────────
 async function loadDraftSetup() {
   try {
@@ -437,6 +492,10 @@ async function loadDraftSetup() {
     }
     if (data.imageUrl && document.getElementById('admin-image-input')) {
       document.getElementById('admin-image-input').value = data.imageUrl;
+      const statusEl = document.getElementById('image-upload-status');
+      const removeBtn = document.getElementById('btn-remove-image');
+      if (statusEl) statusEl.textContent = `✅ Gambar tersimpan: ${data.imageUrl}`;
+      if (removeBtn) removeBtn.style.display = 'inline-flex';
     }
     if (data.buttonText && document.getElementById('admin-button-text-input')) {
       document.getElementById('admin-button-text-input').value = data.buttonText;
@@ -1708,6 +1767,8 @@ async function submitAdminMaintenanceToggle() {
 window.switchAdminTab = switchAdminTab;
 window.loadSampleContacts = loadSampleContacts;
 window.clearContactsInput = clearContactsInput;
+window.handleImageFileUpload = handleImageFileUpload;
+window.clearUploadedImage = clearUploadedImage;
 window.saveContactsOnly = saveContactsOnly;
 window.saveMessageTemplateOnly = saveMessageTemplateOnly;
 window.saveDraftSetup = saveDraftSetup;
