@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAdminMaintenanceStatus();
 
   // Close modals on backdrop click
-  ['reject-wd-modal', 'approve-wd-modal', 'create-user-modal', 'edit-saldo-modal'].forEach(id => {
+  ['reject-wd-modal', 'approve-wd-modal', 'create-user-modal', 'edit-saldo-modal', 'admin-maintenance-modal'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('click', (e) => {
@@ -1481,23 +1481,70 @@ function updateMaintenanceUI(isMaintenance, message) {
   }
 }
 
-async function toggleAdminMaintenance() {
+let pendingMaintenanceTargetState = false;
+
+function toggleAdminMaintenance() {
   const token = localStorage.getItem('akaza_admin_token');
   if (!token) return;
 
-  const targetState = !currentMaintenanceState;
-  let customMessage = '';
+  pendingMaintenanceTargetState = !currentMaintenanceState;
 
-  if (targetState) {
-    const input = prompt(
-      'Aktifkan Mode Maintenance?\n\nMasukkan pesan pemberitahuan untuk user (opsional):',
-      'Sistem sedang dalam pemeliharaan rutin. Silakan coba beberapa saat lagi.'
-    );
-    if (input === null) return; // cancelled
-    customMessage = input.trim();
+  const modal = document.getElementById('admin-maintenance-modal');
+  const title = document.getElementById('maint-modal-title');
+  const desc = document.getElementById('maint-modal-desc');
+  const msgGroup = document.getElementById('maint-modal-msg-group');
+  const btnLabel = document.getElementById('maint-modal-btn-label');
+  const submitBtn = document.getElementById('maint-modal-submit-btn');
+  const iconBox = document.getElementById('maint-modal-icon-box');
+  const msgInput = document.getElementById('maint-modal-input-msg');
+
+  if (pendingMaintenanceTargetState) {
+    // Activating Maintenance
+    if (title) title.textContent = 'Aktifkan Mode Maintenance';
+    if (desc) desc.textContent = 'Aplikasi user akan menampilkan layar pemeliharaan dan membatasi akses sementara hingga Anda mematikannya kembali.';
+    if (msgGroup) msgGroup.style.display = 'block';
+    if (btnLabel) btnLabel.textContent = 'Aktifkan Sekarang';
+    if (submitBtn) {
+      submitBtn.style.background = '#ef4444';
+      submitBtn.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
+    }
+    if (iconBox) {
+      iconBox.style.background = '#fef2f2';
+      iconBox.style.color = '#ef4444';
+    }
+    if (msgInput && !msgInput.value.trim()) {
+      msgInput.value = 'Sistem sedang dalam pemeliharaan rutin. Silakan coba beberapa saat lagi.';
+    }
   } else {
-    if (!confirm('Matikan Mode Maintenance dan kembalikan akses normal untuk semua user?')) return;
+    // Deactivating Maintenance
+    if (title) title.textContent = 'Matikan Mode Maintenance';
+    if (desc) desc.textContent = 'Kembalikan sistem ke status NORMAL. Akses aplikasi user/member akan langsung aktif dan dapat digunakan kembali.';
+    if (msgGroup) msgGroup.style.display = 'none';
+    if (btnLabel) btnLabel.textContent = 'Matikan & Buka Akses User';
+    if (submitBtn) {
+      submitBtn.style.background = '#10b981';
+      submitBtn.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+    }
+    if (iconBox) {
+      iconBox.style.background = '#ecfdf5';
+      iconBox.style.color = '#10b981';
+    }
   }
+
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeAdminMaintenanceModal() {
+  const modal = document.getElementById('admin-maintenance-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function submitAdminMaintenanceToggle() {
+  const token = localStorage.getItem('akaza_admin_token');
+  if (!token) return;
+
+  const msgInput = document.getElementById('maint-modal-input-msg');
+  const customMessage = msgInput ? msgInput.value.trim() : '';
 
   try {
     const res = await fetch(`${API}/api/admin/system/maintenance`, {
@@ -1507,21 +1554,22 @@ async function toggleAdminMaintenance() {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        maintenance: targetState,
+        maintenance: pendingMaintenanceTargetState,
         message: customMessage
       })
     });
 
     const data = await res.json();
     if (data.error) {
-      alert(`Gagal: ${data.error}`);
+      showAdminToast(`❌ Gagal: ${data.error}`);
       return;
     }
 
+    closeAdminMaintenanceModal();
     updateMaintenanceUI(data.maintenance, data.message);
     showAdminToast(data.maintenance ? '🚨 Mode Maintenance BERHASIL DIAKTIFKAN!' : '✅ Mode Maintenance BERHASIL DIMATIKAN!');
   } catch (err) {
-    alert(`Terjadi kesalahan server: ${err.message}`);
+    showAdminToast(`❌ Terjadi kesalahan server: ${err.message}`);
   }
 }
 
@@ -1559,4 +1607,6 @@ window.exportBlastReportExcel = exportBlastReportExcel;
 window.filterAdminLogs = filterAdminLogs;
 window.clearAdminLogs = clearAdminLogs;
 window.toggleAdminMaintenance = toggleAdminMaintenance;
+window.closeAdminMaintenanceModal = closeAdminMaintenanceModal;
+window.submitAdminMaintenanceToggle = submitAdminMaintenanceToggle;
 window.loadAdminMaintenanceStatus = loadAdminMaintenanceStatus;
