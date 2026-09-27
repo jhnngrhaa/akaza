@@ -1648,13 +1648,20 @@ async function loadServerLogs() {
 
   try {
     const res = await fetch(`${API}/api/admin/server-logs`);
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error('Server belum di-restart dengan versi terbaru. Silakan jalankan "pm2 restart all" di VPS.');
+    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     allServerLogs = data.logs || [];
     renderServerLogs();
   } catch (err) {
     if (container) {
-      container.innerHTML = `<div style="color:#ef4444;text-align:center;padding:30px;">Gagal memuat log server: ${err.message}</div>`;
+      container.innerHTML = `<div style="color:#fca5a5;text-align:center;padding:34px;line-height:1.6;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:26px;margin-bottom:8px;color:#ef4444;display:block;"></i>
+        <strong style="color:#ffffff;">Gagal Memuat Log Server:</strong><br>${err.message}
+      </div>`;
     }
   }
 }
