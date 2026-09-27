@@ -589,52 +589,13 @@ async function runBlast(campaignId) {
 
       let finalMsg = msg;
       if (btnUrl && !msg.includes(btnUrl)) {
-        const label = btnText || 'Klik di sini';
-        finalMsg = `${msg}\n\n👉 *${label}*:\n${btnUrl}`;
+        const label = btnText ? btnText.trim() : 'Klik di sini';
+        finalMsg = `${msg}\n\n👉 🔗 *${label}*:\n${btnUrl}`;
+      } else if (btnText && !btnUrl) {
+        finalMsg = `${msg}\n\n👉 🔗 *${btnText.trim()}*`;
       }
 
-      if (btnText) {
-        // Send WhatsApp Quick Reply Stacked Buttons (like AQUA screenshot: [ Masukkan Kode Unik ])
-        try {
-          const cleanBtnLabel = btnText.trim();
-          const btnDisplay = cleanBtnLabel.length > 20 ? cleanBtnLabel.slice(0, 20) : cleanBtnLabel;
-
-          const buttonArray = [
-            {
-              buttonId: 'btn_1',
-              buttonText: { displayText: btnDisplay },
-              type: 1
-            }
-          ];
-
-          if (imageSource) {
-            // Send image first
-            await sock.sendMessage(jid, { image: imageSource, caption: msg });
-            // Send quick reply button message
-            await sock.sendMessage(jid, {
-              text: btnUrl ? `👉 *${cleanBtnLabel}*:\n${btnUrl}` : 'Silakan klik tombol di bawah:',
-              footer: db.blastTitle || 'Akaza Blast',
-              buttons: buttonArray,
-              headerType: 1
-            });
-          } else {
-            // Send text with quick reply button directly
-            await sock.sendMessage(jid, {
-              text: finalMsg,
-              footer: db.blastTitle || 'Akaza Blast',
-              buttons: buttonArray,
-              headerType: 1
-            });
-          }
-        } catch (btnErr) {
-          console.error('Quick reply button message failed, using fallback:', btnErr);
-          if (imageSource) {
-            await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
-          } else {
-            await sock.sendMessage(jid, { text: finalMsg });
-          }
-        }
-      } else if (imageSource) {
+      if (imageSource) {
         await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
       } else {
         await sock.sendMessage(jid, { text: finalMsg });
