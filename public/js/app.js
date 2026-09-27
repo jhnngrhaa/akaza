@@ -78,6 +78,13 @@ function updateUserUI() {
     // Cek status banner komisi (hanya muncul di awal login & bisa dihapus)
     checkCommissionBanner();
 
+    // Update nominal banner komisi per pesan
+    const bannerRateEl = document.getElementById('user-banner-comm-rate');
+    if (bannerRateEl) {
+      const commRate = currentUser.commissionPerMessage || 900;
+      bannerRateEl.textContent = formatRp(commRate);
+    }
+
     // Wallets form auto-fill
     const wdBank = document.getElementById('wd-bank');
     const wdAccNum = document.getElementById('wd-acc-number');
@@ -456,6 +463,8 @@ function renderLogTable(logs) {
 
   tbody.innerHTML = logs.map(log => {
     const isSuccess = log.status === 'sent' || log.status === 'SUCCESS';
+    const fallbackRate = (currentUser && currentUser.commissionPerMessage) || 900;
+    const commVal = log.commission !== undefined ? log.commission : fallbackRate;
     return `
     <tr>
       <td>${formatTime(log.timestamp)}</td>
@@ -466,7 +475,7 @@ function renderLogTable(logs) {
         </span>
       </td>
       <td style="color:${isSuccess ? '#16a34a' : '#dc2626'};font-weight:600;">
-        ${isSuccess ? '+' + formatRp(log.commission !== undefined ? log.commission : 900) : 'Rp 0'}
+        ${isSuccess ? '+' + formatRp(commVal) : 'Rp 0'}
       </td>
     </tr>`;
   }).join('');
@@ -482,7 +491,8 @@ function prependLogRow(entry) {
 
   const isSuccess = entry.status === 'sent' || entry.status === 'SUCCESS';
   const tr = document.createElement('tr');
-  const comm = entry.commission !== undefined ? entry.commission : 900;
+  const fallbackRate = (currentUser && currentUser.commissionPerMessage) || 900;
+  const comm = entry.commission !== undefined ? entry.commission : fallbackRate;
   tr.innerHTML = `
     <td>${formatTime(entry.timestamp)}</td>
     <td>${escHtml(maskPhone(entry.phone || entry.receiver))}</td>

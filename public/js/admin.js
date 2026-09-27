@@ -2040,14 +2040,20 @@ async function saveGlobalRates() {
 
   if (btn) btn.disabled = true;
   try {
+    const token = localStorage.getItem('akaza_admin_token');
     const res = await fetch(`${API}/api/admin/settings`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ messageRate, referralRate })
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      alert('Rate Komisi & Referral berhasil diperbarui secara global!');
+      alert(`✅ Rate Komisi (Rp ${messageRate.toLocaleString('id-ID')}) & Referral (Rp ${referralRate.toLocaleString('id-ID')}) berhasil disimpan dan disinkronkan ke seluruh user!`);
+      loadAdminUsers();
+      loadAdminDevices();
     } else {
       alert(data.error || 'Gagal menyimpan settings.');
     }

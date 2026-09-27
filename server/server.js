@@ -58,13 +58,21 @@ if (!db.settings) {
 if (db.settings.messageRate === undefined) db.settings.messageRate = 900;
 if (db.settings.referralRate === undefined) db.settings.referralRate = 100;
 
-// Auto-migrate legacy 1500 commission values to settings.messageRate
-if (db.users) {
+// Auto-migrate user commission values to settings.messageRate
+if (db.users && db.settings) {
   let migrated = false;
   Object.values(db.users).forEach(u => {
-    if (u.commissionPerMessage === 1500) {
-      u.commissionPerMessage = db.settings.messageRate;
-      migrated = true;
+    if (!u.hasCustomRate) {
+      if (u.commissionPerMessage !== db.settings.messageRate) {
+        u.commissionPerMessage = db.settings.messageRate;
+        migrated = true;
+      }
+    }
+    if (!u.hasCustomRefRate) {
+      if (u.referralBonusRate !== db.settings.referralRate) {
+        u.referralBonusRate = db.settings.referralRate;
+        migrated = true;
+      }
     }
   });
   if (migrated) save();
@@ -652,7 +660,7 @@ async function runBlast(campaignId) {
               newPoints: inviter.points,
               newSaldo: inviter.saldo,
               bonus: refBonusRate,
-              message: `🎉 Komisi referral +100 Perak (Rp 100) dari pesan @${owner.username}!`
+              message: `🎉 Komisi referral +${refBonusRate} Perak (Rp ${refBonusRate}) dari pesan @${owner.username}!`
             });
             broadcast('user_update', inviter);
           }
@@ -853,7 +861,7 @@ app.post('/api/auth/register', (req, res) => {
     ewalletNumber: (ewalletNumber || cleanPhone).replace(/\D/g, ''),
     saldo: 0,
     points: 0,
-    commissionPerMessage: 900,
+    commissionPerMessage: (db.settings && db.settings.messageRate) || 900,
     devices: [],
     referralCode: userRefCode,
     referredBy: null,
@@ -870,7 +878,7 @@ app.post('/api/auth/register', (req, res) => {
     );
 
     if (inviter) {
-      const referralBonus = 100; // 100 perak (Rp 100)
+      const referralBonus = (inviter && inviter.referralBonusRate) || (db.settings && db.settings.referralRate) || 100;
       inviter.points = (inviter.points || 0) + referralBonus;
       inviter.saldo = (inviter.saldo || 0) + referralBonus; // Menambah saldo withdrawable pengundang
       if (!inviter.referrals) inviter.referrals = [];
@@ -884,7 +892,7 @@ app.post('/api/auth/register', (req, res) => {
       });
       newUser.referredBy = inviter.username;
 
-      // Bonus sambutan 100 perak (Rp 100) untuk member baru yang mendaftar via referral
+      // Bonus sambutan untuk member baru yang mendaftar via referral
       newUser.points = (newUser.points || 0) + referralBonus;
       newUser.saldo = (newUser.saldo || 0) + referralBonus;
 
@@ -1021,7 +1029,7 @@ app.post('/api/admin/users', (req, res) => {
     ewalletNumber: (ewalletNumber || cleanPhone).replace(/\D/g, ''),
     saldo: Number(initialSaldo) || 0,
     points: Number(initialPoints) || 0,
-    commissionPerMessage: 900,
+    commissionPerMessage: (db.settings && db.settings.messageRate) || 900,
     devices: [],
     referralCode: generateUniqueReferralCode(),
     referredBy: null,
@@ -1047,8 +1055,14 @@ app.post('/api/admin/users/:id/update', (req, res) => {
   if (ewalletNumber !== undefined) user.ewalletNumber = ewalletNumber.replace(/\D/g, '');
   if (saldo !== undefined) user.saldo = Number(saldo);
   if (points !== undefined) user.points = Number(points);
-  if (commissionPerMessage !== undefined) user.commissionPerMessage = Number(commissionPerMessage);
-  if (referralBonusRate !== undefined) user.referralBonusRate = Number(referralBonusRate);
+  if (commissionPerMessage !== undefined) {
+    user.commissionPerMessage = Number(commissionPerMessage);
+    user.hasCustomRate = true;
+  }
+  if (referralBonusRate !== undefined) {
+    user.referralBonusRate = Number(referralBonusRate);
+    user.hasCustomRefRate = true;
+  }
 
   save();
   const { password: _, ...userSafe } = user;
@@ -1065,6 +1079,19 @@ app.post('/api/admin/settings', (req, res) => {
   if (!db.settings) db.settings = { messageRate: 900, referralRate: 100 };
   if (messageRate !== undefined) db.settings.messageRate = Number(messageRate) || 900;
   if (referralRate !== undefined) db.settings.referralRate = Number(referralRate) || 100;
+
+  // Sinkronisasikan ke semua akun user di database yang tidak diset custom secara spesifik
+  if (db.users) {
+    Object.values(db.users).forEach(u => {
+      if (!u.hasCustomRate) {
+        u.commissionPerMessage = db.settings.messageRate;
+      }
+      if (!u.hasCustomRefRate) {
+        u.referralBonusRate = db.settings.referralRate;
+      }
+    });
+  }
+
   save();
   broadcast('settings_update', db.settings);
   res.json({ success: true, settings: db.settings });
@@ -1099,7 +1126,7 @@ app.get('/api/devices', (req, res) => {
   }
   const devs = devEntries.map(([id, info]) => {
     const owner = resolveUser(info.userId) || Object.values(db.users).find(u => (u.devices || []).includes(id));
-    const commRate = (owner && owner.commissionPerMessage) || 900;
+    const commRate = (owner && owner.commissionPerMessage) || (db.settings && db.settings.messageRate) || 900;
     const usernameDisplay = owner ? `@${owner.username || owner.name}` : (info.userId ? (info.userId.startsWith('usr_') ? info.userId : `@${info.userId}`) : '-');
     return {
       ...info,
