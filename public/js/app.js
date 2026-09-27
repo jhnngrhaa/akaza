@@ -802,14 +802,24 @@ function showPairingCode(code) {
 }
 
 async function disconnectDevice(deviceId) {
-  if (!confirm('Yakin ingin memutuskan device ini?')) return;
+  const ok = await showCustomConfirm('Yakin ingin memutuskan koneksi WhatsApp device ini?', {
+    title: 'Putuskan WhatsApp',
+    confirmText: 'Putuskan',
+    isDanger: true
+  });
+  if (!ok) return;
   await fetch(`${API}/api/devices/${deviceId}/disconnect`, { method: 'POST' });
   refreshDevices();
   showToast('Device diputuskan.');
 }
 
 async function deleteDevice(deviceId) {
-  if (!confirm('Hapus device ini secara permanen?\nSession WhatsApp akan dihapus.')) return;
+  const ok = await showCustomConfirm('Hapus device ini secara permanen? Sesi login WhatsApp pada server akan dihapus.', {
+    title: 'Hapus Device',
+    confirmText: 'Hapus Permanen',
+    isDanger: true
+  });
+  if (!ok) return;
   const r = await fetch(`${API}/api/devices/${deviceId}`, { method: 'DELETE' });
   if (r.ok) {
     const card = document.getElementById(`device-card-${deviceId}`);
@@ -1152,9 +1162,14 @@ function switchAuthMode(mode) {
   }
 }
 
-function handleAuthClick() {
+async function handleAuthClick() {
   if (currentUser) {
-    if (confirm(`Yakin ingin keluar (logout) dari akun @${currentUser.username || currentUser.name}?`)) {
+    const ok = await showCustomConfirm(`Yakin ingin keluar (logout) dari akun @${currentUser.username || currentUser.name}?`, {
+      title: 'Keluar Akun',
+      confirmText: 'Keluar Sekarang',
+      isDanger: true
+    });
+    if (ok) {
       currentUserId = null;
       currentUser = null;
       localStorage.removeItem('akaza_auth_uid');
@@ -1222,6 +1237,224 @@ function showToast(msg) {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
 }
+
+// ─── Custom UI Popup Dialog (Menggantikan Alert & Confirm Bawaan Browser) ───
+function initCustomDialogUI() {
+  if (document.getElementById('akaza-custom-dialog-overlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'akaza-custom-dialog-overlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    font-family: inherit;
+  `;
+
+  overlay.innerHTML = `
+    <div id="akaza-custom-dialog-box" style="
+      background: #ffffff;
+      border-radius: 20px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      transform: scale(0.92);
+      opacity: 0;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    ">
+      <div style="padding: 28px 24px 18px; text-align: center;">
+        <div id="akaza-dialog-icon-box" style="
+          width: 64px; height: 64px; border-radius: 50%;
+          margin: 0 auto 16px; display: flex; align-items: center;
+          justify-content: center; font-size: 28px;
+        ">
+          <i id="akaza-dialog-icon" class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 id="akaza-dialog-title" style="margin: 0 0 8px; font-size: 17px; font-weight: 800; color: #0f172a; letter-spacing: -0.2px;"></h3>
+        <div id="akaza-dialog-message" style="margin: 0; font-size: 13.5px; color: #475569; line-height: 1.55; white-space: pre-line; word-break: break-word;"></div>
+      </div>
+      <div id="akaza-dialog-actions" style="padding: 8px 20px 22px; display: flex; gap: 10px; justify-content: center;">
+        <button type="button" id="akaza-dialog-cancel-btn" style="
+          display: none; flex: 1; padding: 11px 18px; border-radius: 12px;
+          border: 1px solid #cbd5e1; background: #ffffff; color: #475569;
+          font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.15s;
+        ">Batal</button>
+        <button type="button" id="akaza-dialog-confirm-btn" style="
+          flex: 1; padding: 11px 18px; border-radius: 12px;
+          border: none; background: #2563eb; color: #ffffff;
+          font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.15s;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        ">Oke, Mengerti</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.style.display === 'flex') {
+      const cancelBtn = document.getElementById('akaza-dialog-cancel-btn');
+      if (cancelBtn && cancelBtn.style.display !== 'none') {
+        cancelBtn.click();
+      } else {
+        const confirmBtn = document.getElementById('akaza-dialog-confirm-btn');
+        if (confirmBtn) confirmBtn.click();
+      }
+    }
+  });
+}
+
+function showCustomAlert(msg, title = '') {
+  return new Promise((resolve) => {
+    initCustomDialogUI();
+    const overlay = document.getElementById('akaza-custom-dialog-overlay');
+    const box = document.getElementById('akaza-custom-dialog-box');
+    const titleEl = document.getElementById('akaza-dialog-title');
+    const msgEl = document.getElementById('akaza-dialog-message');
+    const iconBox = document.getElementById('akaza-dialog-icon-box');
+    const iconEl = document.getElementById('akaza-dialog-icon');
+    const cancelBtn = document.getElementById('akaza-dialog-cancel-btn');
+    const confirmBtn = document.getElementById('akaza-dialog-confirm-btn');
+
+    const msgStr = String(msg || '');
+    let finalType = 'info';
+    if (msgStr.includes('✅') || msgStr.toLowerCase().includes('berhasil') || msgStr.toLowerCase().includes('sukses')) {
+      finalType = 'success';
+    } else if (msgStr.includes('❌') || msgStr.toLowerCase().includes('gagal') || msgStr.toLowerCase().includes('error')) {
+      finalType = 'error';
+    } else if (msgStr.includes('⚠️') || msgStr.toLowerCase().includes('peringatan') || msgStr.toLowerCase().includes('perhatian')) {
+      finalType = 'warning';
+    }
+
+    const cleanMsg = msgStr.replace(/^[✅❌⚠️ℹ️🎉]\s*/, '');
+    let defaultTitle = 'Pemberitahuan';
+    if (finalType === 'success') defaultTitle = 'Berhasil!';
+    else if (finalType === 'error') defaultTitle = 'Terjadi Kesalahan';
+    else if (finalType === 'warning') defaultTitle = 'Perhatian';
+
+    titleEl.textContent = title || defaultTitle;
+    msgEl.textContent = cleanMsg;
+
+    if (finalType === 'success') {
+      iconBox.style.background = '#ecfdf5';
+      iconBox.style.color = '#10b981';
+      iconEl.className = 'fa-solid fa-circle-check';
+      confirmBtn.style.background = '#10b981';
+      confirmBtn.style.boxShadow = '0 4px 14px rgba(16, 185, 129, 0.3)';
+      confirmBtn.textContent = 'Oke, Selesai';
+    } else if (finalType === 'error') {
+      iconBox.style.background = '#fef2f2';
+      iconBox.style.color = '#ef4444';
+      iconEl.className = 'fa-solid fa-circle-xmark';
+      confirmBtn.style.background = '#ef4444';
+      confirmBtn.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.3)';
+      confirmBtn.textContent = 'Tutup';
+    } else if (finalType === 'warning') {
+      iconBox.style.background = '#fffbeb';
+      iconBox.style.color = '#f59e0b';
+      iconEl.className = 'fa-solid fa-triangle-exclamation';
+      confirmBtn.style.background = '#f59e0b';
+      confirmBtn.style.boxShadow = '0 4px 14px rgba(245, 158, 11, 0.3)';
+      confirmBtn.textContent = 'Oke, Mengerti';
+    } else {
+      iconBox.style.background = '#eff6ff';
+      iconBox.style.color = '#3b82f6';
+      iconEl.className = 'fa-solid fa-circle-info';
+      confirmBtn.style.background = '#2563eb';
+      confirmBtn.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.3)';
+      confirmBtn.textContent = 'Oke';
+    }
+
+    cancelBtn.style.display = 'none';
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => {
+      box.style.transform = 'scale(1)';
+      box.style.opacity = '1';
+    });
+
+    const finish = () => {
+      box.style.transform = 'scale(0.92)';
+      box.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        resolve(true);
+      }, 150);
+    };
+
+    confirmBtn.onclick = finish;
+  });
+}
+
+function showCustomConfirm(msg, {
+  title = 'Konfirmasi Tindakan',
+  confirmText = 'Ya, Lanjutkan',
+  cancelText = 'Batal',
+  isDanger = false
+} = {}) {
+  return new Promise((resolve) => {
+    initCustomDialogUI();
+    const overlay = document.getElementById('akaza-custom-dialog-overlay');
+    const box = document.getElementById('akaza-custom-dialog-box');
+    const titleEl = document.getElementById('akaza-dialog-title');
+    const msgEl = document.getElementById('akaza-dialog-message');
+    const iconBox = document.getElementById('akaza-dialog-icon-box');
+    const iconEl = document.getElementById('akaza-dialog-icon');
+    const cancelBtn = document.getElementById('akaza-dialog-cancel-btn');
+    const confirmBtn = document.getElementById('akaza-dialog-confirm-btn');
+
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
+
+    if (isDanger) {
+      iconBox.style.background = '#fef2f2';
+      iconBox.style.color = '#ef4444';
+      iconEl.className = 'fa-solid fa-triangle-exclamation';
+      confirmBtn.style.background = '#ef4444';
+      confirmBtn.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.3)';
+    } else {
+      iconBox.style.background = '#eff6ff';
+      iconBox.style.color = '#3b82f6';
+      iconEl.className = 'fa-solid fa-circle-question';
+      confirmBtn.style.background = '#2563eb';
+      confirmBtn.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.3)';
+    }
+
+    confirmBtn.textContent = confirmText;
+    cancelBtn.textContent = cancelText;
+    cancelBtn.style.display = 'block';
+
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => {
+      box.style.transform = 'scale(1)';
+      box.style.opacity = '1';
+    });
+
+    const cleanup = (result) => {
+      box.style.transform = 'scale(0.92)';
+      box.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        resolve(result);
+      }, 150);
+    };
+
+    confirmBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+  });
+}
+
+// Override alert bawaan browser agar selalu menampilkan modal custom cantik
+window.alert = function(msg) {
+  showCustomAlert(msg);
+};
 
 // ─── Commission Banner Dismissible ────────────────────────────────
 function checkCommissionBanner() {
