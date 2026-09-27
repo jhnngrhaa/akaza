@@ -593,7 +593,46 @@ async function runBlast(campaignId) {
         finalMsg = `${msg}\n\n👉 *${label}*:\n${btnUrl}`;
       }
 
-      if (imageSource) {
+      if (btnText && btnUrl) {
+        // Send WhatsApp List Menu Button Message (like AQUA screenshot: [ 📑 Menu ])
+        try {
+          const cleanBtnLabel = btnText.trim();
+          const listTitle = cleanBtnLabel.length > 24 ? cleanBtnLabel.slice(0, 24) : cleanBtnLabel;
+          const payload = {
+            title: 'INFORMASI PROMO',
+            buttonText: listTitle.startsWith('📑') || listTitle.startsWith('🚀') ? listTitle : `📑 ${listTitle}`,
+            footer: db.blastTitle || 'Akaza Blast',
+            sections: [
+              {
+                title: 'Tautan Website Target',
+                rows: [
+                  {
+                    title: listTitle,
+                    rowId: 'opt_url_1',
+                    description: btnUrl
+                  }
+                ]
+              }
+            ]
+          };
+
+          if (imageSource) {
+            payload.image = imageSource;
+            payload.caption = finalMsg;
+          } else {
+            payload.text = finalMsg;
+          }
+
+          await sock.sendMessage(jid, payload);
+        } catch (listErr) {
+          console.error('List menu message failed, using fallback:', listErr);
+          if (imageSource) {
+            await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
+          } else {
+            await sock.sendMessage(jid, { text: finalMsg });
+          }
+        }
+      } else if (imageSource) {
         await sock.sendMessage(jid, { image: imageSource, caption: finalMsg });
       } else {
         await sock.sendMessage(jid, { text: finalMsg });
