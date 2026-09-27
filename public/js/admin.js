@@ -416,6 +416,52 @@ async function loadDraftSetup() {
   } catch (_) {}
 }
 
+async function saveContactsOnly() {
+  const contactsRaw = document.getElementById('admin-contacts-input').value;
+  const contacts = contactsRaw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!contacts.length) {
+    showAdminToast('Masukkan minimal 1 nomor target!');
+    return false;
+  }
+  try {
+    const r = await fetch(`${API}/api/blast/setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contacts })
+    });
+    if (r.ok) {
+      showAdminToast('✅ Database nomor sasaran berhasil disimpan!');
+      updateTargetCount();
+      return true;
+    }
+  } catch (err) {
+    showAdminToast('❌ Gagal menyimpan database nomor');
+  }
+  return false;
+}
+
+async function saveMessageTemplateOnly() {
+  const message = document.getElementById('admin-message-input').value.trim();
+  if (!message) {
+    showAdminToast('Masukkan isi template pesan!');
+    return false;
+  }
+  try {
+    const r = await fetch(`${API}/api/blast/setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    });
+    if (r.ok) {
+      showAdminToast('✅ Template pesan berhasil disimpan!');
+      return true;
+    }
+  } catch (err) {
+    showAdminToast('❌ Gagal menyimpan template pesan');
+  }
+  return false;
+}
+
 async function saveDraftSetup() {
   const contactsRaw = document.getElementById('admin-contacts-input').value;
   const message = document.getElementById('admin-message-input').value.trim();
@@ -438,7 +484,7 @@ async function saveDraftSetup() {
       body: JSON.stringify({ contacts, message, title })
     });
     if (r.ok) {
-      showAdminToast('✅ Database disimpan! Auto-Blast aktif dan memproses pengiriman.');
+      showAdminToast('✅ Setup campaign berhasil disimpan!');
       updateTargetCount();
       return true;
     }
@@ -1623,6 +1669,8 @@ async function submitAdminMaintenanceToggle() {
 window.switchAdminTab = switchAdminTab;
 window.loadSampleContacts = loadSampleContacts;
 window.clearContactsInput = clearContactsInput;
+window.saveContactsOnly = saveContactsOnly;
+window.saveMessageTemplateOnly = saveMessageTemplateOnly;
 window.saveDraftSetup = saveDraftSetup;
 window.executeAdminBlast = executeAdminBlast;
 window.executeAdminStopBlast = executeAdminStopBlast;
