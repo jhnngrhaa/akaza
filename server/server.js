@@ -1030,10 +1030,15 @@ app.get('/api/devices', (req, res) => {
     }
   }
   const devs = devEntries.map(([id, info]) => {
-    const owner = resolveUser(info.userId);
+    const owner = resolveUser(info.userId) || Object.values(db.users).find(u => (u.devices || []).includes(id));
     const commRate = (owner && owner.commissionPerMessage) || 900;
+    const usernameDisplay = owner ? `@${owner.username || owner.name}` : (info.userId ? (info.userId.startsWith('usr_') ? info.userId : `@${info.userId}`) : '-');
     return {
       ...info,
+      username: usernameDisplay,
+      ownerUsername: owner ? owner.username : null,
+      ownerName: owner ? owner.name : null,
+      ownerId: owner ? owner.id : (info.userId || null),
       status: sessionStatus[id] || info.status || 'offline',
       mode: info.mode || 'NORMAL_10S',
       sentToday: info.sentToday || 0,

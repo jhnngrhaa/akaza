@@ -631,12 +631,18 @@ async function loadAdminDevices() {
       const statusBadge = isOnline ? 'connected' : isConnecting ? 'connecting' : 'disconnected';
       const statusText = isOnline ? 'CONNECTED' : isConnecting ? 'CONNECTING' : 'OFFLINE';
 
+      const ownerTag = dev.username || (dev.ownerUsername ? '@' + dev.ownerUsername : (dev.userId || 'Mitra'));
       return `
       <div class="device-card-item" id="admin-dev-${dev.id}">
         <div class="device-card-header">
-          <div class="device-id-title">
-            <span class="device-label">DEVICE</span>
-            <span class="device-id-text">${escHtml(dev.id)}</span>
+          <div class="device-id-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <span class="device-label">DEVICE</span>
+              <span class="device-id-text">${escHtml(dev.id)}</span>
+            </div>
+            <div style="background:#eef2ff;color:#4f46e5;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #c7d2fe;display:inline-flex;align-items:center;gap:4px;" title="Pemilik Device">
+              <i class="fa-solid fa-user" style="font-size:10px;"></i> ${escHtml(ownerTag)}
+            </div>
           </div>
           <div class="device-status-pill ${statusBadge}">
             <span class="dot"></span>
