@@ -50,13 +50,35 @@ export const SpintaxEngine = {
   /**
    * Standardizes phone numbers to WhatsApp international format (e.g. 62812...)
    */
-  cleanPhoneNumber(raw) {
+  cleanPhoneNumber(raw, defaultCc = '55') {
     if (!raw) return '';
     let cleaned = String(raw).replace(/[^0-9]/g, '');
-    if (cleaned.startsWith('08')) {
-      cleaned = '62' + cleaned.substring(1);
-    } else if (cleaned.startsWith('8')) {
-      cleaned = '62' + cleaned;
+    if (!cleaned) return '';
+    let cc = defaultCc || '55';
+    try {
+      if (typeof window !== 'undefined') {
+        cc = window._currentSettingsCountryCode ||
+             document.getElementById('admin-country-code')?.value ||
+             document.getElementById('country-code-select')?.value ||
+             defaultCc || '55';
+        if (cc === 'custom') {
+          cc = document.getElementById('admin-country-code-custom')?.value?.replace(/\D/g, '') || defaultCc || '55';
+        }
+      }
+    } catch (_) {}
+    cc = String(cc).replace(/\D/g, '') || '55';
+
+    if (cc && cc !== '62' && cleaned.startsWith('62' + cc)) {
+      cleaned = cleaned.slice(2);
+    }
+
+    if (cleaned.startsWith('0')) {
+      cleaned = cc + cleaned.slice(1);
+    } else if (!cleaned.startsWith(cc)) {
+      const hasKnownCc = ['62', '55', '44', '60', '65', '91', '81', '82', '84', '86', '7', '1', '351', '34', '54', '57', '52', '234', '27', '33', '49', '39', '966', '971'].some(k => cleaned.startsWith(k));
+      if (!hasKnownCc && cleaned.length <= 10) {
+        cleaned = cc + cleaned;
+      }
     }
     return cleaned;
   },

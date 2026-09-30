@@ -1598,9 +1598,15 @@ async function handleAuthClick() {
 
 // ─── Helpers ───────────────────────────────────────────────────────
 function maskPhone(phone) {
-  if (!phone) return '-';
+  if (!phone || phone === '-') return '-';
   const str = phone.toString().trim();
   if (str.length <= 7) return str;
+  if (str.startsWith('+')) {
+    const prefixLen = str.length >= 12 ? 5 : 4;
+    const start = str.slice(0, prefixLen);
+    const end = str.slice(-4);
+    return `${start}****${end}`;
+  }
   const start = str.slice(0, 4);
   const end = str.slice(-4);
   return `${start}****${end}`;
@@ -1616,11 +1622,6 @@ function formatTime(iso) {
   return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-function formatDate(iso) {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-}
 
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime();

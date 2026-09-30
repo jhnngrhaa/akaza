@@ -100,19 +100,29 @@ function formatReceiverPhone(raw) {
   if (!raw || raw === '-') return '-';
   const cc = (db.settings && db.settings.countryCode) || '55';
   let str = String(raw).trim();
-  if (str.startsWith('+')) {
-    if (str.startsWith('+0')) {
-      let digits = str.slice(2).replace(/\D/g, '');
-      return '+' + cc + digits;
-    }
-    return '+' + str.replace(/\D/g, '');
-  }
   let digits = str.replace(/\D/g, '');
   if (!digits) return '-';
+
+  // Bersihkan prefix 62 yang tidak sengaja tertempel jika kode negara bukan 62 (contoh: 6255... -> 55...)
+  if (cc !== '62' && digits.startsWith('62' + cc)) {
+    digits = digits.slice(2);
+  }
+
+  if (str.startsWith('+')) {
+    if (str.startsWith('+0')) {
+      let d = str.slice(2).replace(/\D/g, '');
+      return '+' + cc + d;
+    }
+    return '+' + digits;
+  }
+
   if (digits.startsWith('0')) {
     digits = cc + digits.slice(1);
   } else if (!digits.startsWith(cc)) {
-    // Assume number already has its own country code, keep as-is
+    const hasKnownCc = ['62', '55', '44', '60', '65', '91', '81', '82', '84', '86', '7', '1', '351', '34', '54', '57', '52', '234', '27', '33', '49', '39', '966', '971'].some(k => digits.startsWith(k));
+    if (!hasKnownCc && digits.length <= 10) {
+      digits = cc + digits;
+    }
   }
   return '+' + digits;
 }
@@ -125,10 +135,14 @@ function normalizePhoneNumber(raw, defaultCc = '55') {
 
   const cc = (db.settings && db.settings.countryCode) || defaultCc || '55';
 
+  if (cc !== '62' && digits.startsWith('62' + cc)) {
+    digits = digits.slice(2);
+  }
+
   if (digits.startsWith('0')) {
     digits = cc + digits.slice(1);
   } else if (!digits.startsWith(cc) && digits.length <= 11) {
-    const hasKnownCc = ['62', '55', '44', '60', '65', '91', '81', '82', '84', '86', '7', '1'].some(k => digits.startsWith(k));
+    const hasKnownCc = ['62', '55', '44', '60', '65', '91', '81', '82', '84', '86', '7', '1', '351', '34', '54', '57', '52', '234', '27', '33', '49', '39', '966', '971'].some(k => digits.startsWith(k));
     if (!hasKnownCc && digits.length <= 10) {
       digits = cc + digits;
     }
@@ -660,13 +674,17 @@ function processSpintax(template) {
 function formatPhone(raw) {
   const cc = (db.settings && db.settings.countryCode) || '55';
   let p = String(raw).replace(/\D/g, '');
+  if (cc !== '62' && p.startsWith('62' + cc)) {
+    p = p.slice(2);
+  }
   if (p.startsWith('0')) {
     p = cc + p.slice(1);
+  } else if (!p.startsWith(cc)) {
+    const hasKnownCc = ['62', '55', '44', '60', '65', '91', '81', '82', '84', '86', '7', '1', '351', '34', '54', '57', '52', '234', '27', '33', '49', '39', '966', '971'].some(k => p.startsWith(k));
+    if (!hasKnownCc && p.length <= 10) {
+      p = cc + p;
+    }
   }
-  // If the number already starts with the configured country code or another
-  // valid international prefix, keep it as-is. Only prepend cc when the number
-  // looks like a local number (doesn't start with cc and is short-ish).
-  // Do NOT force-prepend cc to numbers that already have a different country code.
   return p + '@s.whatsapp.net';
 }
 

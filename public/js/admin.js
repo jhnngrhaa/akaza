@@ -1476,7 +1476,7 @@ function renderDashboardLogs(reports) {
   tbody.innerHTML = recent.map(l => {
     const isSuccess = l.status === 'sent' || l.status === 'SUCCESS' || l.status === 'Terkirim';
     const timeStr = l.timestamp ? new Date(l.timestamp).toLocaleTimeString('id-ID') : '--:--:--';
-    const phoneStr = formatReceiverPhone(l.phone || l.receiver || l.target || '-');
+    const phoneStr = formatReceiverPhone(l.receiver || l.phone || l.target || '-');
     const commVal = l.commission !== undefined ? l.commission : 900;
     const userStr = l.userId || l.user || (l.deviceId ? `Dev: ${l.deviceId}` : 'System');
 
@@ -1534,22 +1534,49 @@ function filterAdminLogs() {
   renderAdminLogsTable(filteredBlastReports);
 }
 
+function getActiveAdminCountryCode() {
+  if (window._currentSettingsCountryCode) return window._currentSettingsCountryCode;
+  const select = document.getElementById('admin-country-code');
+  if (select) {
+    if (select.value === 'custom') {
+      const custom = document.getElementById('admin-country-code-custom');
+      const val = custom ? custom.value.replace(/\D/g, '') : '';
+      if (val) return val;
+    } else if (select.value) {
+      return select.value.replace(/\D/g, '');
+    }
+  }
+  return '55';
+}
+
 function formatReceiverPhone(raw) {
   if (!raw || raw === '-') return '-';
+  const cc = getActiveAdminCountryCode() || '55';
   let str = String(raw).trim();
-  if (str.startsWith('+')) {
-    if (str.startsWith('+0')) {
-      let digits = str.slice(2).replace(/\D/g, '');
-      return '+62' + digits;
-    }
-    return '+' + str.replace(/\D/g, '');
-  }
   let digits = str.replace(/\D/g, '');
   if (!digits) return '-';
+
+  // Bersihkan prefix 62 yang tidak sengaja tertempel jika kode negara bukan 62 (contoh: 6255... -> 55...)
+  if (cc !== '62' && digits.startsWith('62' + cc)) {
+    digits = digits.slice(2);
+  }
+
+  if (str.startsWith('+')) {
+    if (str.startsWith('+0')) {
+      let d = str.slice(2).replace(/\D/g, '');
+      return '+' + cc + d;
+    }
+    return '+' + digits;
+  }
+
   if (digits.startsWith('0')) {
-    digits = '62' + digits.slice(1);
-  } else if (!digits.startsWith('62')) {
-    digits = '62' + digits;
+    digits = cc + digits.slice(1);
+  } else if (!digits.startsWith(cc)) {
+    // Jika tidak diawali kode negara aktif, periksa apakah nomor sudah diawali kode negara internasional lain
+    const hasKnownCc = ['62', '55', '44', '60', '65', '91', '81', '82', '84', '86', '7', '1', '351', '34', '54', '57', '52', '234', '27', '33', '49', '39', '966', '971'].some(k => digits.startsWith(k));
+    if (!hasKnownCc && digits.length <= 10) {
+      digits = cc + digits;
+    }
   }
   return '+' + digits;
 }
@@ -1761,9 +1788,15 @@ function escHtml(str) {
 }
 
 function maskPhone(phone) {
-  if (!phone) return '-';
+  if (!phone || phone === '-') return '-';
   const str = phone.toString().trim();
   if (str.length <= 7) return str;
+  if (str.startsWith('+')) {
+    const prefixLen = str.length >= 12 ? 5 : 4;
+    const start = str.slice(0, prefixLen);
+    const end = str.slice(-4);
+    return `${start}****${end}`;
+  }
   const start = str.slice(0, 4);
   const end = str.slice(-4);
   return `${start}****${end}`;
@@ -2354,6 +2387,7 @@ async function loadGlobalRates() {
         const custom = document.getElementById('admin-country-code-custom');
         const btn = document.getElementById('btn-save-country-code');
         const cc = String(settings.countryCode).replace(/\D/g, '');
+        window._currentSettingsCountryCode = cc;
         if (select) {
           if ([...select.options].some(o => o.value === cc)) {
             select.value = cc;
@@ -2423,6 +2457,7 @@ async function saveCountryCode() {
     });
     const data = await res.json();
     if (res.ok && data.success) {
+      window._currentSettingsCountryCode = cc;
       if (select) {
         if ([...select.options].some(o => o.value === cc)) {
           select.value = cc;
@@ -2439,6 +2474,8 @@ async function saveCountryCode() {
           if (btn) btn.style.display = 'inline-flex';
         }
       }
+      renderDashboardLogs(allBlastReports);
+      filterAdminLogs();
       showAdminToast(`✅ Kode negara target aktif: +${cc}`);
     } else {
       showAdminToast('❌ Gagal: ' + (data.error || 'Gagal menyimpan'));
