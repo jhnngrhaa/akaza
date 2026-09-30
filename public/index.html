@@ -306,100 +306,125 @@
     <!-- ==========================================
          TAB 4: REFERRALS (PASIF KOMISI RP 100 / PESAN)
          ========================================== -->
+    <!-- ==========================================
+         TAB 4: REFERRALS
+         ========================================== -->
     <section id="tab-referrals" class="page-view" style="display:none;">
-      <div class="section-header">
-        <div class="section-icon-box" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-gift"></i></div>
-        <div class="section-title-group">
-          <h2>Program Referral &amp; Pasif Komisi</h2>
-          <p>Dapatkan pasif komisi Rp 100 untuk setiap 1 pesan terkirim oleh teman yang diundang!</p>
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div style="width:42px;height:42px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#475569;font-size:18px;flex-shrink:0;">
+          <i class="fa-solid fa-link"></i>
         </div>
-      </div>
-
-      <!-- Referral Banner Info -->
-      <div class="card-info-blue" style="background:#fffbeb;border:none;">
-        <div class="icon" style="background:#f59e0b;color:#ffffff;"><i class="fa-solid fa-star"></i></div>
         <div>
-          <div class="content-title" style="color:#b45309;">Pasif Komisi Rp 100 / Pesan Terkirim Teman</div>
-          <div class="content-desc" style="color:#92400e;">
-            Ajak teman bergabung. Setiap kali teman yang kamu undang berhasil mengirim 1 pesan blast, <strong>kamu otomatis mendapat komisi pasif Rp 100</strong>!
-          </div>
+          <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--text-main,#0f172a);letter-spacing:-0.2px;">Referrals</h2>
+          <p style="margin:2px 0 0 0;font-size:12.5px;color:var(--text-muted,#64748b);">Bagikan link dan dapatkan komisi</p>
         </div>
       </div>
 
-      <!-- Toggleable Referral Rules Card -->
-      <div class="clean-panel" style="margin-bottom:14px;background:#f8fafc;border:1px solid #e2e8f0;">
-        <div onclick="toggleReferralRules()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;">
-          <div style="font-size:13.5px;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:8px;">
-            <i class="fa-solid fa-circle-question" style="color:var(--primary);font-size:16px;"></i> Aturan &amp; Skema Komisi Referral (Klik untuk Buka/Tutup)
+      <!-- Info Banner -->
+      <div style="background:#eef2ff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;border:1px solid #e0e7ff;">
+        <i class="fa-solid fa-circle-info" style="color:#6366f1;font-size:17px;flex-shrink:0;"></i>
+        <div style="font-size:12.5px;color:#4338ca;line-height:1.45;">
+          Anda mendapatkan <strong style="font-weight:700;color:#3730a3;" id="ref-banner-rate">Rp50</strong> untuk setiap pesan yang dikirim oleh user referral Anda.
+        </div>
+      </div>
+
+      <!-- Card 1: KODE REFERRAL -->
+      <div style="background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.5px;text-transform:uppercase;">KODE REFERRAL</span>
+          <div style="color:#818cf8;font-size:22px;display:flex;align-items:center;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
           </div>
-          <span id="ref-rules-chevron" style="font-size:13px;color:var(--text-muted);transition:transform 0.2s;">
-            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+
+        <div id="ref-display-code" style="font-size:26px;font-weight:800;letter-spacing:1px;color:#0f172a;margin:8px 0 14px 0;font-family:system-ui, -apple-system, sans-serif;">
+          ------
+        </div>
+
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <button type="button" onclick="copyReferralCode()" style="background:#4f46e5;color:#ffffff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.15s;">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+          <button type="button" onclick="shareReferral()" style="background:#ffffff;color:#1e293b;border:1px solid #e2e8f0;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.15s;">
+            <i class="fa-solid fa-share-nodes"></i> Share
+          </button>
+        </div>
+
+        <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <span id="ref-display-link" style="font-size:12.5px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;flex:1;">
+            Loading link referral...
           </span>
-        </div>
-        <div id="ref-rules-content" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:12.5px;color:var(--text-secondary);line-height:1.6;">
-          <div style="background:#ffffff;border-radius:10px;padding:12px 14px;border:1px solid #e2e8f0;margin-bottom:10px;">
-            <div style="font-weight:800;color:var(--primary);margin-bottom:6px;">💡 Skema Pembagian Komisi Per Pesan Blast:</div>
-            <ul style="margin:0;padding-left:18px;">
-              <li style="margin-bottom:4px;"><strong>Teman yang Diundang</strong>: Mengirim pesan blast WA ➔ Mendapatkan <strong>Rp 900 per 1 pesan terkirim</strong>.</li>
-              <li><strong>Kamu (Pengundang)</strong>: Otomatis mendapatkan pasif komisi <strong>Rp 100 per 1 pesan terkirim</strong> oleh temanmu.</li>
-            </ul>
-          </div>
-          <ol style="margin:0;padding-left:18px;">
-            <li style="margin-bottom:4px;">Setiap teman yang mendaftar menggunakan Kode / Link Referral kamu akan terhubung secara otomatis &amp; permanen.</li>
-            <li style="margin-bottom:4px;">Komisi pasif Rp 100 otomatis menambah <strong>Saldo Komisi &amp; Poin Bonus</strong> kamu secara real-time setiap kali pesan terkirim dari WhatsApp temanmu.</li>
-            <li>Tidak ada batasan jumlah teman maupun jumlah pesan yang dikirim oleh temanmu. Semakin aktif temanmu mengirim blast, semakin besar komisi pasif harianmu!</li>
-          </ol>
+          <button type="button" onclick="copyReferralLink()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;font-size:15px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='#94a3b8'" title="Salin Tautan">
+            <i class="fa-regular fa-copy"></i>
+          </button>
         </div>
       </div>
 
-      <!-- Stat Cards -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div class="clean-panel" style="text-align:center;">
-          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Total Teman Bergabung</div>
-          <div style="font-size:26px;font-weight:800;color:var(--primary);margin:4px 0;" id="ref-total-invited">0</div>
-          <div style="font-size:11.5px;color:var(--text-muted);">Orang Member</div>
+      <!-- Card 2: TOTAL PENDAPATAN REFERRAL -->
+      <div style="background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.5px;text-transform:uppercase;">TOTAL PENDAPATAN REFERRAL</span>
+          <div style="width:28px;height:28px;border-radius:6px;background:#e0e7ff;color:#6366f1;display:flex;align-items:center;justify-content:center;font-size:13px;">
+            <i class="fa-solid fa-chart-simple"></i>
+          </div>
         </div>
-        <div class="clean-panel" style="text-align:center;">
-          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Pasif Komisi Referral</div>
-          <div style="font-size:26px;font-weight:800;color:#f59e0b;margin:4px 0;" id="ref-total-points">0 Perak</div>
-          <div style="font-size:11.5px;color:#16a34a;font-weight:700;">+100 Perak / pesan teman</div>
+
+        <div id="ref-total-earnings" style="font-size:30px;font-weight:800;color:#0f172a;margin:8px 0 16px 0;">
+          Rp0
+        </div>
+
+        <div style="border-top:1px dashed #e2e8f0;padding-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="color:#6366f1;font-size:16px;display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-user-group"></i>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#94a3b8;font-weight:500;">Total Referred</div>
+              <div id="ref-total-referred-count" style="font-size:16px;font-weight:800;color:#0f172a;margin-top:1px;">0</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="color:#eab308;font-size:16px;display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-coins"></i>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#94a3b8;font-weight:500;">Pendapatan Hari Ini</div>
+              <div id="ref-today-earnings" style="font-size:16px;font-weight:800;color:#0f172a;margin-top:1px;">Rp0</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Share Box -->
-      <div class="clean-panel" style="margin-bottom:14px;">
-        <div style="font-size:13.5px;font-weight:700;margin-bottom:8px;">Kode &amp; Tautan Undangan Kamu</div>
-        <div class="form-group" style="margin-bottom:10px;">
-          <label class="form-label" style="font-size:11px;">Kode Referral Unik</label>
-          <div style="display:flex;gap:8px;">
-            <input type="text" class="form-input" id="ref-code-input" value="Loading..." readonly style="font-weight:800;letter-spacing:1px;font-family:monospace;font-size:14px;color:var(--primary);flex:1;min-width:0;">
-            <button class="btn-primary" style="flex-shrink:0;white-space:nowrap;padding:10px 14px;font-size:12px;" onclick="copyReferralCode()"><i class="fa-solid fa-copy"></i> Salin Kode</button>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label class="form-label" style="font-size:11px;">Tautan Pendaftaran Langsung</label>
-          <div style="display:flex;gap:8px;">
-            <input type="text" class="form-input" id="ref-link-input" value="Loading..." readonly style="font-size:12px;color:var(--text-secondary);flex:1;min-width:0;">
-            <button class="btn-secondary" style="flex-shrink:0;white-space:nowrap;padding:10px 14px;font-size:12px;" onclick="copyReferralLink()"><i class="fa-solid fa-link"></i> Salin Link</button>
-          </div>
-        </div>
-        <button class="btn-primary" style="width:100%;background:#25d366;border-color:#25d366;" onclick="shareReferralWhatsApp()">
-          <i class="fa-brands fa-whatsapp"></i> Bagikan Langsung ke Teman WhatsApp
+      <!-- Sub-Tabs Switcher Pills -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;">
+        <button type="button" id="ref-subtab-btn-users" onclick="switchReferralSubTab('users')" style="border-radius:24px;padding:6px 20px;font-size:13px;font-weight:700;border:1px solid #c7d2fe;background:#e0e7ff;color:#4f46e5;cursor:pointer;transition:all 0.15s;">
+          Pengguna
+        </button>
+        <button type="button" id="ref-subtab-btn-history" onclick="switchReferralSubTab('history')" style="border-radius:24px;padding:6px 20px;font-size:13px;font-weight:600;border:1px solid #e2e8f0;background:#ffffff;color:#64748b;cursor:pointer;transition:all 0.15s;">
+          Riwayat
         </button>
       </div>
 
-      <!-- Daftar Teman Referral -->
-      <div class="clean-panel">
-        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Daftar Teman yang Diundang</div>
-        <div class="clean-table-box">
-          <table class="clean-table">
-            <thead>
-              <tr><th>Teman / Mitra</th><th>Tanggal Bergabung</th><th>Bonus Poin</th></tr>
-            </thead>
-            <tbody id="ref-members-tbody">
-              <tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:16px;">Belum ada member yang mendaftar via referral kamu. Bagikan sekarang!</td></tr>
-            </tbody>
-          </table>
+      <!-- Content Area -->
+      <div style="background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02);min-height:120px;">
+        <!-- Sub-Tab: Pengguna -->
+        <div id="ref-view-users">
+          <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:12px;">Pengguna dari Referral</div>
+          <div id="ref-users-empty" style="color:#94a3b8;font-size:13px;padding:4px 0 8px 0;">
+            Belum ada yang mendaftar dengan kode Anda.
+          </div>
+          <div id="ref-users-list" style="display:none;"></div>
+        </div>
+
+        <!-- Sub-Tab: Riwayat -->
+        <div id="ref-view-history" style="display:none;">
+          <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:12px;">Riwayat Pendapatan Referral</div>
+          <div id="ref-history-empty" style="color:#94a3b8;font-size:13px;padding:4px 0 8px 0;">
+            Belum ada riwayat pendapatan referral.
+          </div>
+          <div id="ref-history-list" style="display:none;"></div>
         </div>
       </div>
     </section>
@@ -603,20 +628,59 @@
 
         <!-- Pairing Tab -->
         <div id="modal-content-pair" style="display:none;">
-          <div class="form-group">
-            <label class="form-label">Nomor WhatsApp Kamu</label>
-            <input type="text" class="form-input" id="pair-phone-input" placeholder="081234567890">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="font-weight:700;font-size:12.5px;">Nomor WhatsApp Kamu</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select id="pair-country-code" style="border:1px solid var(--border);border-radius:10px;padding:9px 8px;font-size:13px;font-weight:700;color:var(--text);background:#f8fafc;outline:none;cursor:pointer;width:115px;flex-shrink:0;">
+                <option value="55" selected>🇧🇷 +55</option>
+                <option value="62">🇮🇩 +62</option>
+                <option value="1">🇺🇸 +1</option>
+                <option value="44">🇬🇧 +44</option>
+                <option value="91">🇮🇳 +91</option>
+                <option value="60">🇲🇾 +60</option>
+                <option value="65">🇸🇬 +65</option>
+                <option value="63">🇵🇭 +63</option>
+                <option value="81">🇯🇵 +81</option>
+                <option value="82">🇰🇷 +82</option>
+                <option value="84">🇻🇳 +84</option>
+                <option value="86">🇨🇳 +86</option>
+                <option value="966">🇸🇦 +966</option>
+                <option value="971">🇦🇪 +971</option>
+                <option value="234">🇳🇬 +234</option>
+                <option value="27">🇿🇦 +27</option>
+                <option value="52">🇲🇽 +52</option>
+                <option value="54">🇦🇷 +54</option>
+                <option value="57">🇨🇴 +57</option>
+                <option value="33">🇫🇷 +33</option>
+                <option value="49">🇩🇪 +49</option>
+                <option value="39">🇮🇹 +39</option>
+                <option value="34">🇪🇸 +34</option>
+                <option value="7">🇷🇺 +7</option>
+              </select>
+              <input type="text" class="form-input" id="pair-phone-input" placeholder="Contoh: 11999998888 / 08123456789" style="flex:1;">
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">
+              Bisa langsung masukkan nomor (dengan atau tanpa angka 0 di depan).
+            </div>
           </div>
-          <button class="btn-primary" id="pair-code-btn" style="width:100%;" onclick="generatePairingCode()">
-            Dapatkan Kode 8 Digit
+          <button class="btn-primary" id="pair-code-btn" style="width:100%;padding:10px;font-size:13px;font-weight:700;" onclick="generatePairingCode()">
+            <i class="fa-solid fa-key"></i> Dapatkan Kode 8 Digit
           </button>
-          <div id="pair-result-box" style="display:none;margin-top:14px;text-align:center;">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Masukkan kode ini di WhatsApp kamu:</div>
-            <div style="font-size:28px;font-weight:800;color:var(--primary);letter-spacing:5px;font-family:monospace;" id="display-pairing-code">
+          <div id="pair-result-box" style="display:none;margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;text-align:center;">
+            <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">Masukkan kode ini di WhatsApp HP kamu:</div>
+            <div style="font-size:32px;font-weight:800;color:var(--primary);letter-spacing:6px;font-family:monospace;background:#ffffff;border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin:6px 0;" id="display-pairing-code">
               --------
             </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
-              WhatsApp → Perangkat Tertaut → Tautkan dgn nomor telepon
+            <button type="button" class="btn-secondary" style="padding:6px 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;margin:6px auto;" onclick="copyPairingCode()">
+              <i class="fa-solid fa-copy"></i> Salin Kode
+            </button>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;line-height:1.5;text-align:left;background:#ffffff;border-radius:8px;padding:10px;border:1px solid #e2e8f0;">
+              <strong>Cara Tautkan di WhatsApp HP:</strong><br>
+              1. Buka <strong>WhatsApp</strong> di HP Anda<br>
+              2. Klik menu Titik Tiga (⋮) / Pengaturan ➔ <strong>Perangkat Tertaut</strong><br>
+              3. Klik <strong>Tautkan Perangkat</strong><br>
+              4. Klik <strong>"Tautkan dengan nomor telepon saja"</strong> di bagian bawah layar<br>
+              5. Masukkan kode 8 karakter di atas
             </div>
           </div>
         </div>
@@ -655,7 +719,7 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script src="js/app.js?v=4.1"></script>
+  <script src="js/app.js?v=4.2"></script>
 
   <script>
     // SSE Indicator Update

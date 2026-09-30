@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   checkUrlReferral();
   await checkUserMaintenanceStatus();
   await initUser();
+  await loadUserSettings();
   connectSSE();
   await refreshAll();
   switchTab('dashboard');
@@ -117,11 +118,30 @@ function updateUserUI() {
     if (wdAccName && (currentUser.ewalletName || currentUser.name)) wdAccName.value = currentUser.ewalletName || currentUser.name;
 
     // Referrals Tab
-    const refCode = currentUser.referralCode || '—';
+    const refCode = currentUser.referralCode || '------';
+    const refRate = currentUser.referralBonusRate || 50;
+    const refLink = `${window.location.origin}/register?ref=${refCode}`;
+
+    const refBannerRateEl = document.getElementById('ref-banner-rate');
+    if (refBannerRateEl) refBannerRateEl.textContent = `Rp${refRate}`;
+
+    const refDispCode = document.getElementById('ref-display-code');
+    if (refDispCode) refDispCode.textContent = refCode;
+
+    const refDispLink = document.getElementById('ref-display-link');
+    if (refDispLink) refDispLink.textContent = refLink;
+
+    const refEarnings = document.getElementById('ref-total-earnings');
+    if (refEarnings) refEarnings.textContent = `Rp${(currentUser.points || 0).toLocaleString('id-ID')}`;
+
+    const refTotalCount = document.getElementById('ref-total-referred-count');
+    if (refTotalCount) refTotalCount.textContent = (currentUser.referrals || []).length;
+
+    // Backward compatibility for old element IDs
     const refCodeEl = document.getElementById('ref-code-input');
     if (refCodeEl) refCodeEl.value = refCode;
     const refLinkEl = document.getElementById('ref-link-input');
-    if (refLinkEl) refLinkEl.value = `${window.location.origin}/?ref=${refCode}`;
+    if (refLinkEl) refLinkEl.value = refLink;
     const refInvitedEl = document.getElementById('ref-total-invited');
     if (refInvitedEl) refInvitedEl.textContent = (currentUser.referrals || []).length;
     const refPointsEl = document.getElementById('ref-total-points');
@@ -181,7 +201,11 @@ function connectSSE() {
   eventSource.addEventListener('qr_update', e => {
     const data = JSON.parse(e.data);
     if (data.deviceId === pendingDeviceId) {
-      renderQRFromString(data.qr);
+      if (typeof renderQRFromString === 'function') {
+        renderQRFromString(data.qr);
+      } else {
+        showQRImage(data.deviceId);
+      }
     }
   });
 
@@ -189,6 +213,18 @@ function connectSSE() {
     const data = JSON.parse(e.data);
     if (data.deviceId === pendingDeviceId) {
       showPairingCode(data.code);
+    }
+  });
+
+  eventSource.addEventListener('pairing_code_error', e => {
+    const data = JSON.parse(e.data);
+    if (data.deviceId === pendingDeviceId) {
+      showToast('❌ ' + (data.error || 'Gagal membuat kode pairing'));
+      const btn = document.getElementById('pair-code-btn');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-key"></i> Dapatkan Kode 8 Digit';
+      }
     }
   });
 
@@ -870,73 +906,158 @@ function startOnlinePoller(deviceId) {
   }, 3000);
 }
 
+let currentRawPairingCode = '';
+
 async function generatePairingCode() {
-  const phone = document.getElementById('pair-phone-input').value.trim();
-  if (!phone) { showToast('Masukkan nomor WhatsApp dulu!'); return; }
-  if (phone.length < 9) { showToast('Nomor tidak valid!'); return; }
+  const phoneInput = document.getElementById('pair-phone-input');
+  const ccSelect = document.getElementById('pair-country-code');
+  const rawPhone = (phoneInput?.value || '').trim();
 
-  const name = document.getElementById('device-name-input').value.trim() || 'WhatsApp Device';
+  if (!rawPhone) { showToast('Masukkan nomor WhatsApp dulu!'); return; }
 
-  document.getElementById('pair-code-btn').disabled = true;
-  document.getElementById('pair-code-btn').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+  const selectedCc = (ccSelect?.value || '55').replace(/\D/g, '');
+  let cleanDigits = rawPhone.replace(/\D/g, '');
 
-  const resp = await fetch(`${API}/api/devices/add`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, userId: currentUserId || 'usr_guest', usePairingCode: true, phoneNumber: phone })
-  });
-  const data = await resp.json();
-  if (!data.success) {
-    showToast('❌ Gagal: ' + (data.error || 'Unknown'));
-    document.getElementById('pair-code-btn').disabled = false;
-    document.getElementById('pair-code-btn').innerHTML = 'Dapatkan Kode 8 Digit';
+  if (cleanDigits.startsWith('0')) {
+    cleanDigits = selectedCc + cleanDigits.slice(1);
+  } else if (!cleanDigits.startsWith(selectedCc) && cleanDigits.length <= 11) {
+    cleanDigits = selectedCc + cleanDigits;
+  }
+
+  if (cleanDigits.length < 9) {
+    showToast('Nomor WhatsApp terlalu pendek atau tidak valid!');
     return;
   }
-  pendingDeviceId = data.deviceId;
 
-  // Poll for code
-  let tries = 0;
-  const poll = setInterval(async () => {
-    tries++;
-    try {
-      const r = await fetch(`${API}/api/devices/${pendingDeviceId}/pairing-code`);
-      const d = await r.json();
-      if (d.code) {
-        clearInterval(poll);
-        showPairingCode(d.code);
-      }
-      if (d.status === 'online') {
-        clearInterval(poll);
-        pendingDeviceId = null;
-        closeDeviceModal(false);
-        showToast('✅ WhatsApp berhasil terhubung!');
-        refreshAll();
-      }
-    } catch (_) {}
-    if (tries > 30) clearInterval(poll);
-  }, 2000);
+  const name = document.getElementById('device-name-input')?.value?.trim() || 'WhatsApp Device';
 
-  // Also watch for online status
-  qrPollingInterval = setInterval(async () => {
-    try {
-      const r = await fetch(`${API}/api/devices/${pendingDeviceId}/status`);
-      const d = await r.json();
-      if (d.status === 'online') {
-        clearInterval(qrPollingInterval);
-        pendingDeviceId = null;
-        closeDeviceModal(false);
-        showToast('✅ WhatsApp berhasil terhubung!');
-        refreshAll();
+  const btn = document.getElementById('pair-code-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan & Meminta Kode...';
+  }
+
+  try {
+    const resp = await fetch(`${API}/api/devices/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        userId: currentUserId || 'usr_guest',
+        usePairingCode: true,
+        phoneNumber: cleanDigits
+      })
+    });
+    const data = await resp.json();
+    if (!data.success) {
+      showToast('❌ Gagal: ' + (data.error || 'Unknown'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-key"></i> Dapatkan Kode 8 Digit';
       }
-    } catch (_) {}
-  }, 3000);
+      return;
+    }
+    pendingDeviceId = data.deviceId;
+
+    // Poll for code
+    let tries = 0;
+    if (window._pairPollInterval) clearInterval(window._pairPollInterval);
+    window._pairPollInterval = setInterval(async () => {
+      tries++;
+      try {
+        const r = await fetch(`${API}/api/devices/${pendingDeviceId}/pairing-code`);
+        const d = await r.json();
+        if (d.code) {
+          clearInterval(window._pairPollInterval);
+          showPairingCode(d.code);
+        }
+        if (d.status === 'online') {
+          clearInterval(window._pairPollInterval);
+          pendingDeviceId = null;
+          closeDeviceModal(false);
+          showToast('✅ WhatsApp berhasil terhubung!');
+          refreshAll();
+        }
+      } catch (_) {}
+      if (tries > 40) {
+        clearInterval(window._pairPollInterval);
+        if (!currentRawPairingCode && btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Coba Minta Kode Lagi';
+        }
+      }
+    }, 2000);
+
+    // Also watch for online status
+    if (qrPollingInterval) clearInterval(qrPollingInterval);
+    qrPollingInterval = setInterval(async () => {
+      try {
+        const r = await fetch(`${API}/api/devices/${pendingDeviceId}/status`);
+        const d = await r.json();
+        if (d.status === 'online') {
+          clearInterval(qrPollingInterval);
+          if (window._pairPollInterval) clearInterval(window._pairPollInterval);
+          pendingDeviceId = null;
+          closeDeviceModal(false);
+          showToast('✅ WhatsApp berhasil terhubung!');
+          refreshAll();
+        }
+      } catch (_) {}
+    }, 2000);
+
+  } catch (err) {
+    showToast('❌ Terjadi kesalahan: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-key"></i> Dapatkan Kode 8 Digit';
+    }
+  }
 }
 
 function showPairingCode(code) {
-  document.getElementById('pair-result-box').style.display = 'block';
-  document.getElementById('display-pairing-code').textContent = code;
-  document.getElementById('pair-code-btn').disabled = false;
-  document.getElementById('pair-code-btn').innerHTML = 'Dapatkan Kode 8 Digit';
+  currentRawPairingCode = code;
+  const resultBox = document.getElementById('pair-result-box');
+  const codeEl = document.getElementById('display-pairing-code');
+  if (resultBox) resultBox.style.display = 'block';
+
+  let formatted = code;
+  if (code && code.length === 8) {
+    formatted = `${code.slice(0, 4)}-${code.slice(4)}`;
+  }
+  if (codeEl) codeEl.textContent = formatted;
+
+  const btn = document.getElementById('pair-code-btn');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Dapatkan Kode Baru';
+  }
+}
+
+function copyPairingCode() {
+  if (!currentRawPairingCode) return;
+  navigator.clipboard.writeText(currentRawPairingCode).then(() => {
+    showToast('📋 Kode pairing disalin: ' + currentRawPairingCode);
+  }).catch(() => {
+    showToast('Kode: ' + currentRawPairingCode);
+  });
+}
+
+async function loadUserSettings() {
+  try {
+    const res = await fetch(`${API}/api/settings`);
+    if (res.ok) {
+      const s = await res.json();
+      if (s.countryCode) {
+        const ccSelect = document.getElementById('pair-country-code');
+        if (ccSelect) {
+          const ccStr = String(s.countryCode).replace(/\D/g, '');
+          if ([...ccSelect.options].some(o => o.value === ccStr)) {
+            ccSelect.value = ccStr;
+          }
+        }
+      }
+    }
+  } catch (_) {}
 }
 
 async function disconnectDevice(deviceId) {
@@ -1138,85 +1259,239 @@ function switchTab(tab, subTab = null) {
   if (tab === 'referrals') renderReferrals();
 }
 
-// ─── Referrals (100 Poin System) ────────────────────────────────────
-async function renderReferrals() {
-  const tbody = document.getElementById('ref-members-tbody');
-  if (!tbody) return;
+// ─── Referrals ──────────────────────────────────────────────────────
+let activeReferralSubTab = 'users';
 
-  if (!currentUserId) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px;">Silakan login untuk melihat data referral Anda.</td></tr>`;
-    return;
+function formatDate(iso) {
+  if (!iso) return '-';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch (_) {
+    return String(iso);
   }
+}
+
+function formatDateTime(iso) {
+  if (!iso) return '-';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  } catch (_) {
+    return String(iso);
+  }
+}
+
+function switchReferralSubTab(tab) {
+  activeReferralSubTab = tab;
+  const btnUsers = document.getElementById('ref-subtab-btn-users');
+  const btnHistory = document.getElementById('ref-subtab-btn-history');
+  const viewUsers = document.getElementById('ref-view-users');
+  const viewHistory = document.getElementById('ref-view-history');
+
+  if (btnUsers) {
+    if (tab === 'users') {
+      btnUsers.style.background = '#e0e7ff';
+      btnUsers.style.color = '#4f46e5';
+      btnUsers.style.border = '1px solid #c7d2fe';
+      btnUsers.style.fontWeight = '700';
+    } else {
+      btnUsers.style.background = '#ffffff';
+      btnUsers.style.color = '#64748b';
+      btnUsers.style.border = '1px solid #e2e8f0';
+      btnUsers.style.fontWeight = '600';
+    }
+  }
+
+  if (btnHistory) {
+    if (tab === 'history') {
+      btnHistory.style.background = '#e0e7ff';
+      btnHistory.style.color = '#4f46e5';
+      btnHistory.style.border = '1px solid #c7d2fe';
+      btnHistory.style.fontWeight = '700';
+    } else {
+      btnHistory.style.background = '#ffffff';
+      btnHistory.style.color = '#64748b';
+      btnHistory.style.border = '1px solid #e2e8f0';
+      btnHistory.style.fontWeight = '600';
+    }
+  }
+
+  if (viewUsers) viewUsers.style.display = tab === 'users' ? 'block' : 'none';
+  if (viewHistory) viewHistory.style.display = tab === 'history' ? 'block' : 'none';
+}
+window.switchReferralSubTab = switchReferralSubTab;
+
+async function renderReferrals() {
+  if (!currentUserId) return;
 
   try {
     const res = await fetch(`${API}/api/user/${currentUserId}/referrals`);
     if (!res.ok) return;
     const data = await res.json();
 
-    const codeEl = document.getElementById('ref-code-input');
-    if (codeEl) codeEl.value = data.referralCode;
-    const linkEl = document.getElementById('ref-link-input');
-    if (linkEl) linkEl.value = `${window.location.origin}/?ref=${data.referralCode}`;
-    const invitedEl = document.getElementById('ref-total-invited');
-    if (invitedEl) invitedEl.textContent = data.totalInvited || 0;
-    const pointsEl = document.getElementById('ref-total-points');
-    if (pointsEl) pointsEl.textContent = `${(data.points || 0).toLocaleString('id-ID')} Perak`;
+    const refCode = data.referralCode || '------';
+    const refRate = data.referralBonusRate || 50;
+    const refLink = `${window.location.origin}/register?ref=${refCode}`;
 
-    const list = data.referrals || [];
-    if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px;">
-        <i class="fa-solid fa-gift" style="opacity:0.3;font-size:24px;display:block;margin-bottom:8px;"></i>
-        Belum ada member yang mendaftar via referral Anda.<br>Ajak teman sekarang untuk dapat pasif komisi <strong>+100 Perak / pesan</strong>!
-      </td></tr>`;
-      return;
+    // Banner rate
+    const bannerRateEl = document.getElementById('ref-banner-rate');
+    if (bannerRateEl) bannerRateEl.textContent = `Rp${refRate}`;
+
+    // Card 1
+    const codeEl = document.getElementById('ref-display-code');
+    if (codeEl) codeEl.textContent = refCode;
+
+    const linkEl = document.getElementById('ref-display-link');
+    if (linkEl) linkEl.textContent = refLink;
+
+    // Backward compat
+    const oldCodeEl = document.getElementById('ref-code-input');
+    if (oldCodeEl) oldCodeEl.value = refCode;
+    const oldLinkEl = document.getElementById('ref-link-input');
+    if (oldLinkEl) oldLinkEl.value = refLink;
+
+    // Card 2
+    const totalEarningsEl = document.getElementById('ref-total-earnings');
+    if (totalEarningsEl) {
+      totalEarningsEl.textContent = `Rp${(data.points || data.totalEarnings || 0).toLocaleString('id-ID')}`;
     }
 
-    tbody.innerHTML = list.map(m => `
-      <tr>
-        <td>
-          <div style="font-weight:700;color:var(--text-main);">${escHtml(m.name || 'Member')}</div>
-          <div style="font-size:11.5px;color:var(--primary);font-family:monospace;">@${escHtml(m.username || '-')}</div>
-          ${m.totalMessagesSent ? `<div style="font-size:10.5px;color:var(--text-muted);">${m.totalMessagesSent} pesan terkirim</div>` : ''}
-        </td>
-        <td style="font-size:12px;color:var(--text-muted);">${formatDate(m.joinedAt)}</td>
-        <td>
-          <span style="background:#fef3c7;color:#b45309;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:4px;">
-            <i class="fa-solid fa-coins"></i> +${(m.bonusRp || m.pointsEarned || 0).toLocaleString('id-ID')} Perak
-          </span>
-        </td>
-      </tr>
-    `).join('');
-  } catch (_) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#ef4444;padding:16px;">Gagal memuat data referral</td></tr>`;
+    const totalReferredEl = document.getElementById('ref-total-referred-count');
+    if (totalReferredEl) {
+      totalReferredEl.textContent = data.totalInvited || (data.referrals ? data.referrals.length : 0);
+    }
+
+    const todayEarningsEl = document.getElementById('ref-today-earnings');
+    if (todayEarningsEl) {
+      todayEarningsEl.textContent = `Rp${(data.todayEarnings || 0).toLocaleString('id-ID')}`;
+    }
+
+    // Sub-tab 1: Pengguna
+    const usersEmpty = document.getElementById('ref-users-empty');
+    const usersList = document.getElementById('ref-users-list');
+    const list = data.referrals || [];
+
+    if (list.length === 0) {
+      if (usersEmpty) usersEmpty.style.display = 'block';
+      if (usersList) {
+        usersList.style.display = 'none';
+        usersList.innerHTML = '';
+      }
+    } else {
+      if (usersEmpty) usersEmpty.style.display = 'none';
+      if (usersList) {
+        usersList.style.display = 'block';
+        usersList.innerHTML = list.map(m => {
+          const initials = ((m.name || m.username || 'M').trim().slice(0, 2)).toUpperCase();
+          const earned = (m.bonusRp || m.pointsEarned || 0).toLocaleString('id-ID');
+          return `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:38px;height:38px;border-radius:50%;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">
+                  ${escHtml(initials)}
+                </div>
+                <div>
+                  <div style="font-size:13.5px;font-weight:700;color:#0f172a;">${escHtml(m.name || 'Member')}</div>
+                  <div style="font-size:11.5px;color:#64748b;">@${escHtml(m.username || '-')} • ${formatDate(m.joinedAt)}</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:13.5px;font-weight:800;color:#16a34a;">+Rp ${earned}</div>
+                <div style="font-size:11px;color:#94a3b8;">${m.totalMessagesSent || 0} pesan blast</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Sub-tab 2: Riwayat
+    const historyEmpty = document.getElementById('ref-history-empty');
+    const historyList = document.getElementById('ref-history-list');
+    const history = data.history || [];
+
+    if (history.length === 0) {
+      if (historyEmpty) historyEmpty.style.display = 'block';
+      if (historyList) {
+        historyList.style.display = 'none';
+        historyList.innerHTML = '';
+      }
+    } else {
+      if (historyEmpty) historyEmpty.style.display = 'none';
+      if (historyList) {
+        historyList.style.display = 'block';
+        historyList.innerHTML = history.map(h => {
+          const amount = (h.amount || 0).toLocaleString('id-ID');
+          return `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:38px;height:38px;border-radius:50%;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">
+                  <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                  <div style="font-size:13.5px;font-weight:700;color:#0f172a;">${escHtml(h.title || 'Komisi Referral')}</div>
+                  <div style="font-size:11.5px;color:#64748b;">dari @${escHtml(h.fromUser || '-')} • ${formatDateTime(h.timestamp)}</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:14px;font-weight:800;color:#16a34a;">+Rp ${amount}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+  } catch (err) {
+    console.error('Failed to load referrals:', err);
   }
 }
 
-function toggleReferralRules() {
-  const content = document.getElementById('ref-rules-content');
-  const chevron = document.getElementById('ref-rules-chevron');
-  if (!content) return;
-  const isHidden = content.style.display === 'none' || !content.style.display;
-  content.style.display = isHidden ? 'block' : 'none';
-  if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-}
-window.toggleReferralRules = toggleReferralRules;
-
 function copyReferralCode() {
-  const code = document.getElementById('ref-code-input').value;
-  if (!code || code === 'Loading...') return;
-  navigator.clipboard.writeText(code).then(() => showToast(`✅ Kode ${code} disalin ke clipboard!`));
+  const el = document.getElementById('ref-display-code');
+  const code = (el ? el.textContent : '') || (document.getElementById('ref-code-input')?.value || '');
+  const cleanCode = code.trim();
+  if (!cleanCode || cleanCode === 'Loading...' || cleanCode === '------') return;
+  navigator.clipboard.writeText(cleanCode).then(() => showToast(`✅ Kode ${cleanCode} disalin ke clipboard!`));
 }
 
 function copyReferralLink() {
-  const link = document.getElementById('ref-link-input').value;
-  if (!link || link === 'Loading...') return;
-  navigator.clipboard.writeText(link).then(() => showToast('✅ Link pendaftaran referral disalin!'));
+  const el = document.getElementById('ref-display-link');
+  const link = (el ? el.textContent : '') || (document.getElementById('ref-link-input')?.value || '');
+  const cleanLink = link.trim();
+  if (!cleanLink || cleanLink.startsWith('Loading')) return;
+  navigator.clipboard.writeText(cleanLink).then(() => showToast('✅ Link referral disalin ke clipboard!'));
+}
+
+function shareReferral() {
+  const elCode = document.getElementById('ref-display-code');
+  const code = (elCode ? elCode.textContent : '').trim() || '------';
+  const elLink = document.getElementById('ref-display-link');
+  const link = (elLink ? elLink.textContent : '').trim() || `${window.location.origin}/register?ref=${code}`;
+  const shareText = `Halo! Yuk gabung jadi mitra di Akaza Blast dan hasilkan uang dari WhatsApp kamu!\n\nDaftar lewat tautan ini:\n${link}\n\nKode referral: ${code}`;
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'Akaza Blast Referral',
+      text: shareText,
+      url: link
+    }).catch(() => {
+      shareReferralWhatsApp();
+    });
+  } else {
+    shareReferralWhatsApp();
+  }
 }
 
 function shareReferralWhatsApp() {
-  const code = document.getElementById('ref-code-input').value;
-  const link = document.getElementById('ref-link-input').value;
-  const msg = encodeURIComponent(`Halo! Yuk gabung jadi mitra Akaza Blast dan hasilkan uang dari WhatsApp kamu! Komisi Rp 900 per pesan blast terkirim.\n\nDaftar gratis lewat link ini:\n${link}\n\nAtau gunakan kode referral: ${code}`);
+  const elCode = document.getElementById('ref-display-code');
+  const code = (elCode ? elCode.textContent : '').trim() || '------';
+  const elLink = document.getElementById('ref-display-link');
+  const link = (elLink ? elLink.textContent : '').trim() || `${window.location.origin}/register?ref=${code}`;
+  const msg = encodeURIComponent(`Halo! Yuk gabung jadi mitra Akaza Blast dan hasilkan uang dari WhatsApp kamu!\n\nDaftar gratis lewat link ini:\n${link}\n\nAtau gunakan kode referral: ${code}`);
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
 
@@ -1631,6 +1906,7 @@ window.switchDeviceModalTab = switchDeviceModalTab;
 window.startQRSession = startQRSession;
 window.refreshQRImage = refreshQRImage;
 window.generatePairingCode = generatePairingCode;
+window.copyPairingCode = copyPairingCode;
 window.disconnectDevice = disconnectDevice;
 window.deleteDevice = deleteDevice;
 window.reconnectDevice = reconnectDevice;
@@ -1641,6 +1917,8 @@ window.loadAdminDefaultDatabase = loadAdminDefaultDatabase;
 window.copyReferralLink = copyReferralLink;
 window.copyReferralCode = copyReferralCode;
 window.shareReferralWhatsApp = shareReferralWhatsApp;
+window.shareReferral = shareReferral;
+window.switchReferralSubTab = switchReferralSubTab;
 window.changeDeviceMode = changeDeviceMode;
 window.handleAuthClick = handleAuthClick;
 window.handleUpdateProfile = handleUpdateProfile;

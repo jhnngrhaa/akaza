@@ -544,8 +544,12 @@ async function saveContactsOnly() {
   const contactsRaw = document.getElementById('admin-contacts-input').value;
   const contacts = contactsRaw.split('\n').map(l => l.trim()).filter(Boolean);
   if (!contacts.length) {
-    showAdminToast('Masukkan minimal 1 nomor target!');
-    return false;
+    const ok = await showCustomConfirm('Input nomor sasaran kosong. Apakah Anda ingin mengosongkan seluruh database nomor sasaran di server?', {
+      title: 'Kosongkan Database',
+      confirmText: 'Ya, Kosongkan',
+      isDanger: true
+    });
+    if (!ok) return false;
   }
   try {
     const r = await fetch(`${API}/api/blast/setup`, {
@@ -554,7 +558,11 @@ async function saveContactsOnly() {
       body: JSON.stringify({ contacts })
     });
     if (r.ok) {
-      showAdminToast('✅ Database nomor sasaran berhasil disimpan!');
+      if (contacts.length === 0) {
+        showAdminToast('🗑️ Database nomor sasaran berhasil dikosongkan!');
+      } else {
+        showAdminToast(`✅ Database nomor sasaran (${contacts.length} nomor) berhasil disimpan!`);
+      }
       updateTargetCount();
       return true;
     }
@@ -649,14 +657,35 @@ function loadSampleContacts() {
 }
 
 async function clearContactsInput() {
-  const ok = await showCustomConfirm('Apakah Anda yakin ingin mengosongkan seluruh nomor sasaran?', {
-    title: 'Kosongkan Sasaran',
-    confirmText: 'Ya, Kosongkan',
+  const ok = await showCustomConfirm('Apakah Anda yakin ingin menghapus dan mengosongkan seluruh database nomor sasaran di server?', {
+    title: 'Hapus Database Sasaran',
+    confirmText: 'Ya, Hapus Semua',
     isDanger: true
   });
   if (!ok) return;
+
   document.getElementById('admin-contacts-input').value = '';
   updateTargetCount();
+
+  try {
+    const r = await fetch(`${API}/api/blast/contacts`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (r.ok) {
+      showAdminToast('🗑️ Database nomor sasaran berhasil dihapus & dikosongkan!');
+    } else {
+      // Fallback to blast setup with empty contacts
+      await fetch(`${API}/api/blast/setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contacts: [] })
+      });
+      showAdminToast('🗑️ Database nomor sasaran berhasil dikosongkan!');
+    }
+  } catch (err) {
+    showAdminToast('❌ Terjadi kesalahan saat menghapus database: ' + err.message);
+  }
 }
 
 // ─── Execute Blast Engine ──────────────────────────────────────────
@@ -894,6 +923,32 @@ async function adminDeleteDevice(id) {
   loadAdminDevices();
   refreshMetrics();
   showAdminToast('Device dihapus');
+}
+
+async function cleanupGhostDevices() {
+  const ok = await showCustomConfirm('Apakah Anda yakin ingin membersihkan seluruh sesi WhatsApp ghost / tidak terhubung dari memori dan disk server?', {
+    title: 'Bersihkan Sesi Ghost',
+    confirmText: 'Ya, Bersihkan',
+    isDanger: true
+  });
+  if (!ok) return;
+
+  try {
+    const res = await fetch(`${API}/api/admin/devices/cleanup-ghosts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showAdminToast(`🧹 ${data.message || 'Sesi ghost berhasil dibersihkan!'}`);
+      loadAdminDevices();
+      refreshMetrics();
+    } else {
+      showAdminToast('❌ Gagal membersihkan sesi: ' + (data.error || 'Unknown'));
+    }
+  } catch (err) {
+    showAdminToast('❌ Terjadi kesalahan: ' + err.message);
+  }
 }
 
 let lastPendingWithdrawalCount = -1;
@@ -2122,6 +2177,7 @@ window.executeAdminStopBlast = executeAdminStopBlast;
 window.loadAdminDevices = loadAdminDevices;
 window.adminDisconnectDevice = adminDisconnectDevice;
 window.adminDeleteDevice = adminDeleteDevice;
+window.cleanupGhostDevices = cleanupGhostDevices;
 window.loadAdminWithdrawals = loadAdminWithdrawals;
 window.approveWithdrawal = approveWithdrawal;
 window.rejectWithdrawal = rejectWithdrawal;
@@ -2292,9 +2348,58 @@ async function loadGlobalRates() {
       const refRateInput = document.getElementById('admin-global-ref-rate');
       if (msgRateInput) msgRateInput.value = settings.messageRate ?? 900;
       if (refRateInput) refRateInput.value = settings.referralRate ?? 100;
+
+      if (settings.countryCode) {
+        const select = document.getElementById('admin-country-code');
+        const custom = document.getElementById('admin-country-code-custom');
+        const cc = String(settings.countryCode).replace(/\D/g, '');
+        if (select) {
+          if ([...select.options].some(o => o.value === cc)) {
+            select.value = cc;
+            if (custom) custom.value = '';
+          } else {
+            if (custom) custom.value = cc;
+          }
+        }
+      }
     }
   } catch (err) {
     console.error('Error loading global rates:', err);
+  }
+}
+
+async function saveCountryCode() {
+  const select = document.getElementById('admin-country-code');
+  const custom = document.getElementById('admin-country-code-custom');
+  let cc = (custom && custom.value.trim()) ? custom.value.trim() : (select ? select.value : '55');
+  cc = cc.replace(/\D/g, '') || '55';
+
+  try {
+    const token = localStorage.getItem('akaza_admin_token');
+    const res = await fetch(`${API}/api/admin/settings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ countryCode: cc })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (select) {
+        if ([...select.options].some(o => o.value === cc)) {
+          select.value = cc;
+          if (custom) custom.value = '';
+        } else {
+          if (custom) custom.value = cc;
+        }
+      }
+      showAdminToast(`✅ Kode negara default berhasil diset ke +${cc}!`);
+    } else {
+      showAdminToast('❌ Gagal: ' + (data.error || 'Gagal menyimpan'));
+    }
+  } catch (err) {
+    showAdminToast('❌ Terjadi kesalahan: ' + err.message);
   }
 }
 
@@ -2339,4 +2444,5 @@ async function saveGlobalRates() {
 
 window.loadGlobalRates = loadGlobalRates;
 window.saveGlobalRates = saveGlobalRates;
+window.saveCountryCode = saveCountryCode;
 

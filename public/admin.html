@@ -947,10 +947,59 @@
               <button class="btn-primary" style="padding:7px 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;" onclick="saveContactsOnly()">
                 <i class="fa-solid fa-floppy-disk"></i> Simpan Database
               </button>
-              <button class="btn-secondary" style="padding:7px 10px;font-size:12px;" onclick="clearContactsInput()" title="Bersihkan Sasaran">
-                <i class="fa-solid fa-trash-can"></i>
+              <button class="btn-secondary" style="padding:7px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;color:#dc2626;border-color:#fca5a5;background:#fff5f5;white-space:nowrap;" onclick="clearContactsInput()" title="Hapus & Kosongkan Seluruh Database Sasaran">
+                <i class="fa-solid fa-trash-can"></i> Hapus Database
               </button>
             </div>
+          </div>
+
+          <!-- Country Code Selector -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;">
+            <i class="fa-solid fa-globe" style="color:#6366f1;font-size:14px;flex-shrink:0;"></i>
+            <span style="font-size:12px;font-weight:700;color:#475569;white-space:nowrap;">Kode Negara:</span>
+            <select id="admin-country-code" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700;color:#0f172a;background:#ffffff;outline:none;cursor:pointer;min-width:160px;">
+              <option value="55">🇧🇷 +55 Brasil</option>
+              <option value="62">🇮🇩 +62 Indonesia</option>
+              <option value="1">🇺🇸 +1 USA / Canada</option>
+              <option value="44">🇬🇧 +44 UK</option>
+              <option value="91">🇮🇳 +91 India</option>
+              <option value="81">🇯🇵 +81 Jepang</option>
+              <option value="82">🇰🇷 +82 Korea</option>
+              <option value="60">🇲🇾 +60 Malaysia</option>
+              <option value="63">🇵🇭 +63 Filipina</option>
+              <option value="65">🇸🇬 +65 Singapura</option>
+              <option value="66">🇹🇭 +66 Thailand</option>
+              <option value="84">🇻🇳 +84 Vietnam</option>
+              <option value="86">🇨🇳 +86 China</option>
+              <option value="234">🇳🇬 +234 Nigeria</option>
+              <option value="27">🇿🇦 +27 Afrika Selatan</option>
+              <option value="971">🇦🇪 +971 UAE</option>
+              <option value="966">🇸🇦 +966 Saudi Arabia</option>
+              <option value="52">🇲🇽 +52 Meksiko</option>
+              <option value="54">🇦🇷 +54 Argentina</option>
+              <option value="57">🇨🇴 +57 Kolombia</option>
+              <option value="56">🇨🇱 +56 Chile</option>
+              <option value="51">🇵🇪 +51 Peru</option>
+              <option value="58">🇻🇪 +58 Venezuela</option>
+              <option value="593">🇪🇨 +593 Ekuador</option>
+              <option value="33">🇫🇷 +33 Prancis</option>
+              <option value="49">🇩🇪 +49 Jerman</option>
+              <option value="39">🇮🇹 +39 Italia</option>
+              <option value="34">🇪🇸 +34 Spanyol</option>
+              <option value="351">🇵🇹 +351 Portugal</option>
+              <option value="7">🇷🇺 +7 Rusia</option>
+              <option value="90">🇹🇷 +90 Turki</option>
+              <option value="20">🇪🇬 +20 Mesir</option>
+              <option value="212">🇲🇦 +212 Maroko</option>
+              <option value="61">🇦🇺 +61 Australia</option>
+              <option value="64">🇳🇿 +64 Selandia Baru</option>
+              <option value="880">🇧🇩 +880 Bangladesh</option>
+              <option value="92">🇵🇰 +92 Pakistan</option>
+            </select>
+            <input type="text" id="admin-country-code-custom" placeholder="Atau ketik kode" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700;color:#0f172a;width:110px;outline:none;background:#ffffff;" title="Ketik kode negara manual jika tidak ada di daftar">
+            <button type="button" class="btn-primary" style="padding:5px 12px;font-size:11.5px;white-space:nowrap;" onclick="saveCountryCode()">
+              <i class="fa-solid fa-check"></i> Set
+            </button>
           </div>
 
           <textarea class="form-textarea" id="admin-contacts-input" style="width:100%;height:250px;min-height:200px;font-family:monospace;font-size:12.5px;resize:vertical;box-sizing:border-box;"
@@ -1024,6 +1073,20 @@
          TAB 2: MEMBER DEVICES MONITOR
          ============================================================== -->
     <section id="admin-view-devices" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);">Monitoring Perangkat Mitra</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Daftar perangkat WhatsApp yang aktif & terhubung untuk pengiriman pesan blast.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-secondary" style="padding:7px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;border-color:#fca5a5;color:#dc2626;background:#fff5f5;" onclick="cleanupGhostDevices()" title="Hapus sesi WhatsApp yang tidak terhubung atau kedaluwarsa">
+            <i class="fa-solid fa-broom"></i> Bersihkan Sesi Ghost
+          </button>
+          <button class="btn-secondary" style="padding:7px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;" onclick="loadAdminDevices()">
+            <i class="fa-solid fa-rotate"></i> Refresh
+          </button>
+        </div>
+      </div>
 
       <div id="admin-devices-container">
         <div class="clean-panel" style="text-align:center;padding:30px;color:var(--text-muted);">

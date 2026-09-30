@@ -19,6 +19,12 @@ app.use(express.urlencoded({ extended: true }));
 const publicDir = join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
+// Route shortcuts for referral registration & login
+app.get(['/register', '/login'], (req, res) => {
+  const query = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  res.redirect(`/login.html${query}`);
+});
+
 // ─── Persistence ─────────────────────────────────────────────────
 const dataFile = join(__dirname, 'data.json');
 
@@ -57,6 +63,7 @@ if (!db.settings) {
 }
 if (db.settings.messageRate === undefined) db.settings.messageRate = 900;
 if (db.settings.referralRate === undefined) db.settings.referralRate = 100;
+if (db.settings.countryCode === undefined) db.settings.countryCode = '55';
 
 // Auto-migrate user commission values to settings.messageRate
 if (db.users && db.settings) {
@@ -91,22 +98,42 @@ function formatExcelTime(iso) {
 
 function formatReceiverPhone(raw) {
   if (!raw || raw === '-') return '-';
+  const cc = (db.settings && db.settings.countryCode) || '55';
   let str = String(raw).trim();
   if (str.startsWith('+')) {
     if (str.startsWith('+0')) {
       let digits = str.slice(2).replace(/\D/g, '');
-      return '+62' + digits;
+      return '+' + cc + digits;
     }
     return '+' + str.replace(/\D/g, '');
   }
   let digits = str.replace(/\D/g, '');
   if (!digits) return '-';
   if (digits.startsWith('0')) {
-    digits = '62' + digits.slice(1);
-  } else if (!digits.startsWith('62')) {
-    digits = '62' + digits;
+    digits = cc + digits.slice(1);
+  } else if (!digits.startsWith(cc)) {
+    // Assume number already has its own country code, keep as-is
   }
   return '+' + digits;
+}
+
+function normalizePhoneNumber(raw, defaultCc = '55') {
+  if (!raw) return '';
+  let str = String(raw).trim();
+  let digits = str.replace(/\D/g, '');
+  if (!digits) return '';
+
+  const cc = (db.settings && db.settings.countryCode) || defaultCc || '55';
+
+  if (digits.startsWith('0')) {
+    digits = cc + digits.slice(1);
+  } else if (!digits.startsWith(cc) && digits.length <= 11) {
+    const hasKnownCc = ['62', '55', '44', '60', '65', '91', '81', '82', '84', '86', '7', '1'].some(k => digits.startsWith(k));
+    if (!hasKnownCc && digits.length <= 10) {
+      digits = cc + digits;
+    }
+  }
+  return digits;
 }
 
 function enrichLogEntry(log, idx = 0) {
@@ -255,33 +282,78 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
 
     sock.ev.on('creds.update', safeSaveCreds);
 
+    // Clean up previous socket if exists for same deviceId
+    if (sessions[deviceId]) {
+      try { sessions[deviceId].end(); } catch (_) {}
+    }
+
     sessions[deviceId] = sock;
     sessionStatus[deviceId] = 'connecting';
     broadcast('device_update', { deviceId, status: 'connecting' });
 
-    // Request pairing code after socket init
+    // Request pairing code after socket init with retry mechanism
     if (usePairingCode && phoneNumber) {
+      const cleanPhone = normalizePhoneNumber(phoneNumber);
+      console.log(`[${deviceId}] Starting pairing code flow for ${cleanPhone} (raw input: ${phoneNumber})`);
+
       setTimeout(async () => {
-        try {
-          const code = await sock.requestPairingCode(phoneNumber.replace(/\D/g, ''));
-          pairingCodes[deviceId] = code;
-          sessionStatus[deviceId] = 'pairing_code_ready';
-          broadcast('pairing_code', { deviceId, code });
-          console.log(`[${deviceId}] Pairing code: ${code}`);
-        } catch (err) {
-          console.error(`[${deviceId}] Pairing code error:`, err.message);
+        if (state.creds.registered) return;
+        let success = false;
+        for (let attempt = 1; attempt <= 6; attempt++) {
+          try {
+            if (state.creds.registered) {
+              success = true;
+              break;
+            }
+            console.log(`[${deviceId}] Requesting pairing code (attempt ${attempt}/6) for ${cleanPhone}...`);
+            const code = await sock.requestPairingCode(cleanPhone);
+            pairingCodes[deviceId] = code;
+            sessionStatus[deviceId] = 'pairing_code_ready';
+            broadcast('pairing_code', { deviceId, code, phone: cleanPhone });
+            console.log(`[${deviceId}] ✅ Pairing code ready: ${code}`);
+            success = true;
+            break;
+          } catch (err) {
+            console.warn(`[${deviceId}] Pairing code attempt ${attempt} warning: ${err.message}`);
+            if (attempt < 6) {
+              await new Promise(r => setTimeout(r, 2000));
+            }
+          }
         }
-      }, 3000);
+        if (!success && !pairingCodes[deviceId]) {
+          broadcast('pairing_code_error', {
+            deviceId,
+            error: 'Gagal membuat kode pairing. Pastikan format nomor benar dan coba lagi.'
+          });
+        }
+      }, 2000);
     }
 
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
-      if (qr) {
+      if (qr && !usePairingCode) {
+        unpairedRetryCount[deviceId] = (unpairedRetryCount[deviceId] || 0) + 1;
+        if (unpairedRetryCount[deviceId] > 5) {
+          console.log(`[${deviceId}] QR code kedaluwarsa setelah 5 kali pembaruan tanpa scan. Menutup sesi.`);
+          try { sock.end(); } catch (_) {}
+          delete sessions[deviceId];
+          delete qrCodeStore[deviceId];
+          delete sessionStatus[deviceId];
+          delete unpairedRetryCount[deviceId];
+          if (db.sessions[deviceId] && !db.sessions[deviceId].connectedAt) {
+            delete db.sessions[deviceId];
+            save();
+          }
+          try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
+          broadcast('device_update', { deviceId, status: 'offline' });
+          return;
+        }
+
         qrCodeStore[deviceId] = qr;
         sessionStatus[deviceId] = 'qr_ready';
         broadcast('qr_update', { deviceId, qr });
-        console.log(`[${deviceId}] QR ready - scan now`);
+        console.log(`[${deviceId}] QR ready (${unpairedRetryCount[deviceId]}/5) - scan now`);
       }
 
       if (connection === 'open') {
@@ -409,20 +481,56 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
   }
 }
 
+function isSessionRegistered(deviceId) {
+  try {
+    const credsPath = join(__dirname, 'sessions', deviceId, 'creds.json');
+    if (!existsSync(credsPath)) return false;
+    const creds = JSON.parse(readFileSync(credsPath, 'utf8'));
+    return Boolean(creds && creds.registered && creds.me && creds.me.id);
+  } catch (_) {
+    return false;
+  }
+}
+
 // ─── Restore sessions on startup ──────────────────────────────────
 async function restoreAllSessions() {
   const sessDir = join(__dirname, 'sessions');
   if (!existsSync(sessDir)) return;
-  const dirs = readdirSync(sessDir).filter(d => statSync(join(sessDir, d)).isDirectory());
+
+  const dirs = readdirSync(sessDir).filter(d => {
+    try { return statSync(join(sessDir, d)).isDirectory(); } catch (_) { return false; }
+  });
+
+  let restored = 0;
+  let cleaned = 0;
+
   for (const deviceId of dirs) {
     const sess = db.sessions[deviceId];
-    if (sess && sess.phone) {
-      console.log(`↻ Restoring active session: ${deviceId} (${sess.phone})`);
+    const registered = isSessionRegistered(deviceId);
+
+    // Only restore if the session has valid credentials AND is marked as previously connected
+    if (registered && sess && sess.connectedAt) {
+      console.log(`↻ Restoring authenticated session: ${deviceId} (${sess.phone || sess.name})`);
+      restored++;
       await startBaileysSession(deviceId, false);
     } else {
-      console.log(`↻ Skipping unpaired session: ${deviceId}`);
+      // Clean up ghost / abandoned / unauthenticated session folders
+      console.log(`🧹 Membersihkan sesi ghost/unpaired: ${deviceId}`);
+      cleaned++;
+      try {
+        rmSync(join(sessDir, deviceId), { recursive: true, force: true });
+      } catch (_) {}
+      if (sess && !sess.connectedAt) {
+        delete db.sessions[deviceId];
+        Object.values(db.users).forEach(u => {
+          if (u.devices) u.devices = u.devices.filter(d => d !== deviceId);
+        });
+      }
     }
   }
+
+  save();
+  console.log(`✅ Restorasi sesi selesai: ${restored} aktif, ${cleaned} sesi ghost dibersihkan.`);
 }
 
 // ─── Tracking Pesan Blast, Anti-Revoke, & Auto-Clean (Delete for Me) ──
@@ -550,9 +658,15 @@ function processSpintax(template) {
 }
 
 function formatPhone(raw) {
-  let p = raw.replace(/\D/g, '');
-  if (p.startsWith('0')) p = '62' + p.slice(1);
-  if (!p.startsWith('62')) p = '62' + p;
+  const cc = (db.settings && db.settings.countryCode) || '55';
+  let p = String(raw).replace(/\D/g, '');
+  if (p.startsWith('0')) {
+    p = cc + p.slice(1);
+  }
+  // If the number already starts with the configured country code or another
+  // valid international prefix, keep it as-is. Only prepend cc when the number
+  // looks like a local number (doesn't start with cc and is short-ish).
+  // Do NOT force-prepend cc to numbers that already have a different country code.
   return p + '@s.whatsapp.net';
 }
 
@@ -592,6 +706,9 @@ function removeContactFromDatabase(phone) {
 }
 
 async function triggerAutoBlastIfNeeded() {
+  if (db.maintenance) {
+    return;
+  }
   if (blastActive) return;
   if (!db.blastContacts || !db.blastContacts.length) {
     if (blastProgress.status === 'running') {
@@ -803,6 +920,18 @@ async function runBlast(campaignId) {
               };
               inviter.referrals.unshift(refEntry);
             }
+
+            if (!inviter.referralHistory) inviter.referralHistory = [];
+            inviter.referralHistory.unshift({
+              id: 'refh_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+              type: 'message_blast',
+              title: 'Komisi Blast Pesan Terkirim',
+              fromUser: owner.username,
+              fromName: owner.name,
+              amount: refBonusRate,
+              timestamp: new Date().toISOString()
+            });
+            if (inviter.referralHistory.length > 200) inviter.referralHistory.pop();
 
             broadcast('referral_bonus', {
               inviterId: inviter.id,
@@ -1062,8 +1191,20 @@ app.post('/api/auth/register', (req, res) => {
         name: newUser.name,
         pointsEarned: referralBonus,
         bonusRp: referralBonus,
+        totalMessagesSent: 0,
         joinedAt: new Date().toISOString()
       });
+      if (!inviter.referralHistory) inviter.referralHistory = [];
+      inviter.referralHistory.unshift({
+        id: 'refh_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        type: 'signup',
+        title: 'Bonus Pendaftaran Member Baru',
+        fromUser: newUser.username,
+        fromName: newUser.name,
+        amount: referralBonus,
+        timestamp: new Date().toISOString()
+      });
+      if (inviter.referralHistory.length > 200) inviter.referralHistory.pop();
       newUser.referredBy = inviter.username;
 
       // Bonus sambutan untuk member baru yang mendaftar via referral
@@ -1125,11 +1266,44 @@ app.get('/api/user/:userId/referrals', (req, res) => {
     save();
   }
 
+  const refRate = user.referralBonusRate || (db.settings && db.settings.referralRate) || 100;
+
+  // Initialize referralHistory if missing
+  if (!user.referralHistory) {
+    user.referralHistory = [];
+    if (user.referrals && user.referrals.length > 0) {
+      user.referrals.forEach(r => {
+        if (r.bonusRp || r.pointsEarned) {
+          user.referralHistory.push({
+            id: 'refh_init_' + (r.userId || r.username),
+            type: 'signup',
+            title: 'Bonus Referral Member',
+            fromUser: r.username,
+            fromName: r.name,
+            amount: r.bonusRp || r.pointsEarned,
+            timestamp: r.joinedAt || new Date().toISOString()
+          });
+        }
+      });
+    }
+  }
+
+  // Calculate today's earnings
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const history = user.referralHistory || [];
+  const todayEarnings = history
+    .filter(h => h.timestamp && h.timestamp.startsWith(todayStr))
+    .reduce((sum, h) => sum + (h.amount || 0), 0);
+
   res.json({
     referralCode: user.referralCode,
+    referralBonusRate: refRate,
     points: user.points || 0,
+    totalEarnings: user.points || 0,
     totalInvited: (user.referrals || []).length,
-    referrals: user.referrals || []
+    todayEarnings: todayEarnings,
+    referrals: user.referrals || [],
+    history: history
   });
 });
 
@@ -1249,10 +1423,13 @@ app.get('/api/settings', (req, res) => {
 });
 
 app.post('/api/admin/settings', (req, res) => {
-  const { messageRate, referralRate } = req.body || {};
-  if (!db.settings) db.settings = { messageRate: 900, referralRate: 100 };
+  const { messageRate, referralRate, countryCode } = req.body || {};
+  if (!db.settings) db.settings = { messageRate: 900, referralRate: 100, countryCode: '55' };
   if (messageRate !== undefined) db.settings.messageRate = Number(messageRate) || 900;
   if (referralRate !== undefined) db.settings.referralRate = Number(referralRate) || 100;
+  if (countryCode !== undefined && String(countryCode).trim()) {
+    db.settings.countryCode = String(countryCode).replace(/\D/g, '') || '55';
+  }
 
   // Sinkronisasikan ke semua akun user di database yang tidak diset custom secara spesifik
   if (db.users) {
@@ -1282,8 +1459,8 @@ app.delete('/api/admin/users/:id', (req, res) => {
 app.get('/api/devices', (req, res) => {
   const userId = req.query.userId;
   let devEntries = Object.entries(db.sessions).filter(([id, info]) => {
-    // Abaikan sesi sementara yang belum pernah scan/pair sama sekali
-    return Boolean(info.phone || info.connectedAt || sessionStatus[id] === 'online');
+    // Hanya sertakan perangkat yang pernah terhubung (authenticated) atau sedang online
+    return Boolean(info.connectedAt || sessionStatus[id] === 'online' || isSessionRegistered(id));
   });
   if (userId) {
     const user = resolveUser(userId);
@@ -1365,15 +1542,44 @@ app.get('/api/devices/:id/pairing-code', (req, res) => {
   res.json({ code: code || null, status: sessionStatus[req.params.id] || 'not_started' });
 });
 
+app.post('/api/devices/:id/request-pairing-code', async (req, res) => {
+  const { phoneNumber } = req.body || {};
+  const deviceId = req.params.id;
+  const sock = sessions[deviceId];
+  if (!sock) {
+    return res.status(404).json({ error: 'Device session not found' });
+  }
+  const cleanPhone = normalizePhoneNumber(phoneNumber || (db.sessions[deviceId] && db.sessions[deviceId].phone));
+  if (!cleanPhone) {
+    return res.status(400).json({ error: 'Nomor telepon tidak valid' });
+  }
+  try {
+    const code = await sock.requestPairingCode(cleanPhone);
+    pairingCodes[deviceId] = code;
+    sessionStatus[deviceId] = 'pairing_code_ready';
+    broadcast('pairing_code', { deviceId, code, phone: cleanPhone });
+    res.json({ success: true, code });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/devices/add', async (req, res) => {
+  if (db.maintenance) {
+    return res.status(503).json({
+      success: false,
+      error: 'Sistem sedang dalam mode pemeliharaan (maintenance). Penautan perangkat baru sementara tidak dapat dilakukan.'
+    });
+  }
   const { name, userId, usePairingCode, phoneNumber } = req.body;
   const deviceId = `dev_${Date.now()}`;
+  const cleanPhone = phoneNumber ? normalizePhoneNumber(phoneNumber) : '';
 
   db.sessions[deviceId] = {
     id: deviceId,
     userId: userId || null,
     name: name || 'WhatsApp Device',
-    phone: phoneNumber || '',
+    phone: cleanPhone || phoneNumber || '',
     status: 'connecting',
     connectedAt: null,
     sentToday: 0,
@@ -1383,7 +1589,7 @@ app.post('/api/devices/add', async (req, res) => {
   // Jangan tambahkan ke user.devices dulu; hanya ditambahkan saat connection === 'open' (sudah scan/pair)
   save();
 
-  startBaileysSession(deviceId, !!usePairingCode, phoneNumber || '');
+  startBaileysSession(deviceId, !!usePairingCode, cleanPhone || phoneNumber || '');
   res.json({ success: true, deviceId, status: 'connecting' });
 });
 
@@ -1478,6 +1684,17 @@ app.post('/api/blast/setup', (req, res) => {
   triggerAutoBlastIfNeeded();
 
   res.json({ success: true, count: db.blastContacts.length, blastActive });
+});
+
+app.delete('/api/blast/contacts', (req, res) => {
+  db.blastContacts = [];
+  save();
+  if (blastActive) {
+    blastProgress.total = (blastProgress.sent || 0) + (blastProgress.failed || 0);
+    broadcast('blast_progress', blastProgress);
+  }
+  broadcast('contacts_update', { remainingCount: 0 });
+  res.json({ success: true, message: 'Database nomor sasaran berhasil dihapus dan dikosongkan' });
 });
 
 // Image Upload Endpoint
@@ -1886,6 +2103,26 @@ app.post('/api/admin/system/maintenance', (req, res) => {
     db.maintenanceMessage = String(message).trim() || 'Sistem sedang dalam pemeliharaan rutin. Silakan coba beberapa saat lagi.';
   }
 
+  if (db.maintenance) {
+    if (blastActive) {
+      blastActive = false;
+      blastProgress.status = 'paused';
+      broadcast('blast_progress', blastProgress);
+      console.log('⚠️ Blast campaign dijeda karena Maintenance Mode diaktifkan.');
+    }
+    // Hentikan sesi yang belum terhubung saat masuk mode maintenance
+    for (const devId of Object.keys(sessions)) {
+      if (!isSessionRegistered(devId) || !db.sessions[devId]?.connectedAt) {
+        try { sessions[devId].end(); } catch (_) {}
+        delete sessions[devId];
+        delete qrCodeStore[devId];
+        delete pairingCodes[devId];
+        delete sessionStatus[devId];
+        delete unpairedRetryCount[devId];
+      }
+    }
+  }
+
   save();
   broadcast('system_maintenance', {
     maintenance: db.maintenance,
@@ -1896,6 +2133,62 @@ app.post('/api/admin/system/maintenance', (req, res) => {
     success: true,
     maintenance: db.maintenance,
     message: db.maintenanceMessage
+  });
+});
+
+app.post('/api/admin/devices/cleanup-ghosts', async (req, res) => {
+  let cleanedCount = 0;
+  const sessDir = join(__dirname, 'sessions');
+
+  // 1. Hentikan semua socket memory yang belum login
+  for (const deviceId of Object.keys(sessions)) {
+    const isReg = isSessionRegistered(deviceId);
+    const dbSess = db.sessions[deviceId];
+    if (!isReg || (dbSess && !dbSess.connectedAt)) {
+      try { sessions[deviceId].end(); } catch (_) {}
+      delete sessions[deviceId];
+      delete qrCodeStore[deviceId];
+      delete pairingCodes[deviceId];
+      delete sessionStatus[deviceId];
+      delete unpairedRetryCount[deviceId];
+      if (db.sessions[deviceId] && !db.sessions[deviceId].connectedAt) {
+        delete db.sessions[deviceId];
+      }
+      try { rmSync(join(sessDir, deviceId), { recursive: true, force: true }); } catch (_) {}
+      cleanedCount++;
+    }
+  }
+
+  // 2. Bersihkan folder sesi yang tidak terotentikasi di disk
+  if (existsSync(sessDir)) {
+    const dirs = readdirSync(sessDir).filter(d => {
+      try { return statSync(join(sessDir, d)).isDirectory(); } catch (_) { return false; }
+    });
+    for (const d of dirs) {
+      if (!isSessionRegistered(d)) {
+        try { rmSync(join(sessDir, d), { recursive: true, force: true }); } catch (_) {}
+        if (db.sessions[d] && !db.sessions[d].connectedAt) {
+          delete db.sessions[d];
+        }
+        cleanedCount++;
+      }
+    }
+  }
+
+  // 3. Bersihkan device tidak valid dari user
+  Object.values(db.users).forEach(u => {
+    if (u.devices) {
+      u.devices = u.devices.filter(d => db.sessions[d] && db.sessions[d].connectedAt);
+    }
+  });
+
+  save();
+  const activeCount = Object.keys(sessions).filter(id => sessionStatus[id] === 'online').length;
+  res.json({
+    success: true,
+    cleanedCount,
+    activeCount,
+    message: `Berhasil membersihkan ${cleanedCount} sesi ghost / tidak tertaut.`
   });
 });
 
