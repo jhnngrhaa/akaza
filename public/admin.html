@@ -915,13 +915,13 @@
           <div style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:6px 12px;">
             <span style="font-size:12px; font-weight:700; color:#475569; white-space:nowrap;">Rate Pesan:</span>
             <span style="font-size:12px; color:#64748b; font-weight:700;">Rp</span>
-            <input type="number" id="admin-global-msg-rate" value="900" style="width:75px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="900">
+            <input type="number" id="admin-global-msg-rate" onchange="saveGlobalRates()" onkeydown="if(event.key==='Enter')saveGlobalRates()" value="900" style="width:75px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="900">
           </div>
 
           <div style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:6px 12px;">
             <span style="font-size:12px; font-weight:700; color:#475569; white-space:nowrap;">Bonus Referral:</span>
             <span style="font-size:12px; color:#64748b; font-weight:700;">Rp</span>
-            <input type="number" id="admin-global-ref-rate" value="100" style="width:75px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="100">
+            <input type="number" id="admin-global-ref-rate" onchange="saveGlobalRates()" onkeydown="if(event.key==='Enter')saveGlobalRates()" value="100" style="width:75px; border:none; background:transparent; font-size:13px; font-weight:800; color:#0f172a; outline:none;" placeholder="100">
           </div>
 
           <button type="button" id="save-rates-btn" onclick="saveGlobalRates()" class="btn-primary" style="padding:9px 18px; font-size:12.5px; border-radius:10px; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; box-shadow:0 4px 12px rgba(99,102,241,0.25);">

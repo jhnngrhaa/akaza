@@ -315,6 +315,31 @@ function connectAdminSSE() {
       if (indicator && data.remainingCount !== undefined) indicator.textContent = data.remainingCount;
     } catch (_) {}
   });
+
+  adminEventSource.addEventListener('settings_update', (e) => {
+    try {
+      const s = JSON.parse(e.data);
+      if (s) {
+        if (s.messageRate !== undefined) {
+          window._currentSettingsMessageRate = Number(s.messageRate);
+          const msgInput = document.getElementById('admin-global-msg-rate');
+          if (msgInput && document.activeElement !== msgInput) msgInput.value = s.messageRate;
+        }
+        if (s.referralRate !== undefined) {
+          window._currentSettingsReferralRate = Number(s.referralRate);
+          const refInput = document.getElementById('admin-global-ref-rate');
+          if (refInput && document.activeElement !== refInput) refInput.value = s.referralRate;
+        }
+        if (s.countryCode !== undefined) {
+          window._currentSettingsCountryCode = String(s.countryCode).replace(/\D/g, '');
+        }
+        renderDashboardLogs(allBlastReports);
+        filterAdminLogs();
+        loadAdminUsers();
+        loadAdminDevices();
+      }
+    } catch (_) {}
+  });
 }
 
 // ─── Metrics Overview ──────────────────────────────────────────────
@@ -1432,7 +1457,7 @@ async function loadAdminLogs() {
           status: (l.status === 'sent' || l.status === 'SUCCESS' || l.status === 'Terkirim') ? 'SUCCESS' : 'FAILED',
           reason: l.reason || l.error || '-',
           timestamp: l.timestamp || new Date().toISOString(),
-          commission: l.commission !== undefined ? l.commission : 900
+          commission: l.commission !== undefined ? l.commission : (window._currentSettingsMessageRate || 900)
         })) : [];
       }
     }
@@ -1477,7 +1502,8 @@ function renderDashboardLogs(reports) {
     const isSuccess = l.status === 'sent' || l.status === 'SUCCESS' || l.status === 'Terkirim';
     const timeStr = l.timestamp ? new Date(l.timestamp).toLocaleTimeString('id-ID') : '--:--:--';
     const phoneStr = formatReceiverPhone(l.receiver || l.phone || l.target || '-');
-    const commVal = l.commission !== undefined ? l.commission : 900;
+    const globalRate = window._currentSettingsMessageRate || 900;
+    const commVal = l.commission !== undefined ? l.commission : globalRate;
     const userStr = l.userId || l.user || (l.deviceId ? `Dev: ${l.deviceId}` : 'System');
 
     return `
@@ -2379,8 +2405,13 @@ async function loadGlobalRates() {
       const settings = await res.json();
       const msgRateInput = document.getElementById('admin-global-msg-rate');
       const refRateInput = document.getElementById('admin-global-ref-rate');
-      if (msgRateInput) msgRateInput.value = settings.messageRate ?? 900;
-      if (refRateInput) refRateInput.value = settings.referralRate ?? 100;
+      const msgRate = settings.messageRate ?? 900;
+      const refRate = settings.referralRate ?? 100;
+      if (msgRateInput) msgRateInput.value = msgRate;
+      if (refRateInput) refRateInput.value = refRate;
+      window._currentSettingsMessageRate = msgRate;
+      window._currentSettingsReferralRate = refRate;
+      renderDashboardLogs(allBlastReports);
 
       if (settings.countryCode) {
         const select = document.getElementById('admin-country-code');
@@ -2494,9 +2525,12 @@ async function saveGlobalRates() {
   const referralRate = parseInt(refRateInput?.value, 10);
 
   if (isNaN(messageRate) || isNaN(referralRate) || messageRate < 0 || referralRate < 0) {
-    alert('Masukkan nilai rate yang valid (angka 0 atau lebih).');
+    showAdminToast('⚠️ Masukkan nilai rate yang valid (angka 0 atau lebih).');
     return;
   }
+
+  window._currentSettingsMessageRate = messageRate;
+  window._currentSettingsReferralRate = referralRate;
 
   if (btn) btn.disabled = true;
   try {
@@ -2507,18 +2541,22 @@ async function saveGlobalRates() {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
-      body: JSON.stringify({ messageRate, referralRate })
+      body: JSON.stringify({ messageRate, referralRate, forceAllUsers: true })
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      alert(`✅ Rate Komisi (Rp ${messageRate.toLocaleString('id-ID')}) & Referral (Rp ${referralRate.toLocaleString('id-ID')}) berhasil disimpan dan disinkronkan ke seluruh user!`);
+      window._currentSettingsMessageRate = messageRate;
+      window._currentSettingsReferralRate = referralRate;
+      showAdminToast(`✅ Rate Komisi (Rp ${messageRate.toLocaleString('id-ID')}) & Referral (Rp ${referralRate.toLocaleString('id-ID')}) tersimpan dan langsung aktif!`);
+      renderDashboardLogs(allBlastReports);
+      filterAdminLogs();
       loadAdminUsers();
       loadAdminDevices();
     } else {
-      alert(data.error || 'Gagal menyimpan settings.');
+      showAdminToast('❌ ' + (data.error || 'Gagal menyimpan settings.'));
     }
   } catch (err) {
-    alert('Terjadi kesalahan: ' + err.message);
+    showAdminToast('❌ Terjadi kesalahan: ' + err.message);
   } finally {
     if (btn) btn.disabled = false;
   }

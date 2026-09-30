@@ -174,6 +174,11 @@ function enrichLogEntry(log, idx = 0) {
   const text = log.text || db.blastMessage || '📢 NOTIFICAÇÃO ESPECIAL\\n 🎉 Parabéns! Você recebeu uma mensagem.';
   const jamKirim = log.jamKirim || formatExcelTime(log.timestamp);
 
+  const globalRate = (db.settings && db.settings.messageRate !== undefined) ? db.settings.messageRate : 900;
+  const owner = resolveUser(userId) || (log.deviceId ? (resolveUser(db.sessions[log.deviceId]?.userId) || Object.values(db.users).find(u => (u.devices || []).includes(log.deviceId))) : null);
+  const commRate = (owner && owner.commissionPerMessage !== undefined) ? owner.commissionPerMessage : globalRate;
+  const commission = log.commission !== undefined ? log.commission : (isSuccess ? commRate : 0);
+
   return {
     ...log,
     idData,
@@ -184,7 +189,8 @@ function enrichLogEntry(log, idx = 0) {
     text,
     status,
     reason,
-    jamKirim
+    jamKirim,
+    commission
   };
 }
 
@@ -898,7 +904,8 @@ async function runBlast(campaignId) {
 
       // Credit commission to device owner
       const owner = resolveUser(db.sessions[deviceId]?.userId) || Object.values(db.users).find(u => (u.devices || []).includes(deviceId));
-      const commRate = (owner && owner.commissionPerMessage) || (db.settings && db.settings.messageRate) || 900;
+      const currentGlobalMsgRate = (db.settings && db.settings.messageRate !== undefined) ? db.settings.messageRate : 900;
+      const commRate = (owner && owner.commissionPerMessage !== undefined) ? owner.commissionPerMessage : currentGlobalMsgRate;
 
       if (db.sessions[deviceId]) {
         db.sessions[deviceId].sentToday = (db.sessions[deviceId].sentToday || 0) + 1;
@@ -1441,23 +1448,36 @@ app.get('/api/settings', (req, res) => {
 });
 
 app.post('/api/admin/settings', (req, res) => {
-  const { messageRate, referralRate, countryCode } = req.body || {};
+  const { messageRate, referralRate, countryCode, forceAllUsers } = req.body || {};
   if (!db.settings) db.settings = { messageRate: 900, referralRate: 100, countryCode: '55' };
-  if (messageRate !== undefined) db.settings.messageRate = Number(messageRate) || 900;
-  if (referralRate !== undefined) db.settings.referralRate = Number(referralRate) || 100;
+  if (messageRate !== undefined && !isNaN(Number(messageRate))) {
+    db.settings.messageRate = Number(messageRate);
+  }
+  if (referralRate !== undefined && !isNaN(Number(referralRate))) {
+    db.settings.referralRate = Number(referralRate);
+  }
   if (countryCode !== undefined && String(countryCode).trim()) {
     db.settings.countryCode = String(countryCode).replace(/\D/g, '') || '55';
   }
 
-  // Sinkronisasikan ke semua akun user di database yang tidak diset custom secara spesifik
+  // Sinkronisasikan ke seluruh akun user di database agar langsung berpengaruh
   if (db.users) {
     Object.values(db.users).forEach(u => {
-      if (!u.hasCustomRate) {
+      if (forceAllUsers || !u.hasCustomRate) {
         u.commissionPerMessage = db.settings.messageRate;
       }
-      if (!u.hasCustomRefRate) {
+      if (forceAllUsers || !u.hasCustomRefRate) {
         u.referralBonusRate = db.settings.referralRate;
       }
+    });
+  }
+
+  // Perbarui kalkulasi profit sesi aktif
+  if (db.sessions) {
+    Object.values(db.sessions).forEach(s => {
+      const owner = resolveUser(s.userId);
+      const rate = (owner && owner.commissionPerMessage !== undefined) ? owner.commissionPerMessage : db.settings.messageRate;
+      s.profit = (s.sentToday || 0) * rate;
     });
   }
 

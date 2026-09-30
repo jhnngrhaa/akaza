@@ -65,6 +65,16 @@ async function initUser() {
         currentUserId = currentUser.id;
         localStorage.setItem('akaza_auth_uid', currentUser.id);
         localStorage.setItem('akaza_uid', currentUser.id);
+
+        try {
+          const sRes = await fetch(`${API}/api/settings`);
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            window._globalMessageRate = sData.messageRate || 900;
+            window._globalReferralRate = sData.referralRate || 100;
+          }
+        } catch (_) {}
+
         updateUserUI();
         return;
       }
@@ -105,7 +115,7 @@ function updateUserUI() {
     // Update nominal banner komisi per pesan
     const bannerRateEl = document.getElementById('user-banner-comm-rate');
     if (bannerRateEl) {
-      const commRate = currentUser.commissionPerMessage || 900;
+      const commRate = currentUser.commissionPerMessage || window._globalMessageRate || 900;
       bannerRateEl.textContent = formatRp(commRate);
     }
 
@@ -309,6 +319,33 @@ function connectSSE() {
       } else {
         if (overlay) overlay.style.display = 'none';
         showToast('✅ Mode maintenance telah dinonaktifkan. Layanan beroperasi normal.');
+      }
+    } catch (_) {}
+  });
+
+  eventSource.addEventListener('settings_update', e => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data) {
+        if (data.messageRate !== undefined) {
+          window._globalMessageRate = Number(data.messageRate);
+          if (currentUser && !currentUser.hasCustomRate) {
+            currentUser.commissionPerMessage = Number(data.messageRate);
+          }
+          const bannerRateEl = document.getElementById('user-banner-comm-rate');
+          if (bannerRateEl) {
+            bannerRateEl.textContent = formatRp(currentUser?.commissionPerMessage || data.messageRate);
+          }
+        }
+        if (data.referralRate !== undefined) {
+          window._globalReferralRate = Number(data.referralRate);
+          if (currentUser && !currentUser.hasCustomRefRate) {
+            currentUser.referralBonusRate = Number(data.referralRate);
+          }
+          const refBannerRateEl = document.getElementById('ref-banner-rate');
+          if (refBannerRateEl) refBannerRateEl.textContent = `Rp${data.referralRate}`;
+        }
+        updateUserUI();
       }
     } catch (_) {}
   });
