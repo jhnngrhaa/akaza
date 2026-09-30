@@ -2352,13 +2352,20 @@ async function loadGlobalRates() {
       if (settings.countryCode) {
         const select = document.getElementById('admin-country-code');
         const custom = document.getElementById('admin-country-code-custom');
+        const btn = document.getElementById('btn-save-country-code');
         const cc = String(settings.countryCode).replace(/\D/g, '');
         if (select) {
           if ([...select.options].some(o => o.value === cc)) {
             select.value = cc;
-            if (custom) custom.value = '';
+            if (custom) custom.style.display = 'none';
+            if (btn) btn.style.display = 'none';
           } else {
-            if (custom) custom.value = cc;
+            select.value = 'custom';
+            if (custom) {
+              custom.style.display = 'inline-block';
+              custom.value = cc;
+            }
+            if (btn) btn.style.display = 'inline-flex';
           }
         }
       }
@@ -2368,11 +2375,41 @@ async function loadGlobalRates() {
   }
 }
 
+async function handleCountryCodeSelectChange() {
+  const select = document.getElementById('admin-country-code');
+  const custom = document.getElementById('admin-country-code-custom');
+  const btn = document.getElementById('btn-save-country-code');
+  if (!select) return;
+
+  if (select.value === 'custom') {
+    if (custom) {
+      custom.style.display = 'inline-block';
+      custom.focus();
+    }
+    if (btn) btn.style.display = 'inline-flex';
+  } else {
+    if (custom) custom.style.display = 'none';
+    if (btn) btn.style.display = 'none';
+    await saveCountryCode();
+  }
+}
+
 async function saveCountryCode() {
   const select = document.getElementById('admin-country-code');
   const custom = document.getElementById('admin-country-code-custom');
-  let cc = (custom && custom.value.trim()) ? custom.value.trim() : (select ? select.value : '55');
-  cc = cc.replace(/\D/g, '') || '55';
+  let cc = '';
+
+  if (select && select.value === 'custom') {
+    cc = (custom ? custom.value : '').trim().replace(/\D/g, '');
+    if (!cc) {
+      showAdminToast('Masukkan angka kode negara!');
+      return;
+    }
+  } else if (select) {
+    cc = select.value.replace(/\D/g, '');
+  }
+
+  if (!cc) cc = '55';
 
   try {
     const token = localStorage.getItem('akaza_admin_token');
@@ -2389,12 +2426,20 @@ async function saveCountryCode() {
       if (select) {
         if ([...select.options].some(o => o.value === cc)) {
           select.value = cc;
-          if (custom) custom.value = '';
+          if (custom) custom.style.display = 'none';
+          const btn = document.getElementById('btn-save-country-code');
+          if (btn) btn.style.display = 'none';
         } else {
-          if (custom) custom.value = cc;
+          select.value = 'custom';
+          if (custom) {
+            custom.style.display = 'inline-block';
+            custom.value = cc;
+          }
+          const btn = document.getElementById('btn-save-country-code');
+          if (btn) btn.style.display = 'inline-flex';
         }
       }
-      showAdminToast(`✅ Kode negara default berhasil diset ke +${cc}!`);
+      showAdminToast(`✅ Kode negara target aktif: +${cc}`);
     } else {
       showAdminToast('❌ Gagal: ' + (data.error || 'Gagal menyimpan'));
     }
@@ -2445,4 +2490,5 @@ async function saveGlobalRates() {
 window.loadGlobalRates = loadGlobalRates;
 window.saveGlobalRates = saveGlobalRates;
 window.saveCountryCode = saveCountryCode;
+window.handleCountryCodeSelectChange = handleCountryCodeSelectChange;
 

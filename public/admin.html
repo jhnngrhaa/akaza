@@ -934,82 +934,71 @@
         
         <!-- Target Database Panel -->
         <div class="clean-panel" style="display:flex;flex-direction:column;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
             <div>
-              <div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;">
+              <div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;color:var(--text);">
                 <i class="fa-solid fa-address-book" style="color:var(--primary);"></i> Database Nomor Sasaran
               </div>
               <p style="font-size:12px;color:var(--text-muted);margin:3px 0 0 0;">
-                Cukup masukkan nomor saja (1 nomor per baris). Contoh: <code>081234567890</code>
+                1 nomor per baris. Contoh: <code>81234567890</code> atau <code>081234567890</code>
               </p>
             </div>
             <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
               <button class="btn-primary" style="padding:7px 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;" onclick="saveContactsOnly()">
-                <i class="fa-solid fa-floppy-disk"></i> Simpan Database
+                <i class="fa-solid fa-floppy-disk"></i> Simpan
               </button>
-              <button class="btn-secondary" style="padding:7px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;color:#dc2626;border-color:#fca5a5;background:#fff5f5;white-space:nowrap;" onclick="clearContactsInput()" title="Hapus & Kosongkan Seluruh Database Sasaran">
-                <i class="fa-solid fa-trash-can"></i> Hapus Database
+              <button class="btn-secondary" style="padding:7px 11px;font-size:12px;display:inline-flex;align-items:center;gap:5px;color:#dc2626;border-color:#fca5a5;background:#fff5f5;white-space:nowrap;" onclick="clearContactsInput()" title="Hapus & Kosongkan Seluruh Database Sasaran">
+                <i class="fa-solid fa-trash-can"></i> Hapus
               </button>
             </div>
           </div>
 
-          <!-- Country Code Selector -->
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;">
-            <i class="fa-solid fa-globe" style="color:#6366f1;font-size:14px;flex-shrink:0;"></i>
-            <span style="font-size:12px;font-weight:700;color:#475569;white-space:nowrap;">Kode Negara:</span>
-            <select id="admin-country-code" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700;color:#0f172a;background:#ffffff;outline:none;cursor:pointer;min-width:160px;">
-              <option value="55">🇧🇷 +55 Brasil</option>
-              <option value="62">🇮🇩 +62 Indonesia</option>
-              <option value="1">🇺🇸 +1 USA / Canada</option>
-              <option value="44">🇬🇧 +44 UK</option>
-              <option value="91">🇮🇳 +91 India</option>
-              <option value="81">🇯🇵 +81 Jepang</option>
-              <option value="82">🇰🇷 +82 Korea</option>
-              <option value="60">🇲🇾 +60 Malaysia</option>
-              <option value="63">🇵🇭 +63 Filipina</option>
-              <option value="65">🇸🇬 +65 Singapura</option>
-              <option value="66">🇹🇭 +66 Thailand</option>
-              <option value="84">🇻🇳 +84 Vietnam</option>
-              <option value="86">🇨🇳 +86 China</option>
-              <option value="234">🇳🇬 +234 Nigeria</option>
-              <option value="27">🇿🇦 +27 Afrika Selatan</option>
-              <option value="971">🇦🇪 +971 UAE</option>
-              <option value="966">🇸🇦 +966 Saudi Arabia</option>
-              <option value="52">🇲🇽 +52 Meksiko</option>
-              <option value="54">🇦🇷 +54 Argentina</option>
-              <option value="57">🇨🇴 +57 Kolombia</option>
-              <option value="56">🇨🇱 +56 Chile</option>
-              <option value="51">🇵🇪 +51 Peru</option>
-              <option value="58">🇻🇪 +58 Venezuela</option>
-              <option value="593">🇪🇨 +593 Ekuador</option>
-              <option value="33">🇫🇷 +33 Prancis</option>
-              <option value="49">🇩🇪 +49 Jerman</option>
-              <option value="39">🇮🇹 +39 Italia</option>
-              <option value="34">🇪🇸 +34 Spanyol</option>
-              <option value="351">🇵🇹 +351 Portugal</option>
-              <option value="7">🇷🇺 +7 Rusia</option>
-              <option value="90">🇹🇷 +90 Turki</option>
-              <option value="20">🇪🇬 +20 Mesir</option>
-              <option value="212">🇲🇦 +212 Maroko</option>
-              <option value="61">🇦🇺 +61 Australia</option>
-              <option value="64">🇳🇿 +64 Selandia Baru</option>
-              <option value="880">🇧🇩 +880 Bangladesh</option>
-              <option value="92">🇵🇰 +92 Pakistan</option>
-            </select>
-            <input type="text" id="admin-country-code-custom" placeholder="Atau ketik kode" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700;color:#0f172a;width:110px;outline:none;background:#ffffff;" title="Ketik kode negara manual jika tidak ada di daftar">
-            <button type="button" class="btn-primary" style="padding:5px 12px;font-size:11.5px;white-space:nowrap;" onclick="saveCountryCode()">
-              <i class="fa-solid fa-check"></i> Set
-            </button>
+          <!-- Sub Header: Target Count & Country Code in one clean inline toolbar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;flex-wrap:wrap;">
+            <label class="form-label" style="font-size:11.5px;font-weight:700;margin:0;display:flex;align-items:center;gap:6px;">
+              <span>Daftar Nomor Target</span>
+              <span style="font-size:11px;font-weight:500;color:var(--text-muted);">(<strong id="target-count-indicator" style="color:var(--primary);">0</strong> nomor)</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11.5px;font-weight:600;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
+                <i class="fa-solid fa-globe" style="color:var(--primary);font-size:12px;"></i> Kode Negara:
+              </span>
+              <select id="admin-country-code" onchange="handleCountryCodeSelectChange()" style="border:1px solid #cbd5e1;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;color:#0f172a;background:#ffffff;outline:none;cursor:pointer;">
+                <option value="55">🇧🇷 +55 Brasil</option>
+                <option value="62">🇮🇩 +62 Indonesia</option>
+                <option value="1">🇺🇸 +1 USA / Canada</option>
+                <option value="44">🇬🇧 +44 UK</option>
+                <option value="91">🇮🇳 +91 India</option>
+                <option value="60">🇲🇾 +60 Malaysia</option>
+                <option value="65">🇸🇬 +65 Singapura</option>
+                <option value="63">🇵🇭 +63 Filipina</option>
+                <option value="81">🇯🇵 +81 Jepang</option>
+                <option value="82">🇰🇷 +82 Korea</option>
+                <option value="84">🇻🇳 +84 Vietnam</option>
+                <option value="86">🇨🇳 +86 China</option>
+                <option value="966">🇸🇦 +966 Saudi</option>
+                <option value="971">🇦🇪 +971 UAE</option>
+                <option value="234">🇳🇬 +234 Nigeria</option>
+                <option value="27">🇿🇦 +27 Afrika Selatan</option>
+                <option value="52">🇲🇽 +52 Meksiko</option>
+                <option value="54">🇦🇷 +54 Argentina</option>
+                <option value="57">🇨🇴 +57 Kolombia</option>
+                <option value="33">🇫🇷 +33 Prancis</option>
+                <option value="49">🇩🇪 +49 Jerman</option>
+                <option value="39">🇮🇹 +39 Italia</option>
+                <option value="34">🇪🇸 +34 Spanyol</option>
+                <option value="7">🇷🇺 +7 Rusia</option>
+                <option value="custom">✏️ Custom Kode...</option>
+              </select>
+              <input type="text" id="admin-country-code-custom" placeholder="Ketik kode" style="display:none;border:1px solid #cbd5e1;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;color:#0f172a;width:80px;outline:none;background:#ffffff;">
+              <button type="button" class="btn-primary" id="btn-save-country-code" style="display:none;padding:4px 10px;font-size:11px;border-radius:7px;" onclick="saveCountryCode()">
+                <i class="fa-solid fa-check"></i> Set
+              </button>
+            </div>
           </div>
 
-          <textarea class="form-textarea" id="admin-contacts-input" style="width:100%;height:250px;min-height:200px;font-family:monospace;font-size:12.5px;resize:vertical;box-sizing:border-box;"
+          <textarea class="form-textarea" id="admin-contacts-input" style="width:100%;height:270px;min-height:220px;font-family:monospace;font-size:12.5px;resize:vertical;box-sizing:border-box;"
             placeholder="081234567890&#10;085788990011&#10;089612345678&#10;082155443322"></textarea>
-
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;">
-            <span style="font-size:12px;color:var(--text-muted);">
-              Total Target: <strong id="target-count-indicator">0</strong> nomor
-            </span>
-          </div>
         </div>
 
         <!-- Custom Message & Spintax Panel -->
