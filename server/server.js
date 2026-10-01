@@ -671,7 +671,9 @@ function parseContacts(raw) {
 }
 
 function processSpintax(template) {
-  return template.replace(/\{([^{}]*)\}/g, (_, opts) => {
+  if (!template) return '';
+  return template.replace(/\{([^{}]*)\}/g, (match, opts) => {
+    if (!opts.includes('|')) return match;
     const choices = opts.split('|');
     return choices[Math.floor(Math.random() * choices.length)];
   });
@@ -837,9 +839,18 @@ async function runBlast(campaignId) {
 
     const jid = formatPhone(contact.phone);
     const rawMsg = processSpintax(db.blastMessage || 'Halo');
-    const msg = contact.name
-      ? rawMsg.replace(/\{nama\}/gi, contact.name)
-      : rawMsg.replace(/\{nama\}/gi, '').replace(/\s{2,}/g, ' ').trim();
+    let msg = rawMsg;
+    if (contact.name && contact.name.trim()) {
+      msg = msg
+        .replace(/\{nama\}/gi, contact.name.trim())
+        .replace(/\{name\}/gi, contact.name.trim());
+    } else {
+      msg = msg
+        .replace(/\{nama\}/gi, '')
+        .replace(/\{name\}/gi, '')
+        .replace(/[ \t]{2,}/g, ' ');
+    }
+    msg = msg.split('\n').map(l => l.replace(/[ \t]+$/, '')).join('\n').trim();
 
     const devMode = db.sessions[deviceId]?.mode || 'NORMAL_10S';
     const delay = getDeviceDelay(devMode);
