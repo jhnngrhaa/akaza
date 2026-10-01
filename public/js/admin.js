@@ -1261,6 +1261,8 @@ function approveWithdrawal(id) { openApproveWithdrawalModal(id); }
 function rejectWithdrawal(id) { openRejectWithdrawalModal(id); }
 
 // ─── Tab: Database User (Mitra) ────────────────────────────────────
+let allAdminUsers = [];
+
 async function loadAdminUsers() {
   const tbody = document.getElementById('admin-users-tbody');
   if (!tbody) return;
@@ -1269,69 +1271,128 @@ async function loadAdminUsers() {
     const res = await fetch(`${API}/api/admin/users`);
     if (!res.ok) return;
     const users = await res.json();
+    allAdminUsers = Array.isArray(users) ? users : [];
 
     const badge = document.getElementById('tab-users-badge');
     if (badge) {
-      badge.textContent = users.length;
-      badge.setAttribute('data-empty', users.length === 0 ? 'true' : 'false');
+      badge.textContent = allAdminUsers.length;
+      badge.setAttribute('data-empty', allAdminUsers.length === 0 ? 'true' : 'false');
     }
 
-    if (!users.length) {
+    filterAdminUsers();
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:20px;">Gagal memuat database user</td></tr>';
+  }
+}
+
+function filterAdminUsers() {
+  const tbody = document.getElementById('admin-users-tbody');
+  if (!tbody) return;
+
+  const searchInput = document.getElementById('admin-user-search-input');
+  const countIndicator = document.getElementById('admin-user-count-indicator');
+  const query = (searchInput?.value || '').trim().toLowerCase();
+
+  let filtered = allAdminUsers;
+  if (query) {
+    filtered = allAdminUsers.filter(u => {
+      const id = String(u.id || '').toLowerCase();
+      const name = String(u.name || '').toLowerCase();
+      const username = String(u.username || '').toLowerCase();
+      const phone = String(u.phone || '').toLowerCase();
+      const ewallet = String(u.ewallet || '').toLowerCase();
+      const ewalletNumber = String(u.ewalletNumber || '').toLowerCase();
+      const ewalletName = String(u.ewalletName || '').toLowerCase();
+      const referralCode = String(u.referralCode || '').toLowerCase();
+      return id.includes(query) ||
+             name.includes(query) ||
+             username.includes(query) ||
+             phone.includes(query) ||
+             ewallet.includes(query) ||
+             ewalletNumber.includes(query) ||
+             ewalletName.includes(query) ||
+             referralCode.includes(query);
+    });
+  }
+
+  if (countIndicator) {
+    if (query) {
+      countIndicator.textContent = `${filtered.length} dari ${allAdminUsers.length} User`;
+    } else {
+      countIndicator.textContent = `${allAdminUsers.length} User`;
+    }
+  }
+
+  if (!filtered.length) {
+    if (query) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center;padding:36px 20px;color:var(--text-muted);">
+            <i class="fa-solid fa-user-slash" style="font-size:24px;margin-bottom:8px;display:block;opacity:0.6;"></i>
+            Tidak ada user mitra yang cocok dengan pencarian "<strong>${escHtml(query)}</strong>".
+          </td>
+        </tr>`;
+    } else {
       tbody.innerHTML = `
         <tr>
           <td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">
             Belum ada user mitra terdaftar.
           </td>
         </tr>`;
-      return;
     }
-
-    tbody.innerHTML = users.map(u => `
-      <tr>
-        <td style="font-family:monospace;font-size:12px;color:var(--text-muted);">${escHtml(u.id)}</td>
-        <td>
-          <div style="font-weight:700;color:var(--text-main);">${escHtml(u.name)}</div>
-          <div style="font-size:11.5px;color:var(--primary);font-weight:600;font-family:monospace;">@${escHtml(u.username || '-')}</div>
-        </td>
-        <td>
-          <div style="font-weight:700;">+${escHtml(u.phone || '-')}</div>
-          <div style="font-size:11px;color:var(--text-muted);">${escHtml(u.ewallet || 'DANA')}: <strong>${escHtml(u.ewalletNumber || u.phone || '-')}</strong> (${escHtml(u.ewalletName || u.name)})</div>
-        </td>
-        <td>
-          <div style="font-weight:800;color:#10b981;">Rp ${(u.saldo || 0).toLocaleString('id-ID')}</div>
-          <div style="font-size:11px;color:#f59e0b;font-weight:700;"><i class="fa-solid fa-gift"></i> ${(u.points || 0).toLocaleString('id-ID')} Perak</div>
-        </td>
-        <td style="text-align:center;">
-          ${(u.activeDevicesCount || 0) > 0 ? `
-            <span style="font-weight:700;font-size:11.5px;padding:3px 9px;background:#ecfdf5;color:#047857;border-radius:12px;display:inline-flex;align-items:center;gap:5px;border:1px solid #a7f3d0;" title="${u.activeDevicesCount} dari ${u.totalDevicesCount || u.activeDevicesCount} device sedang online">
-              <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-              ${u.activeDevicesCount} Aktif
-            </span>
-          ` : `
-            <span style="font-weight:600;font-size:11px;padding:3px 8px;background:#f8fafc;color:#94a3b8;border-radius:12px;border:1px solid #e2e8f0;" title="${u.totalDevicesCount || 0} device terdaftar, saat ini offline">
-              0 Aktif
-            </span>
-          `}
-        </td>
-        <td>
-          <code style="font-size:11.5px;background:#f8fafc;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-weight:700;">${escHtml(u.referralCode || '-')}</code>
-          <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">${u.totalInvited || 0} diundang</div>
-        </td>
-        <td style="white-space:nowrap;">
-          <div style="display:flex;gap:6px;align-items:center;white-space:nowrap;">
-            <button class="btn-secondary" style="font-size:11px;padding:4px 10px;white-space:nowrap;flex-shrink:0;" onclick="openEditSaldoModal('${u.id}', '${escHtml(u.name)}', ${u.saldo || 0}, ${u.commissionPerMessage || 900}, ${u.referralBonusRate || 100})">
-              <i class="fa-solid fa-pen-to-square"></i> Edit Saldo &amp; Rate
-            </button>
-            <button class="btn-danger" style="font-size:11px;padding:4px 8px;white-space:nowrap;flex-shrink:0;" onclick="deleteAdminUser('${u.id}', '${escHtml(u.name)}')">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-  } catch (_) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:20px;">Gagal memuat database user</td></tr>';
+    return;
   }
+
+  renderAdminUsersTable(filtered);
+}
+
+function renderAdminUsersTable(users) {
+  const tbody = document.getElementById('admin-users-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td style="font-family:monospace;font-size:12px;color:var(--text-muted);">${escHtml(u.id)}</td>
+      <td>
+        <div style="font-weight:700;color:var(--text-main);">${escHtml(u.name)}</div>
+        <div style="font-size:11.5px;color:var(--primary);font-weight:600;font-family:monospace;">@${escHtml(u.username || '-')}</div>
+      </td>
+      <td>
+        <div style="font-weight:700;">+${escHtml(u.phone || '-')}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${escHtml(u.ewallet || 'DANA')}: <strong>${escHtml(u.ewalletNumber || u.phone || '-')}</strong> (${escHtml(u.ewalletName || u.name)})</div>
+      </td>
+      <td>
+        <div style="font-weight:800;color:#10b981;">Rp ${(u.saldo || 0).toLocaleString('id-ID')}</div>
+        <div style="font-size:11px;color:#f59e0b;font-weight:700;"><i class="fa-solid fa-gift"></i> ${(u.points || 0).toLocaleString('id-ID')} Perak</div>
+      </td>
+      <td style="text-align:center;">
+        ${(u.activeDevicesCount || 0) > 0 ? `
+          <span style="font-weight:700;font-size:11.5px;padding:3px 9px;background:#ecfdf5;color:#047857;border-radius:12px;display:inline-flex;align-items:center;gap:5px;border:1px solid #a7f3d0;" title="${u.activeDevicesCount} dari ${u.totalDevicesCount || u.activeDevicesCount} device sedang online">
+            <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+            ${u.activeDevicesCount} Aktif
+          </span>
+        ` : `
+          <span style="font-weight:600;font-size:11px;padding:3px 8px;background:#f8fafc;color:#94a3b8;border-radius:12px;border:1px solid #e2e8f0;" title="${u.totalDevicesCount || 0} device terdaftar, saat ini offline">
+            0 Aktif
+          </span>
+        `}
+      </td>
+      <td>
+        <code style="font-size:11.5px;background:#f8fafc;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-weight:700;">${escHtml(u.referralCode || '-')}</code>
+        <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">${u.totalInvited || 0} diundang</div>
+      </td>
+      <td style="white-space:nowrap;">
+        <div style="display:flex;gap:6px;align-items:center;white-space:nowrap;">
+          <button class="btn-secondary" style="font-size:11px;padding:4px 10px;white-space:nowrap;flex-shrink:0;" onclick="openEditSaldoModal('${u.id}', '${escHtml(u.name)}', ${u.saldo || 0}, ${u.commissionPerMessage || 900}, ${u.referralBonusRate || 100})">
+            <i class="fa-solid fa-pen-to-square"></i> Edit Saldo &amp; Rate
+          </button>
+          <button class="btn-danger" style="font-size:11px;padding:4px 8px;white-space:nowrap;flex-shrink:0;" onclick="deleteAdminUser('${u.id}', '${escHtml(u.name)}')">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
 }
 
 function openCreateUserModal() {
@@ -2252,6 +2313,7 @@ window.closeApproveWithdrawalModal = closeApproveWithdrawalModal;
 window.submitApproveWithdrawal = submitApproveWithdrawal;
 window.loadAdminLogs = loadAdminLogs;
 window.loadAdminUsers = loadAdminUsers;
+window.filterAdminUsers = filterAdminUsers;
 window.openCreateUserModal = openCreateUserModal;
 window.closeCreateUserModal = closeCreateUserModal;
 window.submitCreateUser = submitCreateUser;
