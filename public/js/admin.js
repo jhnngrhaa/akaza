@@ -968,6 +968,9 @@ async function cleanupGhostDevices() {
       showAdminToast(`🧹 ${data.message || 'Sesi ghost berhasil dibersihkan!'}`);
       loadAdminDevices();
       refreshMetrics();
+      if (typeof loadServerLogs === 'function') {
+        setTimeout(loadServerLogs, 500);
+      }
     } else {
       showAdminToast('❌ Gagal membersihkan sesi: ' + (data.error || 'Unknown'));
     }

@@ -257,7 +257,10 @@ console.error = (...args) => {
   pushServerLog('error', args);
 };
 
-// ─── Baileys Session ──────────────────────────────────────────────
+// ─── Baileys Session Management ───────────────────────────────────
+const terminatedSessions = new Set();
+const reconnectAttempts = {};
+
 async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber = '') {
   try {
     const {
@@ -269,6 +272,8 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
     } = await import('@whiskeysockets/baileys');
 
     const { default: pino } = await import('pino');
+
+    terminatedSessions.delete(deviceId);
 
     const sessionDir = join(__dirname, 'sessions', deviceId);
     mkdirSync(sessionDir, { recursive: true });
@@ -353,20 +358,43 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
       const { connection, lastDisconnect, qr } = update;
 
       if (qr && !usePairingCode) {
-        unpairedRetryCount[deviceId] = (unpairedRetryCount[deviceId] || 0) + 1;
-        if (unpairedRetryCount[deviceId] > 5) {
-          console.log(`[${deviceId}] QR code kedaluwarsa setelah 5 kali pembaruan tanpa scan. Menutup sesi.`);
-          try { sock.end(); } catch (_) {}
+        // Jika sesi ini sebelumnya sudah pernah login (authenticated), tapi sekarang WhatsApp meminta QR code:
+        // Artinya sesi sudah kedaluwarsa / dicabut dari WhatsApp. Jangan spam QR berulang kali!
+        const wasPreviouslyConnected = Boolean(db.sessions[deviceId]?.connectedAt);
+        if (wasPreviouslyConnected) {
+          console.warn(`[${deviceId}] Sesi WhatsApp telah kedaluwarsa atau dicabut dari HP (WhatsApp meminta scan ulang). Menutup sesi otomatis.`);
+          terminatedSessions.add(deviceId);
           delete sessions[deviceId];
           delete qrCodeStore[deviceId];
           delete sessionStatus[deviceId];
           delete unpairedRetryCount[deviceId];
+          delete reconnectAttempts[deviceId];
+          try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
+          if (db.sessions[deviceId]) {
+            db.sessions[deviceId].status = 'offline';
+            save();
+          }
+          broadcast('device_update', { deviceId, status: 'offline' });
+          try { sock.end(); } catch (_) {}
+          return;
+        }
+
+        unpairedRetryCount[deviceId] = (unpairedRetryCount[deviceId] || 0) + 1;
+        if (unpairedRetryCount[deviceId] > 5) {
+          console.log(`[${deviceId}] QR code kedaluwarsa setelah 5 kali pembaruan tanpa scan. Menutup sesi.`);
+          terminatedSessions.add(deviceId);
+          delete sessions[deviceId];
+          delete qrCodeStore[deviceId];
+          delete sessionStatus[deviceId];
+          delete unpairedRetryCount[deviceId];
+          delete reconnectAttempts[deviceId];
           if (db.sessions[deviceId] && !db.sessions[deviceId].connectedAt) {
             delete db.sessions[deviceId];
             save();
           }
           try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
           broadcast('device_update', { deviceId, status: 'offline' });
+          try { sock.end(); } catch (_) {}
           return;
         }
 
@@ -377,6 +405,8 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
       }
 
       if (connection === 'open') {
+        terminatedSessions.delete(deviceId);
+        delete reconnectAttempts[deviceId];
         sessionStatus[deviceId] = 'online';
         delete qrCodeStore[deviceId];
         delete pairingCodes[deviceId];
@@ -414,26 +444,68 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
       }
 
       if (connection === 'close') {
-        const reason = lastDisconnect?.error?.output?.statusCode;
-        const isLoggedOut = reason === DisconnectReason.loggedOut || reason === 401;
-        const shouldReconnect = !isLoggedOut && reason !== DisconnectReason.connectionReplaced;
+        const rawReason = lastDisconnect?.error?.output?.statusCode;
+        const reason = rawReason !== undefined ? Number(rawReason) : undefined;
 
-        console.log(`[${deviceId}] Connection closed (reason: ${reason || 'unknown'}), isLoggedOut: ${isLoggedOut}, shouldReconnect: ${shouldReconnect}`);
-
-        if (isLoggedOut) {
-          try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
-          delete db.sessions[deviceId];
+        // Jika sesi sudah sengaja dihentikan (misal QR expired, logout, user delete/disconnect, ghost cleanup)
+        if (terminatedSessions.has(deviceId)) {
+          console.log(`[${deviceId}] Sesi telah dihentikan (terminated), tidak akan menghubungkan ulang.`);
           delete sessions[deviceId];
           delete qrCodeStore[deviceId];
           delete pairingCodes[deviceId];
           delete sessionStatus[deviceId];
           delete unpairedRetryCount[deviceId];
-          Object.values(db.users).forEach(u => {
-            if (u.devices) u.devices = u.devices.filter(d => d !== deviceId);
-          });
-          save();
-          broadcast('device_update', { deviceId, status: 'deleted' });
-          console.log(`[${deviceId}] Sesi di-logout atau tidak terotorisasi, dibersihkan otomatis.`);
+          delete reconnectAttempts[deviceId];
+          return;
+        }
+
+        // Status code terminal pada WhatsApp Baileys:
+        // 401: Logged out
+        // 403: Forbidden / Akun diblokir / Sesi dicabut
+        // 405: Method Not Allowed / Autentikasi ditolak
+        // 411: Multi-device mismatch
+        // 440: Connection replaced (ada sesi lain login)
+        // 500: Bad session / file kredensial rusak
+        const terminalCodes = [401, 403, 405, 411, 440, 500];
+        const isTerminalError = (reason && terminalCodes.includes(reason)) ||
+          reason === DisconnectReason.loggedOut ||
+          reason === DisconnectReason.connectionReplaced ||
+          reason === DisconnectReason.badSession;
+
+        // Perangkat yang BELUM pernah login / scan QR tidak boleh reconnect otomatis sama sekali!
+        const isRegistered = Boolean(state.creds?.registered || db.sessions[deviceId]?.connectedAt);
+        const isUnpaired = !isRegistered;
+
+        const shouldReconnect = isRegistered && !isTerminalError;
+
+        console.log(`[${deviceId}] Connection closed (reason: ${reason || 'unknown'}), isTerminal: ${isTerminalError}, isUnpaired: ${isUnpaired}, shouldReconnect: ${shouldReconnect}`);
+
+        if (isTerminalError || isUnpaired) {
+          terminatedSessions.add(deviceId);
+          try { rmSync(join(__dirname, 'sessions', deviceId), { recursive: true, force: true }); } catch (_) {}
+          delete sessions[deviceId];
+          delete qrCodeStore[deviceId];
+          delete pairingCodes[deviceId];
+          delete sessionStatus[deviceId];
+          delete unpairedRetryCount[deviceId];
+          delete reconnectAttempts[deviceId];
+
+          if (isTerminalError) {
+            delete db.sessions[deviceId];
+            Object.values(db.users).forEach(u => {
+              if (u.devices) u.devices = u.devices.filter(d => d !== deviceId);
+            });
+            save();
+            broadcast('device_update', { deviceId, status: 'deleted' });
+            console.log(`[${deviceId}] Sesi dihentikan & dibersihkan otomatis karena error terminal (reason: ${reason}).`);
+          } else {
+            if (db.sessions[deviceId] && !db.sessions[deviceId].connectedAt) {
+              delete db.sessions[deviceId];
+              save();
+            }
+            broadcast('device_update', { deviceId, status: 'offline' });
+            console.log(`[${deviceId}] Sesi belum tertaut ditutup, tidak akan mencoba menghubungkan ulang.`);
+          }
           return;
         }
 
@@ -448,13 +520,32 @@ async function startBaileysSession(deviceId, usePairingCode = false, phoneNumber
         broadcast('device_update', { deviceId, status: newStatus });
 
         if (shouldReconnect) {
+          reconnectAttempts[deviceId] = (reconnectAttempts[deviceId] || 0) + 1;
+          if (reconnectAttempts[deviceId] > 5) {
+            console.warn(`[${deviceId}] Reconnect gagal setelah 5 percobaan berturut-turut. Menghentikan reconnection loop.`);
+            terminatedSessions.add(deviceId);
+            sessionStatus[deviceId] = 'offline';
+            if (db.sessions[deviceId]) {
+              db.sessions[deviceId].status = 'offline';
+              save();
+            }
+            broadcast('device_update', { deviceId, status: 'offline' });
+            delete sessions[deviceId];
+            delete qrCodeStore[deviceId];
+            delete pairingCodes[deviceId];
+            return;
+          }
+
+          const delayMs = Math.min(3000 * Math.pow(2, reconnectAttempts[deviceId] - 1), 30000);
+          console.log(`[${deviceId}] Menjadwalkan reconnect (${reconnectAttempts[deviceId]}/5) dalam ${delayMs / 1000} detik...`);
+
           setTimeout(() => {
-            if (!sessions[deviceId] || sessionStatus[deviceId] === 'connecting') {
+            if (!terminatedSessions.has(deviceId) && (!sessions[deviceId] || sessionStatus[deviceId] === 'connecting')) {
               startBaileysSession(deviceId, false).catch(err => {
                 console.error(`[${deviceId}] Reconnect error:`, err.message);
               });
             }
-          }, 3000);
+          }, delayMs);
         } else {
           delete sessions[deviceId];
           delete qrCodeStore[deviceId];
@@ -533,10 +624,13 @@ async function restoreAllSessions() {
       console.log(`↻ Restoring authenticated session: ${deviceId} (${sess.phone || sess.name})`);
       restored++;
       await startBaileysSession(deviceId, false);
+      // Give 1 second delay between session restorations to prevent WhatsApp rate-limit
+      await new Promise(r => setTimeout(r, 1000));
     } else {
       // Clean up ghost / abandoned / unauthenticated session folders
       console.log(`🧹 Membersihkan sesi ghost/unpaired: ${deviceId}`);
       cleaned++;
+      terminatedSessions.add(deviceId);
       try {
         rmSync(join(sessDir, deviceId), { recursive: true, force: true });
       } catch (_) {}
@@ -546,6 +640,14 @@ async function restoreAllSessions() {
           if (u.devices) u.devices = u.devices.filter(d => d !== deviceId);
         });
       }
+    }
+  }
+
+  // Prune any db.sessions entries that have no folder or are marked offline without connection
+  for (const [id, s] of Object.entries(db.sessions)) {
+    if (!dirs.includes(id) && !s.connectedAt) {
+      delete db.sessions[id];
+      cleaned++;
     }
   }
 
@@ -1638,31 +1740,41 @@ app.post('/api/devices/add', async (req, res) => {
   // Jangan tambahkan ke user.devices dulu; hanya ditambahkan saat connection === 'open' (sudah scan/pair)
   save();
 
+  terminatedSessions.delete(deviceId);
+  delete reconnectAttempts[deviceId];
+
   startBaileysSession(deviceId, !!usePairingCode, cleanPhone || phoneNumber || '');
   res.json({ success: true, deviceId, status: 'connecting' });
 });
 
 app.post('/api/devices/:id/disconnect', async (req, res) => {
-  const sock = sessions[req.params.id];
+  const id = req.params.id;
+  terminatedSessions.add(id);
+  delete reconnectAttempts[id];
+  const sock = sessions[id];
   if (sock) {
     try { await sock.logout(); } catch (_) {}
-    delete sessions[req.params.id];
+    try { sock.end(); } catch (_) {}
+    delete sessions[id];
   }
-  if (db.sessions[req.params.id]) {
-    db.sessions[req.params.id].status = 'offline';
+  if (db.sessions[id]) {
+    db.sessions[id].status = 'offline';
     save();
   }
-  sessionStatus[req.params.id] = 'offline';
-  broadcast('device_update', { deviceId: req.params.id, status: 'offline' });
+  sessionStatus[id] = 'offline';
+  broadcast('device_update', { deviceId: id, status: 'offline' });
   res.json({ success: true });
 });
 
 // Permanently delete a device and clean up its session files
 app.delete('/api/devices/:id', async (req, res) => {
   const id = req.params.id;
+  terminatedSessions.add(id);
+  delete reconnectAttempts[id];
   const sock = sessions[id];
   if (sock) {
     try { await sock.logout(); } catch (_) {}
+    try { sock.end(); } catch (_) {}
     delete sessions[id];
   }
   delete sessionStatus[id];
@@ -2189,11 +2301,15 @@ app.post('/api/admin/devices/cleanup-ghosts', async (req, res) => {
   let cleanedCount = 0;
   const sessDir = join(__dirname, 'sessions');
 
-  // 1. Hentikan semua socket memory yang belum login
+  // 1. Hentikan semua socket memory yang tidak berstatus 'online'
   for (const deviceId of Object.keys(sessions)) {
+    const isOnline = sessionStatus[deviceId] === 'online';
     const isReg = isSessionRegistered(deviceId);
     const dbSess = db.sessions[deviceId];
-    if (!isReg || (dbSess && !dbSess.connectedAt)) {
+
+    if (!isOnline || !isReg || !dbSess || !dbSess.connectedAt) {
+      terminatedSessions.add(deviceId);
+      delete reconnectAttempts[deviceId];
       try { sessions[deviceId].end(); } catch (_) {}
       delete sessions[deviceId];
       delete qrCodeStore[deviceId];
@@ -2214,7 +2330,12 @@ app.post('/api/admin/devices/cleanup-ghosts', async (req, res) => {
       try { return statSync(join(sessDir, d)).isDirectory(); } catch (_) { return false; }
     });
     for (const d of dirs) {
-      if (!isSessionRegistered(d)) {
+      const isOnline = sessionStatus[d] === 'online' && sessions[d];
+      const isReg = isSessionRegistered(d);
+      const dbSess = db.sessions[d];
+      if (!isOnline && (!isReg || !dbSess || !dbSess.connectedAt)) {
+        terminatedSessions.add(d);
+        delete reconnectAttempts[d];
         try { rmSync(join(sessDir, d), { recursive: true, force: true }); } catch (_) {}
         if (db.sessions[d] && !db.sessions[d].connectedAt) {
           delete db.sessions[d];
@@ -2224,7 +2345,14 @@ app.post('/api/admin/devices/cleanup-ghosts', async (req, res) => {
     }
   }
 
-  // 3. Bersihkan device tidak valid dari user
+  // 3. Bersihkan device tidak valid dari user & prune db.sessions yatim
+  for (const [id, s] of Object.entries(db.sessions)) {
+    if (!s.connectedAt && sessionStatus[id] !== 'online') {
+      delete db.sessions[id];
+      cleanedCount++;
+    }
+  }
+
   Object.values(db.users).forEach(u => {
     if (u.devices) {
       u.devices = u.devices.filter(d => db.sessions[d] && db.sessions[d].connectedAt);
@@ -2232,12 +2360,14 @@ app.post('/api/admin/devices/cleanup-ghosts', async (req, res) => {
   });
 
   save();
+  broadcast('devices_synced', {});
   const activeCount = Object.keys(sessions).filter(id => sessionStatus[id] === 'online').length;
+  console.log(`🧹 [CLEANUP] Berhasil membersihkan ${cleanedCount} sesi ghost. Sesi aktif tersisa: ${activeCount}`);
   res.json({
     success: true,
     cleanedCount,
     activeCount,
-    message: `Berhasil membersihkan ${cleanedCount} sesi ghost / tidak tertaut.`
+    message: `Berhasil membersihkan ${cleanedCount} sesi ghost / tidak aktif. Sesi online aktif: ${activeCount}`
   });
 });
 
